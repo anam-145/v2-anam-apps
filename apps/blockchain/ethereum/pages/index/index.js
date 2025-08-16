@@ -267,14 +267,14 @@ async function updateBalance() {
 
   try {
     const balance = await adapter.getBalance(currentWallet.address);
-    
+
     // 디버깅 로그 추가
     console.log("Wallet address:", currentWallet.address);
     console.log("Raw balance from adapter:", balance);
     console.log("Type of balance:", typeof balance);
-    
+
     const formattedBalance = window.formatBalance(balance);
-    
+
     console.log("Formatted balance:", formattedBalance);
 
     document.getElementById("balance-display").textContent = formattedBalance;
@@ -309,18 +309,24 @@ function navigateToSendWithAddress(address) {
     showToast("No wallet found");
     return;
   }
-  
+
   console.log("Navigating to send page with address:", address);
-  
+
   // blockchain miniapp은 anamUI 네임스페이스 사용
   if (window.anamUI && window.anamUI.navigateTo) {
     // 쿼리 파라미터로 주소 전달
-    window.anamUI.navigateTo(`pages/send/send?address=${encodeURIComponent(address)}`);
+    window.anamUI.navigateTo(
+      `pages/send/send?address=${encodeURIComponent(address)}`
+    );
   } else if (window.anam && window.anam.navigateTo) {
-    window.anam.navigateTo(`pages/send/send?address=${encodeURIComponent(address)}`);
+    window.anam.navigateTo(
+      `pages/send/send?address=${encodeURIComponent(address)}`
+    );
   } else {
     // 개발 환경: 일반 HTML 페이지 이동
-    window.location.href = `../send/send.html?address=${encodeURIComponent(address)}`;
+    window.location.href = `../send/send.html?address=${encodeURIComponent(
+      address
+    )}`;
   }
 }
 
@@ -480,7 +486,7 @@ async function handleTransactionRequest(event) {
       const requestId = event.detail.requestId;
       const errorResponse = {
         error: "No wallet found",
-        status: "error"
+        status: "error",
       };
       window.anam.sendTransactionResponse(
         requestId,
@@ -496,7 +502,7 @@ async function handleTransactionRequest(event) {
   try {
     // 트랜잭션 데이터 파싱
     let transactionData;
-    if (typeof requestData.transactionData === 'string') {
+    if (typeof requestData.transactionData === "string") {
       transactionData = JSON.parse(requestData.transactionData);
     } else {
       transactionData = requestData;
@@ -571,91 +577,93 @@ async function handleTransactionRequest(event) {
 // QR 코드 스캔
 function scanQRCode() {
   console.log("scanQRCode() called");
-  
+
   // anamUI API 확인 (블록체인 미니앱에서 사용)
   if (window.anamUI && window.anamUI.scanQRCode) {
     console.log("Using anamUI.scanQRCode API");
-    
+
     // QR 스캔 결과 이벤트 리스너 등록
-    window.addEventListener('qrScanned', handleQRScanned);
-    
+    window.addEventListener("qrScanned", handleQRScanned);
+
     // QR 스캐너 호출 - 메인 프로세스에서 카메라 실행
-    window.anamUI.scanQRCode(JSON.stringify({
-      title: "QR 코드 스캔",
-      description: "지갑 주소 또는 개인키 QR 코드를 스캔하세요"
-    }));
-    
+    window.anamUI.scanQRCode(
+      JSON.stringify({
+        title: "Scan QR Code",
+        description: "Scan Ethereum wallet address QR code",
+      })
+    );
+
     console.log("QR scanner requested to main process");
   } else {
     console.error("anamUI.scanQRCode API not available");
-    showToast("QR 스캔 기능을 사용할 수 없습니다");
+    showToast("QR scan feature is not available");
   }
 }
 
 // QR 스캔 결과 처리
 function handleQRScanned(event) {
   console.log("QR scan event received:", event);
-  
+
   // 이벤트 리스너 제거 (일회성)
-  window.removeEventListener('qrScanned', handleQRScanned);
-  
+  window.removeEventListener("qrScanned", handleQRScanned);
+
   if (event.detail && event.detail.success) {
     const qrData = event.detail.data;
-    console.log("=== QR 스캔 성공 ===");
-    console.log("QR 데이터:", qrData);
-    console.log("데이터 길이:", qrData.length);
-    console.log("데이터 타입:", typeof qrData);
-    
-    // QR 데이터 분석
+    console.log("=== QR scan success ===");
+    console.log("QR data:", qrData);
+    console.log("Data length:", qrData.length);
+    console.log("Data type:", typeof qrData);
+
+    // Analyze QR data
     analyzeQRData(qrData);
-    
+
     // 사용자에게 알림
-    showToast("QR 스캔 완료");
+    showToast("QR scan completed");
   } else {
     const error = event.detail ? event.detail.error : "Unknown error";
-    console.error("QR 스캔 실패:", error);
-    showToast("QR 스캔 실패: " + error);
+    console.error("QR scan failed:", error);
+    showToast("QR scan failed: " + error);
   }
 }
 
-// QR 데이터 분석
+// Analyze QR data
 function analyzeQRData(data) {
-  console.log("=== QR 데이터 분석 ===");
-  
-  // 1. Ethereum 주소 형식 체크 (0x로 시작하는 42자)
+  console.log("=== QR data analysis ===");
+
+  // 1. Check Ethereum address format (42 characters starting with 0x)
   if (data.startsWith("0x") && data.length === 42) {
-    console.log("형식: Ethereum 주소");
-    console.log("주소:", data);
-    // Send 페이지로 이동하면서 주소 전달
+    console.log("Format: Ethereum address");
+    console.log("Address:", data);
+    // Navigate to Send page with address
     navigateToSendWithAddress(data);
     return;
   }
-  
-  // 2. Ethereum URI 형식 체크 (ethereum:0x...)
+
+  // 2. Check Ethereum URI format (ethereum:0x...)
   if (data.startsWith("ethereum:")) {
-    console.log("형식: Ethereum URI");
+    console.log("Format: Ethereum URI");
     const parts = data.split(":");
     if (parts.length >= 2) {
-      const address = parts[1].split("?")[0]; // 파라미터 제거
-      console.log("주소:", address);
-      // Send 페이지로 이동하면서 주소 전달
+      const address = parts[1].split("?")[0]; // Remove parameters
+      console.log("Address:", address);
+      // Navigate to Send page with address
       navigateToSendWithAddress(address);
     }
     return;
   }
-  
-  // 3. 개인키 형식 체크 (64자 hex)
+
+  // 3. Check private key format (64 hex characters)
   if (/^[0-9a-fA-F]{64}$/.test(data)) {
-    console.log("형식: 개인키 (주의: 민감한 정보)");
-    // 개인키는 보안상 자동 처리하지 않음
-    showToast("개인키 QR 코드 감지됨");
+    console.log("Format: Private key (CAUTION: Sensitive information)");
+    // Private key is not processed automatically for security
+    showToast("Private key QR code detected");
     return;
   }
-  
-  // 4. 알 수 없는 형식
-  console.log("형식: 알 수 없음");
-  console.log("데이터:", data.substring(0, 50) + "...");
-  showToast("인식할 수 없는 QR 코드입니다");
+
+  // 4. Unknown format
+  console.log("Format: Unknown");
+  console.log("Data:", data.substring(0, 50) + "...");
+  showToast("Unrecognized QR code");
 }
 
 // HTML onclick을 위한 전역 함수 등록
@@ -674,33 +682,32 @@ window.scanQRCode = scanQRCode;
 // Universal Bridge 요청 이벤트 리스너
 window.addEventListener("universalRequest", async (event) => {
   console.log("Universal request received:", event.detail);
-  
+
   const { requestId, payload } = event.detail;
-  
+
   try {
     const request = JSON.parse(payload);
-    
+
     // Ethereum RPC 요청인지 확인
-    if (request.type === 'ethereum_rpc') {
+    if (request.type === "ethereum_rpc") {
       handleDAppRequest(requestId, request.method, request.params);
       return;
     }
-    
+
     // 기존 트랜잭션 요청 처리 (하위 호환성)
     if (request.to && request.amount) {
       const transactionEvent = {
         detail: {
           requestId: requestId,
-          ...request
-        }
+          ...request,
+        },
       };
       handleTransactionRequest(transactionEvent);
       return;
     }
-    
+
     // 알 수 없는 요청 타입
     sendUniversalError(requestId, -32000, "Unknown request type");
-    
   } catch (error) {
     console.error("Failed to parse universal request:", error);
     sendUniversalError(requestId, -32700, "Parse error");
@@ -710,8 +717,10 @@ window.addEventListener("universalRequest", async (event) => {
 // DApp 요청 처리
 async function handleDAppRequest(requestId, method, params) {
   console.log(`DApp request - method: ${method}, params:`, params);
-  console.log(`Network: ${CoinConfig.network.networkName} (chainId: ${CoinConfig.network.chainId})`);
-  
+  console.log(
+    `Network: ${CoinConfig.network.networkName} (chainId: ${CoinConfig.network.chainId})`
+  );
+
   // 지갑 정보 다시 로드 (BlockchainService 환경에서 실행될 때를 위해)
   if (!currentWallet) {
     const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
@@ -730,7 +739,7 @@ async function handleDAppRequest(requestId, method, params) {
       return;
     }
   }
-  
+
   if (!adapter) {
     adapter = window.getAdapter();
     if (!adapter) {
@@ -738,7 +747,7 @@ async function handleDAppRequest(requestId, method, params) {
       return;
     }
   }
-  
+
   try {
     // EIP-1193 메서드 처리
     switch (method) {
@@ -746,7 +755,7 @@ async function handleDAppRequest(requestId, method, params) {
         // 권한 요청 - eth_accounts 권한 반환
         sendDAppResponse(requestId, [{ parentCapability: "eth_accounts" }]);
         break;
-        
+
       case "eth_requestAccounts":
       case "eth_accounts":
         // 현재 계정 반환
@@ -757,27 +766,27 @@ async function handleDAppRequest(requestId, method, params) {
           sendDAppResponse(requestId, []);
         }
         break;
-        
+
       case "eth_chainId":
         // 체인 ID 반환 (Sepolia: 11155111 = 0xaa36a7)
         sendDAppResponse(requestId, "0xaa36a7");
         break;
-        
+
       case "eth_sendTransaction":
         // 트랜잭션 전송
         await handleDAppSendTransaction(requestId, params);
         break;
-        
+
       case "personal_sign":
         // 메시지 서명
         await handleDAppPersonalSign(requestId, params);
         break;
-        
+
       case "eth_signTypedData_v4":
         // 구조화된 데이터 서명
         await handleDAppSignTypedData(requestId, params);
         break;
-        
+
       case "wallet_switchEthereumChain":
         // 네트워크 전환 (현재는 Sepolia만 지원)
         const chainId = params[0]?.chainId;
@@ -787,7 +796,7 @@ async function handleDAppRequest(requestId, method, params) {
           sendDAppError(requestId, 4902, "Unrecognized chain ID");
         }
         break;
-        
+
       case "eth_getBalance":
         // 잔액 조회
         const balance = await adapter.getBalance(currentWallet.address);
@@ -795,41 +804,42 @@ async function handleDAppRequest(requestId, method, params) {
         const hexBalance = "0x" + BigInt(balance).toString(16);
         sendDAppResponse(requestId, hexBalance);
         break;
-        
+
       case "eth_blockNumber":
         // 현재 블록 번호
         const blockNumber = await adapter.getBlockNumber();
         const hexBlockNumber = "0x" + blockNumber.toString(16);
         sendDAppResponse(requestId, hexBlockNumber);
         break;
-        
+
       case "net_version":
         // 네트워크 버전 (Sepolia: 11155111)
         sendDAppResponse(requestId, "11155111");
         break;
-        
+
       case "wallet_getCapabilities":
         // 지갑 기능 목록 반환 (EIP-5792)
         sendDAppResponse(requestId, {
-          "0xaa36a7": { // Sepolia chainId
+          "0xaa36a7": {
+            // Sepolia chainId
             atomicBatch: {
-              supported: false
+              supported: false,
             },
             switchChain: {
-              supported: true  // 체인 전환 지원
+              supported: true, // 체인 전환 지원
             },
             signTypedDataV4: {
-              supported: true  // EIP-712 서명 지원
-            }
-          }
+              supported: true, // EIP-712 서명 지원
+            },
+          },
         });
         break;
-        
+
       case "wallet_disconnect":
         // 지갑 연결 해제
         handleDAppDisconnect(requestId);
         break;
-        
+
       default:
         // 미지원 메서드
         sendDAppError(requestId, -32601, `Method not supported: ${method}`);
@@ -844,18 +854,18 @@ async function handleDAppRequest(requestId, method, params) {
 async function handleDAppSendTransaction(requestId, params) {
   try {
     const txParams = params[0]; // eth_sendTransaction의 첫 번째 파라미터
-    
+
     console.log("DApp transaction params:", txParams);
-    
+
     // 트랜잭션 파라미터 구성
     const txRequest = {
       from: currentWallet.address,
       to: txParams.to,
       amount: txParams.value ? ethers.utils.formatEther(txParams.value) : "0",
       privateKey: currentWallet.privateKey,
-      data: txParams.data || "0x"
+      data: txParams.data || "0x",
     };
-    
+
     // 가스 설정
     if (txParams.gas) {
       txRequest.gasLimit = parseInt(txParams.gas, 16);
@@ -863,16 +873,15 @@ async function handleDAppSendTransaction(requestId, params) {
     if (txParams.gasPrice) {
       txRequest.gasPrice = txParams.gasPrice;
     }
-    
+
     // 트랜잭션 전송
     const result = await adapter.sendTransaction(txRequest);
-    
+
     // 트랜잭션 해시 반환
     sendDAppResponse(requestId, result.hash);
-    
+
     // UI 업데이트
     setTimeout(updateBalance, 3000);
-    
   } catch (error) {
     console.error("DApp transaction failed:", error);
     sendDAppError(requestId, -32000, error.message);
@@ -884,23 +893,22 @@ async function handleDAppPersonalSign(requestId, params) {
   try {
     const message = params[0]; // 서명할 메시지
     const address = params[1]; // 주소 (검증용)
-    
+
     // 주소 확인
     if (address.toLowerCase() !== currentWallet.address.toLowerCase()) {
       sendDAppError(requestId, -32000, "Address mismatch");
       return;
     }
-    
+
     // ethers.js를 사용한 서명
     const wallet = new ethers.Wallet(currentWallet.privateKey);
     const signature = await wallet.signMessage(
-      ethers.utils.isHexString(message) 
+      ethers.utils.isHexString(message)
         ? ethers.utils.arrayify(message)
         : message
     );
-    
+
     sendDAppResponse(requestId, signature);
-    
   } catch (error) {
     console.error("DApp signing failed:", error);
     sendDAppError(requestId, -32000, error.message);
@@ -911,14 +919,15 @@ async function handleDAppPersonalSign(requestId, params) {
 async function handleDAppSignTypedData(requestId, params) {
   try {
     const address = params[0];
-    const typedData = typeof params[1] === 'string' ? JSON.parse(params[1]) : params[1];
-    
+    const typedData =
+      typeof params[1] === "string" ? JSON.parse(params[1]) : params[1];
+
     // 주소 확인
     if (address.toLowerCase() !== currentWallet.address.toLowerCase()) {
       sendDAppError(requestId, -32000, "Address mismatch");
       return;
     }
-    
+
     // ethers.js를 사용한 EIP-712 서명
     const wallet = new ethers.Wallet(currentWallet.privateKey);
     const signature = await wallet._signTypedData(
@@ -926,9 +935,8 @@ async function handleDAppSignTypedData(requestId, params) {
       typedData.types,
       typedData.message
     );
-    
+
     sendDAppResponse(requestId, signature);
-    
   } catch (error) {
     console.error("DApp typed data signing failed:", error);
     sendDAppError(requestId, -32000, error.message);
@@ -940,14 +948,11 @@ function sendDAppResponse(requestId, result) {
   const response = {
     jsonrpc: "2.0",
     id: requestId,
-    result: result
+    result: result,
   };
-  
+
   if (window.anam && window.anam.sendUniversalResponse) {
-    window.anam.sendUniversalResponse(
-      requestId,
-      JSON.stringify(response)
-    );
+    window.anam.sendUniversalResponse(requestId, JSON.stringify(response));
     console.log("Universal response sent:", response);
   } else {
     console.error("Universal Bridge not available for response");
@@ -961,15 +966,12 @@ function sendDAppError(requestId, code, message) {
     id: requestId,
     error: {
       code: code,
-      message: message
-    }
+      message: message,
+    },
   };
-  
+
   if (window.anam && window.anam.sendUniversalResponse) {
-    window.anam.sendUniversalResponse(
-      requestId,
-      JSON.stringify(errorResponse)
-    );
+    window.anam.sendUniversalResponse(requestId, JSON.stringify(errorResponse));
     console.log("Universal error sent:", errorResponse);
   }
 }
@@ -982,10 +984,10 @@ function sendUniversalError(requestId, code, message) {
 // DApp disconnect 처리
 function handleDAppDisconnect(requestId) {
   console.log("DApp disconnect requested");
-  
+
   // 성공 응답 보내기 - null 반환 (대부분의 라이브러리가 기대하는 값)
   sendDAppResponse(requestId, null);
-  
-  // 참고: disconnect 이벤트는 BrowserWebView의 provider.disconnect() 메서드가 호출될 때 
+
+  // 참고: disconnect 이벤트는 BrowserWebView의 provider.disconnect() 메서드가 호출될 때
   // 직접 발생합니다. Ethereum 미니앱에서는 응답만 보내면 됩니다.
 }

@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // UI 초기화
   updateUI();
   
-  // URL 파라미터 확인 (QR 코드로부터 주소 전달받은 경우)
+  // Check URL parameters (address from QR code)
   checkUrlParameters();
 });
 
@@ -155,7 +155,7 @@ function checkUrlParameters() {
       console.log("Address auto-filled in recipient field");
       
       // 주소가 채워졌음을 사용자에게 알림
-      showToast("QR 코드에서 주소를 가져왔습니다");
+      showToast("Address imported from QR code");
       
       // 금액 입력란으로 포커스 이동
       const amountInput = document.getElementById('send-amount');
