@@ -9,11 +9,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- 헤더 -->
-        <div class="header">
-            <h1 class="header-title">Payment Complete</h1>
-        </div>
-
         <!-- 성공 아이콘 -->
         <div class="success-icon-container">
             <div class="success-icon">
@@ -36,11 +31,8 @@
                 <span class="info-label">Transaction Hash</span>
                 <div class="tx-hash-container">
                     <span id="tx-hash" class="tx-hash">-</span>
-                    <button class="copy-button" onclick="copyTxHash()">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <rect x="5" y="5" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/>
-                            <path d="M3 3h8v8" stroke="currentColor" stroke-width="1.5"/>
-                        </svg>
+                    <button class="copy-button" onclick="copyTxHash()" title="Copy">
+                        📋
                     </button>
                 </div>
             </div>
