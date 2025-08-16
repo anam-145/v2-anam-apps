@@ -1,0 +1,8 @@
+{
+  "app_id": "com.la.universal",
+  "type": "app",
+  "version": "1.0.0",
+  "name": "Universal",
+  "icon": "assets/icons/app_icon.png",
+  "pages": ["pages/index/index"]
+}

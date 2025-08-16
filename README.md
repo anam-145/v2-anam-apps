@@ -27,6 +27,7 @@ v2-anam-apps/
 │       ├── anam/          # Anam 공식 앱
 │       ├── busan/         # 부산 지역 앱
 │       ├── seoul/         # 서울 지역 앱
+│       ├── la/            # LA 지역 앱
 │       └── etc/           # 기타 서비스 (DeFi 등)
 │
 ├── bundler/               # 브라우저 번들러

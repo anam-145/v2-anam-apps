@@ -362,8 +362,35 @@ window.showToast = (message, type = "info") => {
 
 // 잔액을 사람이 읽기 쉬운 형식으로 변환
 window.formatBalance = (balance, decimals = 18) => {
-  const value = Number(balance) / Math.pow(10, decimals);
-  return value.toFixed(4);
+  try {
+    // ethers v5 사용
+    if (ethers.utils && ethers.utils.formatUnits) {
+      return ethers.utils.formatUnits(balance, decimals);
+    }
+    // ethers v6 (미래 호환성)
+    if (ethers.formatEther && decimals === 18) {
+      return ethers.formatEther(balance);
+    }
+  } catch (error) {
+    console.error("Error formatting balance:", error);
+  }
+  
+  // Fallback: BigInt 사용 (정밀도 손실 최소화)
+  try {
+    const divisor = BigInt(10) ** BigInt(decimals);
+    const balanceBigInt = BigInt(balance);
+    const wholePart = balanceBigInt / divisor;
+    const fractionalPart = balanceBigInt % divisor;
+    
+    // 소수점 4자리까지만 표시
+    const fractionalStr = fractionalPart.toString().padStart(decimals, '0');
+    const displayFraction = fractionalStr.substring(0, 4);
+    
+    return `${wholePart}.${displayFraction}`;
+  } catch (fallbackError) {
+    console.error("Fallback formatting error:", fallbackError);
+    return "0.0000";
+  }
 };
 
 // 금액을 최소 단위로 변환
@@ -391,7 +418,11 @@ class EthereumAdapter extends CoinAdapter {
   // Provider 초기화
   async initProvider() {
     if (!this.provider && typeof ethers !== 'undefined') {
-      this.provider = new ethers.providers.JsonRpcProvider(this.config.network.rpcEndpoint);
+      // 체인 ID를 명시하여 네트워크 자동 감지 지연 방지
+      this.provider = new ethers.providers.JsonRpcProvider(
+        this.config.network.rpcEndpoint,
+        this.config.network.chainId
+      );
     }
     return this.provider;
   }
@@ -444,6 +475,12 @@ class EthereumAdapter extends CoinAdapter {
   async getBalance(address) {
     await this.initProvider();
     const balance = await this.provider.getBalance(address);
+    
+    // 디버깅 로그
+    console.log("Raw balance (BigNumber):", balance);
+    console.log("Balance in Wei:", balance.toString());
+    console.log("Balance in ETH:", ethers.utils.formatEther(balance));
+    
     return balance.toString(); // Wei 단위 BigNumber를 문자열로
   }
 
