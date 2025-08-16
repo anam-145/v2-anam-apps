@@ -21,6 +21,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // UI 초기화
   updateUI();
+  
+  // URL 파라미터 확인 (QR 코드로부터 주소 전달받은 경우)
+  checkUrlParameters();
 });
 
 // 지갑 정보 로드
@@ -133,6 +136,33 @@ async function confirmSend() {
   } catch (error) {
     console.error("Transaction failed:", error);
     showToast("Transaction failed: " + error.message);
+  }
+}
+
+// URL 파라미터에서 주소 가져오기
+function checkUrlParameters() {
+  // 현재 URL 가져오기
+  const urlParams = new URLSearchParams(window.location.search);
+  const address = urlParams.get('address');
+  
+  if (address) {
+    console.log("Address from QR code:", address);
+    
+    // 주소 입력란에 자동 입력
+    const addressInput = document.getElementById('recipient-address');
+    if (addressInput) {
+      addressInput.value = address;
+      console.log("Address auto-filled in recipient field");
+      
+      // 주소가 채워졌음을 사용자에게 알림
+      showToast("QR 코드에서 주소를 가져왔습니다");
+      
+      // 금액 입력란으로 포커스 이동
+      const amountInput = document.getElementById('send-amount');
+      if (amountInput) {
+        amountInput.focus();
+      }
+    }
   }
 }
 

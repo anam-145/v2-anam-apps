@@ -303,6 +303,27 @@ function navigateToSend() {
   }
 }
 
+// QR 스캔 후 주소와 함께 Send 페이지로 이동
+function navigateToSendWithAddress(address) {
+  if (!currentWallet) {
+    showToast("No wallet found");
+    return;
+  }
+  
+  console.log("Navigating to send page with address:", address);
+  
+  // blockchain miniapp은 anamUI 네임스페이스 사용
+  if (window.anamUI && window.anamUI.navigateTo) {
+    // 쿼리 파라미터로 주소 전달
+    window.anamUI.navigateTo(`pages/send/send?address=${encodeURIComponent(address)}`);
+  } else if (window.anam && window.anam.navigateTo) {
+    window.anam.navigateTo(`pages/send/send?address=${encodeURIComponent(address)}`);
+  } else {
+    // 개발 환경: 일반 HTML 페이지 이동
+    window.location.href = `../send/send.html?address=${encodeURIComponent(address)}`;
+  }
+}
+
 // Receive 페이지로 이동
 function navigateToReceive() {
   if (!currentWallet) {
@@ -547,6 +568,96 @@ async function handleTransactionRequest(event) {
   }
 }
 
+// QR 코드 스캔
+function scanQRCode() {
+  console.log("scanQRCode() called");
+  
+  // anamUI API 확인 (블록체인 미니앱에서 사용)
+  if (window.anamUI && window.anamUI.scanQRCode) {
+    console.log("Using anamUI.scanQRCode API");
+    
+    // QR 스캔 결과 이벤트 리스너 등록
+    window.addEventListener('qrScanned', handleQRScanned);
+    
+    // QR 스캐너 호출 - 메인 프로세스에서 카메라 실행
+    window.anamUI.scanQRCode(JSON.stringify({
+      title: "QR 코드 스캔",
+      description: "지갑 주소 또는 개인키 QR 코드를 스캔하세요"
+    }));
+    
+    console.log("QR scanner requested to main process");
+  } else {
+    console.error("anamUI.scanQRCode API not available");
+    showToast("QR 스캔 기능을 사용할 수 없습니다");
+  }
+}
+
+// QR 스캔 결과 처리
+function handleQRScanned(event) {
+  console.log("QR scan event received:", event);
+  
+  // 이벤트 리스너 제거 (일회성)
+  window.removeEventListener('qrScanned', handleQRScanned);
+  
+  if (event.detail && event.detail.success) {
+    const qrData = event.detail.data;
+    console.log("=== QR 스캔 성공 ===");
+    console.log("QR 데이터:", qrData);
+    console.log("데이터 길이:", qrData.length);
+    console.log("데이터 타입:", typeof qrData);
+    
+    // QR 데이터 분석
+    analyzeQRData(qrData);
+    
+    // 사용자에게 알림
+    showToast("QR 스캔 완료");
+  } else {
+    const error = event.detail ? event.detail.error : "Unknown error";
+    console.error("QR 스캔 실패:", error);
+    showToast("QR 스캔 실패: " + error);
+  }
+}
+
+// QR 데이터 분석
+function analyzeQRData(data) {
+  console.log("=== QR 데이터 분석 ===");
+  
+  // 1. Ethereum 주소 형식 체크 (0x로 시작하는 42자)
+  if (data.startsWith("0x") && data.length === 42) {
+    console.log("형식: Ethereum 주소");
+    console.log("주소:", data);
+    // Send 페이지로 이동하면서 주소 전달
+    navigateToSendWithAddress(data);
+    return;
+  }
+  
+  // 2. Ethereum URI 형식 체크 (ethereum:0x...)
+  if (data.startsWith("ethereum:")) {
+    console.log("형식: Ethereum URI");
+    const parts = data.split(":");
+    if (parts.length >= 2) {
+      const address = parts[1].split("?")[0]; // 파라미터 제거
+      console.log("주소:", address);
+      // Send 페이지로 이동하면서 주소 전달
+      navigateToSendWithAddress(address);
+    }
+    return;
+  }
+  
+  // 3. 개인키 형식 체크 (64자 hex)
+  if (/^[0-9a-fA-F]{64}$/.test(data)) {
+    console.log("형식: 개인키 (주의: 민감한 정보)");
+    // 개인키는 보안상 자동 처리하지 않음
+    showToast("개인키 QR 코드 감지됨");
+    return;
+  }
+  
+  // 4. 알 수 없는 형식
+  console.log("형식: 알 수 없음");
+  console.log("데이터:", data.substring(0, 50) + "...");
+  showToast("인식할 수 없는 QR 코드입니다");
+}
+
 // HTML onclick을 위한 전역 함수 등록
 window.createWallet = createWallet;
 window.importFromMnemonic = importFromMnemonic;
@@ -554,6 +665,7 @@ window.importFromPrivateKey = importFromPrivateKey;
 window.navigateToSend = navigateToSend;
 window.navigateToReceive = navigateToReceive;
 window.resetWallet = resetWallet;
+window.scanQRCode = scanQRCode;
 
 // ================================================================
 // Universal Bridge 요청 처리
