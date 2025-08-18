@@ -150,6 +150,12 @@ textarea.import-input {
   margin: 0 auto;
 }
 
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .logo {
   display: flex;
   align-items: center;
@@ -169,7 +175,8 @@ textarea.import-input {
   color: #222;
 }
 
-.reset-wallet-btn {
+/* Icon buttons */
+.icon-btn {
   background: none;
   border: none;
   color: #666;
@@ -177,11 +184,24 @@ textarea.import-input {
   padding: 8px;
   border-radius: 8px;
   transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.reset-wallet-btn:hover {
+.icon-btn:hover {
   background: #f5f5f5;
   color: #333;
+}
+
+/* Reset button - next to logo */
+.reset-btn {
+  margin-left: 8px;
+}
+
+/* QR button - right side */
+.qr-btn {
+  margin-left: auto;
 }
 
 /* 카드 스타일 */
