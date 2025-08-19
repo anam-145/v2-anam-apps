@@ -166,6 +166,33 @@ function checkUrlParameters() {
   }
 }
 
+// QR 코드 스캔 함수
+async function scanQRCode() {
+  console.log("Scan QR Code for recipient address");
+
+  // Bridge API가 있는지 확인
+  if (window.anam && window.anam.scanQRCode) {
+    try {
+      const result = await window.anam.scanQRCode();
+      if (result) {
+        // QR 코드 데이터를 주소 필드에 입력
+        document.getElementById("recipient-address").value = result;
+        showToast("QR code scanned successfully");
+      }
+    } catch (error) {
+      console.error("Failed to scan QR code:", error);
+      showToast("Failed to scan QR code");
+    }
+  } else {
+    // 개발 환경에서 테스트용
+    const testAddress = prompt("Enter address (development mode):");
+    if (testAddress) {
+      document.getElementById("recipient-address").value = testAddress;
+    }
+  }
+}
+
 // HTML onclick을 위한 전역 함수 등록
 window.goBack = goBack;
 window.confirmSend = confirmSend;
+window.scanQRCode = scanQRCode;

@@ -940,6 +940,12 @@ window.importFromMnemonic = importFromMnemonic;
 window.importFromPrivateKey = importFromPrivateKey;
 window.navigateToSend = navigateToSend;
 window.navigateToReceive = navigateToReceive;
+
+// Navigate to settings
+function navigateToSettings() {
+  window.location.href = "../settings/settings.html";
+}
+window.navigateToSettings = navigateToSettings;
 window.resetWallet = resetWallet;
 window.scanQRCode = scanQRCode;
 window.loadTransactionHistory = loadTransactionHistory;

@@ -194,6 +194,12 @@ textarea.import-input {
   color: #333;
 }
 
+.icon-btn img {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
 /* Reset button - next to logo */
 .reset-btn {
   margin-left: 8px;
