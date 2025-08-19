@@ -119,71 +119,8 @@
         <!-- Transaction History Section -->
         <section class="transactions-section">
           <h2 class="section-title">Recent Transactions</h2>
-          <div class="tx-list">
-            <!-- Transaction 1 -->
-            <div class="tx-item">
-              <div class="tx-icon send">↑</div>
-              <div class="tx-details">
-                <div class="tx-type">Sent</div>
-                <div class="tx-address">0x4B20...3E8a</div>
-              </div>
-              <div class="tx-amount">
-                <div class="tx-eth send">-0.5 ETH</div>
-                <div class="tx-time">2 hours ago</div>
-              </div>
-            </div>
-            
-            <!-- Transaction 2 -->
-            <div class="tx-item">
-              <div class="tx-icon receive">↓</div>
-              <div class="tx-details">
-                <div class="tx-type">Received</div>
-                <div class="tx-address">0x9F8c...7D2e</div>
-              </div>
-              <div class="tx-amount">
-                <div class="tx-eth receive">+1.2 ETH</div>
-                <div class="tx-time">5 hours ago</div>
-              </div>
-            </div>
-            
-            <!-- Transaction 3 -->
-            <div class="tx-item">
-              <div class="tx-icon send">↑</div>
-              <div class="tx-details">
-                <div class="tx-type">Swap</div>
-                <div class="tx-address">Uniswap V3</div>
-              </div>
-              <div class="tx-amount">
-                <div class="tx-eth send">-0.8 ETH</div>
-                <div class="tx-time">1 day ago</div>
-              </div>
-            </div>
-
-            <!-- Transaction 4 -->
-            <div class="tx-item">
-              <div class="tx-icon receive">↓</div>
-              <div class="tx-details">
-                <div class="tx-type">Received</div>
-                <div class="tx-address">0x7A5c...9B1d</div>
-              </div>
-              <div class="tx-amount">
-                <div class="tx-eth receive">+2.5 ETH</div>
-                <div class="tx-time">3 days ago</div>
-              </div>
-            </div>
-
-            <!-- Transaction 5 -->
-            <div class="tx-item">
-              <div class="tx-icon send">↑</div>
-              <div class="tx-details">
-                <div class="tx-type">Contract</div>
-                <div class="tx-address">OpenSea</div>
-              </div>
-              <div class="tx-amount">
-                <div class="tx-eth send">-0.025 ETH</div>
-                <div class="tx-time">1 week ago</div>
-              </div>
-            </div>
+          <div class="tx-list" id="tx-list">
+            <!-- Transactions will be loaded dynamically -->
           </div>
         </section>
       </div>

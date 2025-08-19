@@ -5,6 +5,14 @@
 let adapter = null; // 코인 어댑터 인스턴스
 let currentWallet = null; // 현재 지갑 정보
 
+// Etherscan API 설정
+const ETHERSCAN_API_KEY = "GD4K6FTTVNF23VIICEYJ3AY3TP7RWT6PIY";
+const ETHERSCAN_BASE_URL = "https://api-sepolia.etherscan.io/api";
+
+// 트랜잭션 캐시 (5분 TTL)
+const TX_CACHE_KEY = "eth_tx_cache";
+const TX_CACHE_TTL = 5 * 60 * 1000; // 5분
+
 // 페이지 초기화
 document.addEventListener("DOMContentLoaded", function () {
   console.log(`${CoinConfig.name} wallet page loaded`);
@@ -25,16 +33,17 @@ document.addEventListener("DOMContentLoaded", function () {
   // UI 테마 적용
   applyTheme();
 
-  // 네트워크 상태 확인
-  checkNetworkStatus();
-
-  // 지갑 존재 여부 확인
+  // 지갑 존재 여부 확인 (UI 먼저 표시)
   checkWalletStatus();
 
-  // 주기적으로 잔액 업데이트 (30초마다)
+  // 네트워크 상태는 비동기로 확인 (블로킹하지 않음)
+  checkNetworkStatus();
+
+  // 주기적으로 잔액 및 트랜잭션 업데이트 (30초마다)
   setInterval(() => {
     if (currentWallet) {
       updateBalance();
+      loadTransactionHistory();
     }
   }, 30000);
 
@@ -95,7 +104,17 @@ function checkWalletStatus() {
       document.getElementById("wallet-main").style.display = "block";
 
       displayWalletInfo();
-      updateBalance();
+
+      // 트랜잭션 로딩 UI를 즉시 표시
+      showTransactionLoading();
+
+      // 잔액과 트랜잭션을 병렬로 로드 (속도 개선)
+      Promise.all([
+        updateBalance(),
+        loadTransactionHistory(true), // skipLoadingUI = true (이미 표시했으므로)
+      ]).catch((error) => {
+        console.error("Failed to load wallet data:", error);
+      });
     } catch (error) {
       console.error("Failed to load wallet:", error);
       showToast("Failed to load wallet");
@@ -143,6 +162,12 @@ async function createWallet() {
 
     displayWalletInfo();
     updateBalance();
+
+    // 트랜잭션 로딩 표시 후 조회
+    showTransactionLoading();
+    setTimeout(() => {
+      loadTransactionHistory(true); // skipLoadingUI = true
+    }, 100);
   } catch (error) {
     console.error("Failed to create wallet:", error);
     showToast("Failed to create wallet: " + error.message);
@@ -188,6 +213,12 @@ async function importFromMnemonic() {
 
     displayWalletInfo();
     updateBalance();
+
+    // 트랜잭션 로딩 표시 후 조회
+    showTransactionLoading();
+    setTimeout(() => {
+      loadTransactionHistory(true); // skipLoadingUI = true
+    }, 100);
   } catch (error) {
     console.error("Failed to import wallet:", error);
     showToast("Please enter a valid mnemonic");
@@ -235,6 +266,12 @@ async function importFromPrivateKey() {
 
     displayWalletInfo();
     updateBalance();
+
+    // 트랜잭션 로딩 표시 후 조회
+    showTransactionLoading();
+    setTimeout(() => {
+      loadTransactionHistory(true); // skipLoadingUI = true
+    }, 100);
   } catch (error) {
     console.error("Failed to import wallet:", error);
     showToast("Please enter a valid private key");
@@ -283,6 +320,223 @@ async function updateBalance() {
     document.getElementById("fiat-value").textContent = "";
   } catch (error) {
     console.error("Failed to fetch balance:", error);
+  }
+}
+
+// ================================================================
+// 트랜잭션 히스토리 관리
+// ================================================================
+
+// 트랜잭션 히스토리 로드 (캐시 우선)
+async function loadTransactionHistory(skipLoadingUI = false) {
+  // 로딩 상태 표시 (이미 표시 중이면 스킵)
+  if (!skipLoadingUI) {
+    showTransactionLoading();
+  }
+
+  try {
+    // 캐시 확인 (주소가 일치하는 경우만 사용)
+    const cached = getTransactionCache();
+    if (
+      cached &&
+      cached.address &&
+      currentWallet &&
+      currentWallet.address &&
+      cached.address.toLowerCase() === currentWallet.address.toLowerCase()
+    ) {
+      console.log("Using cached transactions for:", cached.address);
+      displayTransactions(cached.transactions);
+      return;
+    }
+
+    // API 호출
+    console.log("Fetching transactions from Etherscan...");
+    const transactions = await fetchTransactionHistory(currentWallet.address);
+
+    // 캐시 저장
+    saveTransactionCache(currentWallet.address, transactions);
+
+    // UI 업데이트
+    displayTransactions(transactions);
+  } catch (error) {
+    console.error("Failed to load transactions:", error);
+    showTransactionError(error.message);
+  }
+}
+
+// Etherscan API로 트랜잭션 조회
+async function fetchTransactionHistory(address) {
+  const url = `${ETHERSCAN_BASE_URL}?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${ETHERSCAN_API_KEY}`;
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`Network error: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  if (data.status === "0" && data.message === "No transactions found") {
+    return [];
+  }
+
+  if (data.status !== "1") {
+    throw new Error(data.message || "Failed to fetch transactions");
+  }
+
+  // 최근 10개만 반환
+  return data.result.slice(0, 10);
+}
+
+// 트랜잭션 표시
+function displayTransactions(transactions) {
+  const txList = document.getElementById("tx-list");
+
+  if (!transactions || transactions.length === 0) {
+    showTransactionEmpty();
+    return;
+  }
+
+  txList.innerHTML = "";
+
+  transactions.forEach((tx) => {
+    const isSent =
+      tx.from.toLowerCase() === currentWallet.address.toLowerCase();
+    const txElement = createTransactionElement(tx, isSent);
+    txList.appendChild(txElement);
+  });
+}
+
+// 트랜잭션 요소 생성
+function createTransactionElement(tx, isSent) {
+  const div = document.createElement("div");
+  div.className = "tx-item";
+
+  const txType = isSent ? "send" : "receive";
+  const amount = ethers.utils.formatEther(tx.value || "0");
+  const timeAgo = getTimeAgo(parseInt(tx.timeStamp) * 1000);
+  const address = isSent ? tx.to : tx.from;
+
+  // 컨트랙트 호출인지 확인
+  const isContract = tx.input && tx.input !== "0x";
+  const txLabel = isContract ? "Contract" : isSent ? "Sent" : "Received";
+
+  div.innerHTML = `
+    <div class="tx-icon ${txType}">${isSent ? "↑" : "↓"}</div>
+    <div class="tx-details">
+      <div class="tx-type">${txLabel}</div>
+      <div class="tx-address">${window.shortenAddress(address, 6)}</div>
+    </div>
+    <div class="tx-amount">
+      <div class="tx-eth ${txType}">${isSent ? "-" : "+"}${parseFloat(
+    amount
+  ).toFixed(4)} ETH</div>
+      <div class="tx-time">${timeAgo}</div>
+    </div>
+  `;
+
+  // 클릭 시 Etherscan으로 이동
+  div.style.cursor = "pointer";
+  div.onclick = () => {
+    const explorerUrl = `https://sepolia.etherscan.io/tx/${tx.hash}`;
+    window.open(explorerUrl, "_blank");
+  };
+
+  return div;
+}
+
+// 시간 계산
+function getTimeAgo(timestamp) {
+  const seconds = Math.floor((Date.now() - timestamp) / 1000);
+
+  if (seconds < 60) return `${seconds} seconds ago`;
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} day${days > 1 ? "s" : ""} ago`;
+
+  const weeks = Math.floor(days / 7);
+  if (weeks < 4) return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
+
+  const months = Math.floor(days / 30);
+  return `${months} month${months > 1 ? "s" : ""} ago`;
+}
+
+// 로딩 상태 표시
+function showTransactionLoading() {
+  const txList = document.getElementById("tx-list");
+  txList.innerHTML = `
+    <div class="tx-loading">
+      <div class="tx-loading-spinner"></div>
+      <div class="tx-loading-text">Loading transactions...</div>
+    </div>
+  `;
+}
+
+// 빈 상태 표시
+function showTransactionEmpty() {
+  const txList = document.getElementById("tx-list");
+  txList.innerHTML = `
+    <div class="tx-empty">
+      <div class="tx-empty-icon">📭</div>
+      <div class="tx-empty-title">No transactions yet</div>
+      <div class="tx-empty-text">
+        Your transaction history will appear here<br>
+        once you send or receive ETH
+      </div>
+    </div>
+  `;
+}
+
+// 에러 상태 표시
+function showTransactionError(message) {
+  const txList = document.getElementById("tx-list");
+  txList.innerHTML = `
+    <div class="tx-error">
+      <div class="tx-error-text">Failed to load transactions: ${message}</div>
+      <button class="tx-retry-btn" onclick="loadTransactionHistory()">
+        Retry
+      </button>
+    </div>
+  `;
+}
+
+// 캐시 관리
+function getTransactionCache() {
+  try {
+    const cached = localStorage.getItem(TX_CACHE_KEY);
+    if (!cached) return null;
+
+    const data = JSON.parse(cached);
+
+    // TTL 확인
+    if (Date.now() - data.timestamp > TX_CACHE_TTL) {
+      localStorage.removeItem(TX_CACHE_KEY);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Cache read error:", error);
+    return null;
+  }
+}
+
+function saveTransactionCache(address, transactions) {
+  try {
+    const data = {
+      address: address,
+      transactions: transactions,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(TX_CACHE_KEY, JSON.stringify(data));
+  } catch (error) {
+    console.error("Cache save error:", error);
   }
 }
 
@@ -351,6 +605,10 @@ function navigateToReceive() {
 function resetWallet() {
   const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
   localStorage.removeItem(walletKey);
+
+  // 트랜잭션 캐시도 함께 삭제 (중요!)
+  localStorage.removeItem(TX_CACHE_KEY);
+
   currentWallet = null;
 
   // 화면 전환
@@ -442,7 +700,12 @@ async function handleTransactionRequest(event) {
     }
 
     // UI 업데이트
-    setTimeout(updateBalance, 3000);
+    setTimeout(() => {
+      updateBalance();
+      // 캐시 무효화 후 트랜잭션 다시 로드
+      localStorage.removeItem(TX_CACHE_KEY);
+      loadTransactionHistory();
+    }, 3000);
   } catch (error) {
     console.error("Transaction failed:", error);
 
@@ -553,7 +816,12 @@ async function handleTransactionRequest(event) {
     }
 
     // UI 업데이트
-    setTimeout(updateBalance, 3000);
+    setTimeout(() => {
+      updateBalance();
+      // 캐시 무효화 후 트랜잭션 다시 로드
+      localStorage.removeItem(TX_CACHE_KEY);
+      loadTransactionHistory();
+    }, 3000);
   } catch (error) {
     console.error("Transaction failed:", error);
 
@@ -674,6 +942,7 @@ window.navigateToSend = navigateToSend;
 window.navigateToReceive = navigateToReceive;
 window.resetWallet = resetWallet;
 window.scanQRCode = scanQRCode;
+window.loadTransactionHistory = loadTransactionHistory;
 
 // ================================================================
 // Universal Bridge 요청 처리
@@ -881,7 +1150,12 @@ async function handleDAppSendTransaction(requestId, params) {
     sendDAppResponse(requestId, result.hash);
 
     // UI 업데이트
-    setTimeout(updateBalance, 3000);
+    setTimeout(() => {
+      updateBalance();
+      // 캐시 무효화 후 트랜잭션 다시 로드
+      localStorage.removeItem(TX_CACHE_KEY);
+      loadTransactionHistory();
+    }, 3000);
   } catch (error) {
     console.error("DApp transaction failed:", error);
     sendDAppError(requestId, -32000, error.message);
