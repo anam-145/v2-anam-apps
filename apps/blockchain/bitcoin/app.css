@@ -46,10 +46,10 @@ button {
 
 /* CSS 변수 - 코인별로 변경 가능한 테마 색상 */
 :root {
-  --coin-primary: #4338CA;      /* 메인 색상 */
-  --coin-secondary: #6366F1;    /* 보조 색상 */
-  --coin-dark: #312E81;         /* 어두운 색상 */
-  --coin-light: #E0E7FF;        /* 밝은 색상 */
+  --coin-primary: #F7931A;      /* 비트코인 오렌지 색상 */
+  --coin-secondary: #4D4D4D;    /* 비트코인 그레이 색상 */
+  --coin-dark: #E68200;         /* 어두운 오렌지 색상 */
+  --coin-light: #FFF3E0;        /* 밝은 오렌지 색상 */
   --coin-gradient: var(--coin-primary); /* Bitcoin은 단색 사용 */
 }
 

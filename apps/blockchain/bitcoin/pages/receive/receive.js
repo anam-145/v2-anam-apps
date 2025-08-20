@@ -10,6 +10,9 @@ document.addEventListener("DOMContentLoaded", function () {
   // 지갑 정보 로드
   loadWalletInfo();
 
+  // 테마 적용
+  applyTheme();
+
   // UI 초기화
   updateUI();
 
@@ -32,6 +35,13 @@ function loadWalletInfo() {
     // showToast("지갑이 없습니다");
     // goBack();
   }
+}
+
+// 테마 적용
+function applyTheme() {
+  const root = document.documentElement;
+  root.style.setProperty("--coin-primary", CoinConfig.theme.primaryColor);
+  root.style.setProperty("--coin-secondary", CoinConfig.theme.secondaryColor);
 }
 
 // UI 업데이트

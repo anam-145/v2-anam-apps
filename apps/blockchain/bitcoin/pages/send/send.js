@@ -19,6 +19,9 @@ document.addEventListener("DOMContentLoaded", function () {
     showToast("Bitcoin adapter initialization failed");
   }
 
+  // 테마 적용
+  applyTheme();
+
   // UI 초기화
   updateUI();
 });
@@ -36,6 +39,13 @@ function loadWalletInfo() {
     // showToast("지갑이 없습니다");
     // goBack();
   }
+}
+
+// 테마 적용
+function applyTheme() {
+  const root = document.documentElement;
+  root.style.setProperty("--coin-primary", CoinConfig.theme.primaryColor);
+  root.style.setProperty("--coin-secondary", CoinConfig.theme.secondaryColor);
 }
 
 // UI 업데이트
