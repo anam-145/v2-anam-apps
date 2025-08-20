@@ -167,28 +167,65 @@ function checkUrlParameters() {
 }
 
 // QR 코드 스캔 함수
-async function scanQRCode() {
-  console.log("Scan QR Code for recipient address");
-
-  // Bridge API가 있는지 확인
-  if (window.anam && window.anam.scanQRCode) {
-    try {
-      const result = await window.anam.scanQRCode();
-      if (result) {
-        // QR 코드 데이터를 주소 필드에 입력
-        document.getElementById("recipient-address").value = result;
-        showToast("QR code scanned successfully");
-      }
-    } catch (error) {
-      console.error("Failed to scan QR code:", error);
-      showToast("Failed to scan QR code");
-    }
+function scanQRCode() {
+  console.log("scanQRCode() called from send page");
+  
+  // anamUI API 확인 (블록체인 미니앱에서 사용)
+  if (window.anamUI && window.anamUI.scanQRCode) {
+    console.log("Using anamUI.scanQRCode API");
+    
+    // QR 스캔 결과 이벤트 리스너 등록
+    window.addEventListener('qrScanned', handleQRScanned);
+    
+    // QR 스캐너 호출 - 메인 프로세스에서 카메라 실행
+    window.anamUI.scanQRCode(JSON.stringify({
+      title: "Scan QR Code",
+      description: "Scan recipient's wallet address QR code"
+    }));
+    
+    console.log("QR scanner requested to main process");
   } else {
+    console.error("anamUI.scanQRCode API not available");
+    showToast("QR scan feature is not available");
+    
     // 개발 환경에서 테스트용
     const testAddress = prompt("Enter address (development mode):");
     if (testAddress) {
       document.getElementById("recipient-address").value = testAddress;
     }
+  }
+}
+
+// QR 스캔 결과 처리
+function handleQRScanned(event) {
+  console.log("QR scan event received:", event);
+  
+  // 이벤트 리스너 제거 (일회성)
+  window.removeEventListener('qrScanned', handleQRScanned);
+  
+  if (event.detail && event.detail.success) {
+    const qrData = event.detail.data;
+    console.log("QR scan success:", qrData);
+    
+    // 이더리움 주소 형식 확인 (0x로 시작하는 42자)
+    if (qrData && qrData.match(/^0x[a-fA-F0-9]{40}$/)) {
+      // 주소 필드에 입력
+      document.getElementById("recipient-address").value = qrData;
+      showToast("Address imported successfully");
+      
+      // 금액 입력란으로 포커스 이동
+      const amountInput = document.getElementById('send-amount');
+      if (amountInput) {
+        amountInput.focus();
+      }
+    } else {
+      console.error("Invalid Ethereum address format:", qrData);
+      showToast("Invalid address format");
+    }
+  } else {
+    const error = event.detail ? event.detail.error : "Unknown error";
+    console.error("QR scan failed:", error);
+    showToast("QR scan failed: " + error);
   }
 }
 

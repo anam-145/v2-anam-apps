@@ -947,7 +947,6 @@ function navigateToSettings() {
 }
 window.navigateToSettings = navigateToSettings;
 window.resetWallet = resetWallet;
-window.scanQRCode = scanQRCode;
 window.loadTransactionHistory = loadTransactionHistory;
 
 // ================================================================
