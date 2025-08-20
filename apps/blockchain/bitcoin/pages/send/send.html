@@ -25,12 +25,20 @@
         <div class="send-content">
           <div class="form-group">
             <label for="recipient-address">Recipient Address</label>
-            <input 
-              type="text" 
-              id="recipient-address" 
-              class="form-input" 
-              placeholder="Enter recipient's address"
-            />
+            <div class="input-with-icon">
+              <input 
+                type="text" 
+                id="recipient-address" 
+                class="form-input" 
+                placeholder="Enter recipient's address"
+              />
+              <button class="input-icon-btn" onclick="scanQRCode()" title="Scan QR Code">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 3h5v5H3V3zm9 0h5v5h-5V3zM3 12h5v5H3v-5zm9 0h2v2h-2v-2zm2 2h2v2h-2v-2zm-2 2h2v2h-2v-2zm4-4h2v2h-2v-2z" fill="currentColor"/>
+                  <path d="M5 5h1v1H5V5zm9 0h1v1h-1V5zM5 14h1v1H5v-1z" fill="currentColor"/>
+                </svg>
+              </button>
+            </div>
           </div>
           
           <div class="form-group">

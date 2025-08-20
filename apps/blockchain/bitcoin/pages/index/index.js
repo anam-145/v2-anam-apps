@@ -379,10 +379,16 @@ async function handleTransactionRequest(event) {
 }
 
 
+// Navigate to settings
+function navigateToSettings() {
+  window.location.href = "../settings/settings.html";
+}
+
 // HTML onclick을 위한 전역 함수 등록
 window.createWallet = createWallet;
 window.importFromMnemonic = importFromMnemonic;
 window.importFromPrivateKey = importFromPrivateKey;
 window.navigateToSend = navigateToSend;
 window.navigateToReceive = navigateToReceive;
+window.navigateToSettings = navigateToSettings;
 window.resetWallet = resetWallet;

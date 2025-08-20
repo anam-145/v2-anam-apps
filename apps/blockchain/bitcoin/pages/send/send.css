@@ -52,6 +52,43 @@
   outline: none;
 }
 
+/* Input with icon styles */
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-icon .form-input {
+  padding-right: 44px;
+}
+
+.input-icon-btn {
+  position: absolute;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.input-icon-btn:hover {
+  background: #f3f4f6;
+  color: var(--coin-primary);
+}
+
+.input-icon-btn:active {
+  background: #e5e7eb;
+}
+
 .input-hint {
   font-size: 12px;
   color: #999;
