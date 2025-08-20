@@ -90,8 +90,9 @@ function deleteWallet() {
     const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
     localStorage.removeItem(walletKey);
     
-    // Clear transaction cache
-    localStorage.removeItem("eth_tx_cache");
+    // Clear transaction cache (Bitcoin specific)
+    const txCacheKey = `${CoinConfig.symbol.toLowerCase()}_tx_cache`;
+    localStorage.removeItem(txCacheKey);
     
     // Clear any other related data
     localStorage.removeItem("walletData");

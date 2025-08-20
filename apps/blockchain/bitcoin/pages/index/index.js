@@ -36,6 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
   setInterval(() => {
     if (currentWallet) {
       updateBalance();
+      loadTransactionHistory();
     }
   }, 30000);
 
@@ -92,6 +93,7 @@ function checkWalletStatus() {
 
       displayWalletInfo();
       updateBalance();
+      loadTransactionHistory();
     } catch (error) {
       console.error("Wallet loading failed:", error);
       showToast("Wallet loading failed");
@@ -137,6 +139,7 @@ async function createWallet() {
 
     displayWalletInfo();
     updateBalance();
+    loadTransactionHistory();
   } catch (error) {
     console.error("Wallet creation failed:", error);
     showToast("Failed to create wallet: " + error.message);
@@ -181,6 +184,7 @@ async function importFromMnemonic() {
 
     displayWalletInfo();
     updateBalance();
+    loadTransactionHistory();
   } catch (error) {
     console.error("Wallet import failed:", error);
     showToast("Please enter valid mnemonic");
@@ -227,6 +231,7 @@ async function importFromPrivateKey() {
 
     displayWalletInfo();
     updateBalance();
+    loadTransactionHistory();
   } catch (error) {
     console.error("Wallet import failed:", error);
     showToast("Please enter valid private key");
@@ -307,6 +312,7 @@ function navigateToReceive() {
 function resetWallet() {
   const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
   localStorage.removeItem(walletKey);
+  localStorage.removeItem(TX_CACHE_KEY); // 트랜잭션 캐시도 삭제
   currentWallet = null;
 
   document.getElementById("wallet-main").style.display = "none";
@@ -382,6 +388,272 @@ async function handleTransactionRequest(event) {
 // Navigate to settings
 function navigateToSettings() {
   window.location.href = "../settings/settings.html";
+}
+
+// Transaction History Functions
+
+// 트랜잭션 캐시 키
+const TX_CACHE_KEY = `${CoinConfig.symbol.toLowerCase()}_tx_cache`;
+const TX_CACHE_TTL = 5 * 60 * 1000; // 5분 (Ethereum과 동일)
+
+// 트랜잭션 히스토리 로드
+async function loadTransactionHistory() {
+  if (!currentWallet) return;
+
+  try {
+    // 캐시 확인 (주소가 일치하는 경우만 사용)
+    const cached = getTransactionCache();
+    if (
+      cached &&
+      cached.address &&
+      currentWallet &&
+      currentWallet.address &&
+      cached.address === currentWallet.address
+    ) {
+      console.log("Using cached transactions for:", cached.address);
+      displayTransactions(cached.transactions);
+      return;
+    }
+
+    // 로딩 상태 표시
+    showTransactionLoading();
+
+    // Mempool.space API 호출
+    const network = CoinConfig.network.networkName === 'mainnet' ? '' : 'testnet4/';
+    const url = `https://mempool.space/${network}api/address/${currentWallet.address}/txs`;
+    
+    console.log("Fetching transactions from:", url);
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
+    }
+    
+    const transactions = await response.json();
+    console.log(`Loaded ${transactions.length} transactions`);
+    
+    // 최근 10개만 사용
+    const recentTransactions = transactions.slice(0, 10);
+    
+    // 캐시 저장
+    saveTransactionCache(currentWallet.address, recentTransactions);
+    
+    // 트랜잭션 표시
+    displayTransactions(recentTransactions);
+    
+  } catch (error) {
+    console.error("Failed to load transactions:", error);
+    
+    // 캐시된 데이터가 있으면 표시
+    const cached = getTransactionCache();
+    if (cached && cached.transactions) {
+      displayTransactions(cached.transactions);
+    } else {
+      showTransactionError("Failed to load transaction history");
+    }
+  }
+}
+
+// 트랜잭션 표시
+function displayTransactions(transactions) {
+  const txList = document.getElementById("tx-list");
+  
+  if (!transactions || transactions.length === 0) {
+    showTransactionEmpty();
+    return;
+  }
+  
+  txList.innerHTML = "";
+  
+  transactions.forEach((tx) => {
+    const txElement = createBitcoinTransactionElement(tx);
+    txList.appendChild(txElement);
+  });
+}
+
+// 비트코인 트랜잭션 요소 생성
+function createBitcoinTransactionElement(tx) {
+  const div = document.createElement("div");
+  div.className = "tx-item";
+  
+  // 송수신 여부 판단
+  let isSent = false;
+  let amount = 0;
+  let address = "";
+  
+  // 입력 검사 (보낸 경우)
+  const myInputs = tx.vin.filter(input => 
+    input.prevout && input.prevout.scriptpubkey_address === currentWallet.address
+  );
+  
+  // 출력 검사 (받은 경우)
+  const myOutputs = tx.vout.filter(output => 
+    output.scriptpubkey_address === currentWallet.address
+  );
+  
+  if (myInputs.length > 0) {
+    // 보낸 트랜잭션
+    isSent = true;
+    
+    // 총 입력 금액
+    const inputAmount = myInputs.reduce((sum, input) => 
+      sum + (input.prevout ? input.prevout.value : 0), 0
+    );
+    
+    // 내 주소로 돌아온 금액 (거스름돈)
+    const changeAmount = myOutputs.reduce((sum, output) => 
+      sum + output.value, 0
+    );
+    
+    // 실제 보낸 금액 = 입력 - 거스름돈
+    amount = inputAmount - changeAmount;
+    
+    // 받는 주소 찾기 (내 주소가 아닌 첫 번째 출력)
+    const recipientOutput = tx.vout.find(output => 
+      output.scriptpubkey_address !== currentWallet.address
+    );
+    address = recipientOutput ? recipientOutput.scriptpubkey_address : "Unknown";
+    
+  } else if (myOutputs.length > 0) {
+    // 받은 트랜잭션
+    isSent = false;
+    amount = myOutputs.reduce((sum, output) => sum + output.value, 0);
+    
+    // 보낸 주소 찾기 (첫 번째 입력의 주소)
+    if (tx.vin.length > 0 && tx.vin[0].prevout) {
+      address = tx.vin[0].prevout.scriptpubkey_address || "Unknown";
+    } else {
+      address = "Unknown";
+    }
+  }
+  
+  // 사토시를 BTC로 변환
+  const btcAmount = (amount / 100000000).toFixed(8);
+  
+  // 시간 계산
+  const timeAgo = tx.status.confirmed 
+    ? getTimeAgo(tx.status.block_time * 1000)
+    : "Pending";
+  
+  const txType = isSent ? "send" : "receive";
+  const txLabel = isSent ? "Sent" : "Received";
+  
+  div.innerHTML = `
+    <div class="tx-icon ${txType}">${isSent ? "↑" : "↓"}</div>
+    <div class="tx-details">
+      <div class="tx-type">${txLabel}</div>
+      <div class="tx-address">${window.shortenAddress(address, 6)}</div>
+    </div>
+    <div class="tx-amount">
+      <div class="tx-btc ${txType}">${isSent ? "-" : "+"}${btcAmount} BTC</div>
+      <div class="tx-time">${timeAgo}</div>
+    </div>
+  `;
+  
+  // 클릭 시 Mempool.space로 이동
+  div.style.cursor = "pointer";
+  div.onclick = () => {
+    const network = CoinConfig.network.networkName === 'mainnet' ? '' : 'testnet4/';
+    const explorerUrl = `https://mempool.space/${network}tx/${tx.txid}`;
+    window.open(explorerUrl, "_blank");
+  };
+  
+  return div;
+}
+
+// 시간 계산
+function getTimeAgo(timestamp) {
+  const seconds = Math.floor((Date.now() - timestamp) / 1000);
+  
+  if (seconds < 60) return `${seconds} seconds ago`;
+  
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
+  
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+  
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} day${days > 1 ? "s" : ""} ago`;
+  
+  const weeks = Math.floor(days / 7);
+  if (weeks < 4) return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
+  
+  const months = Math.floor(days / 30);
+  return `${months} month${months > 1 ? "s" : ""} ago`;
+}
+
+// 로딩 상태 표시
+function showTransactionLoading() {
+  const txList = document.getElementById("tx-list");
+  txList.innerHTML = `
+    <div class="tx-loading">
+      <div class="tx-loading-spinner"></div>
+      <div class="tx-loading-text">Loading transactions...</div>
+    </div>
+  `;
+}
+
+// 빈 상태 표시
+function showTransactionEmpty() {
+  const txList = document.getElementById("tx-list");
+  txList.innerHTML = `
+    <div class="tx-empty">
+      <div class="tx-empty-icon">📭</div>
+      <div class="tx-empty-title">No transactions yet</div>
+      <div class="tx-empty-text">
+        Your transaction history will appear here<br>
+        once you send or receive BTC
+      </div>
+    </div>
+  `;
+}
+
+// 에러 상태 표시
+function showTransactionError(message) {
+  const txList = document.getElementById("tx-list");
+  txList.innerHTML = `
+    <div class="tx-error">
+      <div class="tx-error-icon">⚠️</div>
+      <div class="tx-error-title">Unable to load transactions</div>
+      <div class="tx-error-text">${message}</div>
+    </div>
+  `;
+}
+
+// 캐시 관리 함수
+function getTransactionCache() {
+  try {
+    const cached = localStorage.getItem(TX_CACHE_KEY);
+    if (!cached) return null;
+
+    const data = JSON.parse(cached);
+
+    // TTL 확인
+    if (Date.now() - data.timestamp > TX_CACHE_TTL) {
+      localStorage.removeItem(TX_CACHE_KEY);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Cache read error:", error);
+    return null;
+  }
+}
+
+function saveTransactionCache(address, transactions) {
+  try {
+    const data = {
+      address: address,
+      transactions: transactions,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(TX_CACHE_KEY, JSON.stringify(data));
+  } catch (error) {
+    console.error("Cache save error:", error);
+  }
 }
 
 // HTML onclick을 위한 전역 함수 등록
