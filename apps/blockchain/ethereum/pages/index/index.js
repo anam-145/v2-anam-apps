@@ -28,6 +28,9 @@ document.addEventListener("DOMContentLoaded", function () {
     console.error("EthereumAdapter not initialized");
     showToast("Failed to initialize Ethereum adapter");
   }
+  
+  // 네트워크 변경 이벤트 리스너
+  window.addEventListener('providerUpdated', handleNetworkChange);
 
   // UI 테마 적용
   applyTheme();
@@ -917,6 +920,32 @@ function analyzeQRData(data) {
   console.log("Format: Unknown");
   console.log("Data:", data.substring(0, 50) + "...");
   showToast("Unrecognized QR code");
+}
+
+// 네트워크 변경 핸들러
+function handleNetworkChange() {
+  console.log('[Index] Network changed, refreshing page data');
+  console.log('Page visibility:', document.visibilityState);
+  console.log('Is background:', document.hidden);
+  console.log('Timestamp:', new Date().toISOString());
+  
+  // 현재 네트워크 정보 업데이트
+  const currentNetwork = window.EthereumConfig?.getCurrentNetwork();
+  if (currentNetwork) {
+    console.log(`Switched to network: ${currentNetwork.name} (Chain ID: ${currentNetwork.chainId})`);
+  }
+  
+  // 지갑이 있다면 잔액과 트랜잭션 다시 로드
+  if (currentWallet && currentWallet.address) {
+    updateBalance();
+    loadTransactionHistory();
+  }
+  
+  // 네트워크 표시 업데이트 (있다면)
+  const networkDisplay = document.querySelector('.network-indicator');
+  if (networkDisplay && currentNetwork) {
+    networkDisplay.textContent = currentNetwork.name;
+  }
 }
 
 // HTML onclick을 위한 전역 함수 등록

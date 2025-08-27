@@ -50,8 +50,52 @@
     }
   };
 
-  // 현재 활성 네트워크
-  const ACTIVE_NETWORK = "sepolia";
+  // ================================================================
+  // 네트워크 관리
+  // ================================================================
+
+  // 활성 네트워크 가져오기 (동적)
+  function getActiveNetwork() {
+    const saved = localStorage.getItem('eth_active_network');
+    return saved || 'sepolia'; // 기본값을 sepolia로 설정 (테스트넷)
+  }
+
+  // 활성 네트워크 설정
+  function setActiveNetwork(networkId) {
+    localStorage.setItem('eth_active_network', networkId);
+    
+    // 네트워크 변경 이벤트 발생
+    window.dispatchEvent(new Event('networkChanged'));
+  }
+
+  // 커스텀 네트워크 가져오기
+  function getCustomNetworks() {
+    try {
+      return JSON.parse(localStorage.getItem('eth_custom_networks') || '[]');
+    } catch (error) {
+      console.error('Failed to load custom networks:', error);
+      return [];
+    }
+  }
+
+  // 커스텀 네트워크 추가
+  function addCustomNetwork(networkConfig) {
+    const customNetworks = getCustomNetworks();
+    const newNetwork = {
+      id: `custom_${Date.now()}`,
+      ...networkConfig
+    };
+    customNetworks.push(newNetwork);
+    localStorage.setItem('eth_custom_networks', JSON.stringify(customNetworks));
+    return newNetwork.id;
+  }
+
+  // 커스텀 네트워크 삭제
+  function removeCustomNetwork(networkId) {
+    const customNetworks = getCustomNetworks();
+    const filtered = customNetworks.filter(n => n.id !== networkId);
+    localStorage.setItem('eth_custom_networks', JSON.stringify(filtered));
+  }
 
   // ================================================================
   // 캐시 설정
@@ -122,7 +166,29 @@
 
   // 현재 네트워크 설정 가져오기
   function getCurrentNetwork() {
-    return NETWORKS[ACTIVE_NETWORK];
+    const activeId = getActiveNetwork();
+    
+    // 기본 네트워크인 경우
+    if (NETWORKS[activeId]) {
+      return NETWORKS[activeId];
+    }
+    
+    // 커스텀 네트워크인 경우
+    const customNetworks = getCustomNetworks();
+    const customNetwork = customNetworks.find(n => n.id === activeId);
+    
+    if (customNetwork) {
+      return {
+        name: customNetwork.name,
+        chainId: customNetwork.chainId,
+        rpcEndpoint: customNetwork.rpcEndpoint,
+        etherscanUrl: customNetwork.explorerUrl || '',
+        etherscanApiUrl: '' // 커스텀 네트워크는 API 없음
+      };
+    }
+    
+    // 폴백: mainnet
+    return NETWORKS.mainnet;
   }
 
   // API URL 생성
@@ -157,7 +223,13 @@
     
     // 네트워크
     NETWORKS,
-    ACTIVE_NETWORK,
+    
+    // 네트워크 관리 함수들
+    getActiveNetwork,
+    setActiveNetwork,
+    getCustomNetworks,
+    addCustomNetwork,
+    removeCustomNetwork,
     
     // 캐시
     CACHE: CACHE_CONFIG,

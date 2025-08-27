@@ -10,11 +10,17 @@ const EthereumAdapterConfig = {
   symbol: "ETH",
   decimals: 18,
   
-  // 네트워크 설정 (config.js에서 가져옴)
+  // 네트워크 설정 (config.js에서 동적으로 가져옴)
   network: {
-    rpcEndpoint: window.EthereumConfig?.rpcEndpoint || "",
-    networkName: window.EthereumConfig?.ACTIVE_NETWORK || "sepolia",
-    chainId: window.EthereumConfig?.chainId || 11155111,
+    get rpcEndpoint() {
+      return window.EthereumConfig?.rpcEndpoint || "";
+    },
+    get networkName() {
+      return window.EthereumConfig?.getActiveNetwork() || "mainnet";
+    },
+    get chainId() {
+      return window.EthereumConfig?.chainId || 1;
+    }
   },
   
   // UI 테마 설정
@@ -64,12 +70,23 @@ class EthereumAdapter {
   // Provider 초기화
   async initProvider() {
     if (!this.provider && typeof ethers !== 'undefined') {
-      // 체인 ID를 명시하여 네트워크 자동 감지 지연 방지
-      this.provider = new ethers.providers.JsonRpcProvider(
-        this.config.network.rpcEndpoint,
-        this.config.network.chainId
-      );
+      // 현재 네트워크 설정 가져오기
+      const currentNetwork = window.EthereumConfig?.getCurrentNetwork();
+      if (currentNetwork) {
+        this.provider = new ethers.providers.JsonRpcProvider(
+          currentNetwork.rpcEndpoint,
+          currentNetwork.chainId
+        );
+      }
     }
+    return this.provider;
+  }
+
+  // Provider 재초기화 (네트워크 변경 시)
+  async reinitProvider() {
+    console.log('Reinitializing provider for network change');
+    this.provider = null; // 기존 provider 제거
+    await this.initProvider(); // 새로운 provider 생성
     return this.provider;
   }
 
@@ -266,5 +283,14 @@ window.getConfig = () => EthereumAdapterConfig;
 // Ethereum Adapter 인스턴스 생성 및 등록
 const ethereumAdapter = new EthereumAdapter(EthereumAdapterConfig);
 window.getAdapter = () => ethereumAdapter;
+
+// 네트워크 변경 이벤트 리스너
+window.addEventListener('networkChanged', async () => {
+  console.log('[EthereumAdapter] Network changed, reinitializing provider');
+  await ethereumAdapter.reinitProvider();
+  
+  // 모든 페이지에 provider 업데이트 알림
+  window.dispatchEvent(new Event('providerUpdated'));
+});
 
 console.log("[EthereumAdapter] Module loaded");

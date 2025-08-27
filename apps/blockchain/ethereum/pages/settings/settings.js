@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", function () {
   loadWalletData();
   applyTheme();
   checkRecoveryPhraseAvailability();
+  updateNetworkDisplay(); // 현재 네트워크 표시
 });
 
 // Apply theme
@@ -189,14 +190,15 @@ window.addEventListener("click", function(event) {
   }
 });
 
-// Network Management Functions (Placeholders)
+// Network Management Functions
 function showNetworkSelector() {
   console.log("Opening network selector");
   const modal = document.getElementById("network-modal");
   modal.style.display = "flex";
   
-  // Update current network display
-  updateNetworkDisplay();
+  // Update checkmarks based on current network
+  const currentNetworkId = window.EthereumConfig?.getActiveNetwork() || 'mainnet';
+  updateNetworkCheckmarks(currentNetworkId);
   
   // Load custom networks
   loadCustomNetworks();
@@ -207,27 +209,81 @@ function closeNetworkModal() {
   modal.style.display = "none";
 }
 
-function selectNetwork(networkId) {
+async function selectNetwork(networkId) {
   console.log("Selecting network:", networkId);
   
-  // Update UI checkmarks
+  try {
+    // 네트워크 변경
+    window.EthereumConfig.setActiveNetwork(networkId);
+    
+    // UI 체크마크 업데이트
+    updateNetworkCheckmarks(networkId);
+    
+    // 캐시 초기화
+    clearNetworkCache();
+    
+    // 성공 메시지
+    const networkName = getNetworkDisplayName(networkId);
+    showToast(`Switched to ${networkName}`);
+    
+    // 현재 네트워크 표시 업데이트
+    updateNetworkDisplay();
+    
+    // 모달 닫기
+    closeNetworkModal();
+    
+    // 잠시 후 페이지 새로고침 (네트워크 변경 반영)
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+    
+  } catch (error) {
+    console.error('Failed to switch network:', error);
+    showToast('Failed to switch network');
+  }
+}
+
+function updateNetworkCheckmarks(networkId) {
+  // 모든 체크마크 숨기기
   document.querySelectorAll('.network-check').forEach(el => {
     el.style.display = 'none';
   });
   
+  // 선택된 네트워크 체크마크 표시
   const checkElement = document.getElementById(`${networkId}-check`);
   if (checkElement) {
-    checkElement.style.display = 'block';
+    checkElement.style.display = 'flex';
+  } else if (networkId.startsWith('custom_')) {
+    // 커스텀 네트워크의 경우
+    const customCheck = document.querySelector(`[data-network-id="${networkId}"] .network-check`);
+    if (customCheck) {
+      customCheck.style.display = 'flex';
+    }
+  }
+}
+
+function clearNetworkCache() {
+  // 네트워크 관련 캐시 삭제
+  localStorage.removeItem('eth_tx_cache');
+  localStorage.removeItem('eth_balance_cache');
+  localStorage.removeItem('eth_price_cache');
+  console.log('Network cache cleared');
+}
+
+function getNetworkDisplayName(networkId) {
+  const networks = window.EthereumConfig?.NETWORKS;
+  if (networks && networks[networkId]) {
+    return networks[networkId].name;
   }
   
-  // TODO: Actually switch network
-  showToast(`Switched to ${networkId}`);
+  // 커스텀 네트워크
+  const customNetworks = window.EthereumConfig?.getCustomNetworks() || [];
+  const customNetwork = customNetworks.find(n => n.id === networkId);
+  if (customNetwork) {
+    return customNetwork.name;
+  }
   
-  // Update current network display
-  updateNetworkDisplay();
-  
-  // Close modal
-  closeNetworkModal();
+  return networkId;
 }
 
 function showCustomRPCForm() {
@@ -249,30 +305,39 @@ function closeCustomRPCModal() {
   document.getElementById("custom-rpc-form").reset();
 }
 
-function addCustomRPC(event) {
+async function addCustomRPC(event) {
   event.preventDefault();
   
   console.log("Adding custom RPC");
   
   // Get form values
-  const networkName = document.getElementById("network-name").value;
-  const rpcUrl = document.getElementById("rpc-url").value;
-  const chainId = document.getElementById("chain-id").value;
-  const currencySymbol = document.getElementById("currency-symbol").value || "ETH";
-  const explorerUrl = document.getElementById("explorer-url").value;
+  const networkName = document.getElementById("network-name").value.trim();
+  const rpcUrl = document.getElementById("rpc-url").value.trim();
+  const chainId = document.getElementById("chain-id").value.trim();
+  const currencySymbol = document.getElementById("currency-symbol").value.trim() || "ETH";
+  const explorerUrl = document.getElementById("explorer-url").value.trim();
   
-  // Validate RPC URL (basic test)
-  if (!rpcUrl.startsWith("https://")) {
-    showToast("RPC URL must start with https://");
+  // Validate RPC URL
+  if (!rpcUrl.startsWith("https://") && !rpcUrl.startsWith("wss://")) {
+    showToast("RPC URL must start with https:// or wss://");
     return;
   }
   
-  // TODO: Test RPC connection
-  console.log("Testing RPC connection to:", rpcUrl);
+  // Test RPC connection
+  showToast("Testing RPC connection...");
   
-  // TODO: Save custom network
+  try {
+    const testProvider = new ethers.providers.JsonRpcProvider(rpcUrl, parseInt(chainId));
+    const blockNumber = await testProvider.getBlockNumber();
+    console.log("RPC connection successful, block number:", blockNumber);
+  } catch (error) {
+    console.error("RPC connection failed:", error);
+    showToast("Failed to connect to RPC endpoint");
+    return;
+  }
+  
+  // Save custom network
   const customNetwork = {
-    id: `custom_${Date.now()}`,
     name: networkName,
     rpcEndpoint: rpcUrl,
     chainId: parseInt(chainId),
@@ -280,40 +345,59 @@ function addCustomRPC(event) {
     explorerUrl: explorerUrl
   };
   
-  console.log("Custom network config:", customNetwork);
+  // Add to config
+  const networkId = window.EthereumConfig.addCustomNetwork(customNetwork);
+  console.log("Custom network saved with ID:", networkId);
   
   showToast("Custom RPC added successfully!");
   
-  // Close modal and refresh
+  // Close modal and switch to new network
   closeCustomRPCModal();
-  showNetworkSelector();
+  
+  // Automatically switch to the new network
+  await selectNetwork(networkId);
 }
 
 function loadCustomNetworks() {
   console.log("Loading custom networks");
   
   const container = document.getElementById("custom-networks-container");
+  const customNetworks = window.EthereumConfig?.getCustomNetworks() || [];
   
-  // TODO: Load from localStorage
-  // For now, just show placeholder
-  container.innerHTML = `
-    <!-- Example custom network (will be loaded dynamically) -->
-    <!--
-    <div class="network-item custom-network-item" onclick="selectNetwork('custom_1234')">
+  if (customNetworks.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+  
+  // Generate HTML for custom networks
+  const customNetworksHTML = customNetworks.map(network => `
+    <div class="network-item custom-network-item" data-network-id="${network.id}" onclick="selectNetwork('${network.id}')">
       <div class="network-item-content">
         <div class="network-details">
-          <span class="network-name">My Custom RPC</span>
-          <span class="network-chain">Chain ID: 1337</span>
+          <span class="network-name">${network.name}</span>
+          <span class="network-chain">Chain ID: ${network.chainId}</span>
         </div>
       </div>
-      <button class="delete-network-btn" onclick="deleteCustomNetwork('custom_1234', event)">
+      <span class="network-check" style="display: none;">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M7 10L9 12L13 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <button class="delete-network-btn" onclick="deleteCustomNetwork('${network.id}', event)" style="position: absolute; right: 40px;">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <path d="M4 4L12 12M4 12L12 4" stroke="currentColor" stroke-width="2"/>
         </svg>
       </button>
     </div>
-    -->
-  `;
+  `).join('');
+  
+  container.innerHTML = customNetworksHTML;
+  
+  // Update check marks for current network
+  const currentNetworkId = window.EthereumConfig?.getActiveNetwork();
+  if (currentNetworkId && currentNetworkId.startsWith('custom_')) {
+    updateNetworkCheckmarks(currentNetworkId);
+  }
 }
 
 function deleteCustomNetwork(networkId, event) {
@@ -321,18 +405,33 @@ function deleteCustomNetwork(networkId, event) {
   
   console.log("Deleting custom network:", networkId);
   
-  // TODO: Remove from localStorage
+  // Check if this is the current network
+  const currentNetworkId = window.EthereumConfig?.getActiveNetwork();
+  if (currentNetworkId === networkId) {
+    showToast("Cannot delete active network. Switch to another network first.");
+    return;
+  }
+  
+  // Remove from storage
+  window.EthereumConfig.removeCustomNetwork(networkId);
   
   showToast("Custom network removed");
   loadCustomNetworks();
 }
 
 function updateNetworkDisplay() {
-  // TODO: Get actual current network
-  const currentNetworkName = "Sepolia Testnet"; // Placeholder
+  const currentNetworkId = window.EthereumConfig?.getActiveNetwork() || 'mainnet';
+  const currentNetwork = window.EthereumConfig?.getCurrentNetwork();
   
   const displayElement = document.getElementById("current-network-name");
-  if (displayElement) {
-    displayElement.textContent = currentNetworkName;
+  if (displayElement && currentNetwork) {
+    // Display network name
+    if (currentNetwork.name === 'mainnet') {
+      displayElement.textContent = 'Ethereum Mainnet';
+    } else if (currentNetwork.name === 'sepolia') {
+      displayElement.textContent = 'Sepolia Testnet';
+    } else {
+      displayElement.textContent = currentNetwork.name;
+    }
   }
 }
