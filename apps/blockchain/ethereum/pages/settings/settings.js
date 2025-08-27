@@ -177,7 +177,162 @@ async function copyToClipboard() {
 // Click outside modal to close
 window.addEventListener("click", function(event) {
   const modal = document.getElementById("modal");
+  const networkModal = document.getElementById("network-modal");
+  const customRpcModal = document.getElementById("custom-rpc-modal");
+  
   if (event.target === modal) {
     closeModal();
+  } else if (event.target === networkModal) {
+    closeNetworkModal();
+  } else if (event.target === customRpcModal) {
+    closeCustomRPCModal();
   }
 });
+
+// Network Management Functions (Placeholders)
+function showNetworkSelector() {
+  console.log("Opening network selector");
+  const modal = document.getElementById("network-modal");
+  modal.style.display = "flex";
+  
+  // Update current network display
+  updateNetworkDisplay();
+  
+  // Load custom networks
+  loadCustomNetworks();
+}
+
+function closeNetworkModal() {
+  const modal = document.getElementById("network-modal");
+  modal.style.display = "none";
+}
+
+function selectNetwork(networkId) {
+  console.log("Selecting network:", networkId);
+  
+  // Update UI checkmarks
+  document.querySelectorAll('.network-check').forEach(el => {
+    el.style.display = 'none';
+  });
+  
+  const checkElement = document.getElementById(`${networkId}-check`);
+  if (checkElement) {
+    checkElement.style.display = 'block';
+  }
+  
+  // TODO: Actually switch network
+  showToast(`Switched to ${networkId}`);
+  
+  // Update current network display
+  updateNetworkDisplay();
+  
+  // Close modal
+  closeNetworkModal();
+}
+
+function showCustomRPCForm() {
+  console.log("Opening custom RPC form");
+  
+  // Close network modal
+  closeNetworkModal();
+  
+  // Open custom RPC modal
+  const modal = document.getElementById("custom-rpc-modal");
+  modal.style.display = "flex";
+}
+
+function closeCustomRPCModal() {
+  const modal = document.getElementById("custom-rpc-modal");
+  modal.style.display = "none";
+  
+  // Clear form
+  document.getElementById("custom-rpc-form").reset();
+}
+
+function addCustomRPC(event) {
+  event.preventDefault();
+  
+  console.log("Adding custom RPC");
+  
+  // Get form values
+  const networkName = document.getElementById("network-name").value;
+  const rpcUrl = document.getElementById("rpc-url").value;
+  const chainId = document.getElementById("chain-id").value;
+  const currencySymbol = document.getElementById("currency-symbol").value || "ETH";
+  const explorerUrl = document.getElementById("explorer-url").value;
+  
+  // Validate RPC URL (basic test)
+  if (!rpcUrl.startsWith("https://")) {
+    showToast("RPC URL must start with https://");
+    return;
+  }
+  
+  // TODO: Test RPC connection
+  console.log("Testing RPC connection to:", rpcUrl);
+  
+  // TODO: Save custom network
+  const customNetwork = {
+    id: `custom_${Date.now()}`,
+    name: networkName,
+    rpcEndpoint: rpcUrl,
+    chainId: parseInt(chainId),
+    symbol: currencySymbol,
+    explorerUrl: explorerUrl
+  };
+  
+  console.log("Custom network config:", customNetwork);
+  
+  showToast("Custom RPC added successfully!");
+  
+  // Close modal and refresh
+  closeCustomRPCModal();
+  showNetworkSelector();
+}
+
+function loadCustomNetworks() {
+  console.log("Loading custom networks");
+  
+  const container = document.getElementById("custom-networks-container");
+  
+  // TODO: Load from localStorage
+  // For now, just show placeholder
+  container.innerHTML = `
+    <!-- Example custom network (will be loaded dynamically) -->
+    <!--
+    <div class="network-item custom-network-item" onclick="selectNetwork('custom_1234')">
+      <div class="network-item-content">
+        <div class="network-details">
+          <span class="network-name">My Custom RPC</span>
+          <span class="network-chain">Chain ID: 1337</span>
+        </div>
+      </div>
+      <button class="delete-network-btn" onclick="deleteCustomNetwork('custom_1234', event)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M4 4L12 12M4 12L12 4" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      </button>
+    </div>
+    -->
+  `;
+}
+
+function deleteCustomNetwork(networkId, event) {
+  event.stopPropagation(); // Prevent network selection
+  
+  console.log("Deleting custom network:", networkId);
+  
+  // TODO: Remove from localStorage
+  
+  showToast("Custom network removed");
+  loadCustomNetworks();
+}
+
+function updateNetworkDisplay() {
+  // TODO: Get actual current network
+  const currentNetworkName = "Sepolia Testnet"; // Placeholder
+  
+  const displayElement = document.getElementById("current-network-name");
+  if (displayElement) {
+    displayElement.textContent = currentNetworkName;
+  }
+}
