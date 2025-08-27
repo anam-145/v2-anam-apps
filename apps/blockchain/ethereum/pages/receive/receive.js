@@ -3,6 +3,9 @@
 // 전역 변수
 let currentWallet = null;
 
+// Utils 함수 가져오기
+const { showToast, copyToClipboard } = window.EthereumUtils || {};
+
 // 페이지 초기화
 document.addEventListener("DOMContentLoaded", function () {
   console.log("Receive page loaded");
@@ -89,17 +92,23 @@ function goBack() {
 }
 
 // 주소 복사
-function copyAddress() {
+async function copyAddress() {
   if (!currentWallet) return;
 
-  navigator.clipboard.writeText(currentWallet.address)
-    .then(() => {
+  // Utils의 copyToClipboard 사용
+  if (copyToClipboard) {
+    const success = await copyToClipboard(currentWallet.address);
+    showToast(success ? "Address copied to clipboard" : "Failed to copy");
+  } else {
+    // Fallback
+    try {
+      await navigator.clipboard.writeText(currentWallet.address);
       showToast("Address copied to clipboard");
-    })
-    .catch(err => {
+    } catch (err) {
       console.error('Copy failed:', err);
       showToast("Failed to copy");
-    });
+    }
+  }
 }
 
 // HTML onclick을 위한 전역 함수 등록

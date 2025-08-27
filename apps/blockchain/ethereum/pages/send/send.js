@@ -4,6 +4,9 @@
 let adapter = null;
 let currentWallet = null;
 
+// Utils 함수 가져오기
+const { showToast, formatBalance, isValidAddress } = window.EthereumUtils || {};
+
 // 페이지 초기화
 document.addEventListener("DOMContentLoaded", function () {
   console.log("Send page loaded");
@@ -54,7 +57,7 @@ async function updateUI() {
   if (currentWallet && adapter) {
     try {
       const balance = await adapter.getBalance(currentWallet.address);
-      const formattedBalance = window.formatBalance(balance);
+      const formattedBalance = formatBalance ? formatBalance(balance) : balance;
       document.getElementById('available-balance').textContent = formattedBalance;
     } catch (error) {
       console.error("Failed to fetch balance:", error);
@@ -92,7 +95,7 @@ async function confirmSend() {
     return;
   }
 
-  if (!adapter.isValidAddress(recipient)) {
+  if (!isValidAddress(recipient)) {
     showToast("Invalid address format");
     return;
   }

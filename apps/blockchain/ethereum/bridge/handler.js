@@ -42,7 +42,7 @@
         return;
       }
 
-      // 기존 트랜잭션 요청 처리 (하위 호환성)
+      // 기존 트랜잭션 요청 처리 (Universal Bridge v1 형식)
       if (request.to && request.amount) {
         // 이 경우 index.js의 handleTransactionRequest로 위임
         if (window.handleTransactionRequest) {
@@ -375,11 +375,7 @@
   window.BridgeHandler = {
     initHandler,
     updateWallet,
-    handleUniversalRequest,
-    // 개별 함수도 노출 (테스트/디버깅용)
-    handleDAppRequest,
-    sendDAppResponse,
-    sendDAppError,
+    handleUniversalRequest
   };
 
   console.log('[BridgeHandler] Module loaded');

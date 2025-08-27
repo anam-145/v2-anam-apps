@@ -338,10 +338,5 @@
     formatGasPrice
   };
 
-  // 하위 호환성을 위한 전역 함수 노출
-  window.formatBalance = formatBalance;
-  window.shortenAddress = shortenAddress;
-  window.showToast = showToast;
-
   console.log('[EthereumUtils] Module loaded');
 })();

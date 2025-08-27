@@ -9,6 +9,9 @@ const { CACHE, getCurrentNetwork, getEtherscanApiUrl } = window.EthereumConfig |
 const TX_CACHE_KEY = CACHE?.TX_CACHE_KEY || "eth_tx_cache";
 const TX_CACHE_TTL = CACHE?.TX_CACHE_TTL || 5 * 60 * 1000;
 
+// Utils 함수 가져오기
+const { showToast } = window.EthereumUtils || {};
+
 // 페이지 초기화
 document.addEventListener("DOMContentLoaded", function () {
   console.log(`${CoinConfig.name} wallet page loaded`);
@@ -91,7 +94,7 @@ async function checkNetworkStatus() {
 }
 
 // 지갑 상태 확인
-function checkWalletStatus() {
+async function checkWalletStatus() {
   const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
   const walletData = localStorage.getItem(walletKey);
 
@@ -112,12 +115,14 @@ function checkWalletStatus() {
       showTransactionLoading();
 
       // 잔액과 트랜잭션을 병렬로 로드 (속도 개선)
-      Promise.all([
-        updateBalance(),
-        loadTransactionHistory(true), // skipLoadingUI = true (이미 표시했으므로)
-      ]).catch((error) => {
+      try {
+        await Promise.all([
+          updateBalance(),
+          loadTransactionHistory(true), // skipLoadingUI = true (이미 표시했으므로)
+        ]);
+      } catch (error) {
         console.error("Failed to load wallet data:", error);
-      });
+      }
     } catch (error) {
       console.error("Failed to load wallet:", error);
       showToast("Failed to load wallet");
@@ -292,15 +297,17 @@ function displayWalletInfo() {
   const addressDisplay = document.getElementById("address-display");
 
   // 주소 축약 표시
-  const shortAddress = window.shortenAddress(address);
+  const shortAddress = window.EthereumUtils?.shortenAddress(address) || address;
   addressDisplay.textContent = shortAddress;
   addressDisplay.title = address; // 전체 주소는 툴팁으로
 
   // 클릭 시 전체 주소 복사
   addressDisplay.style.cursor = "pointer";
-  addressDisplay.onclick = () => {
-    navigator.clipboard.writeText(address);
-    showToast("Address copied to clipboard");
+  addressDisplay.onclick = async () => {
+    const success = await window.EthereumUtils?.copyToClipboard(address);
+    if (success) {
+      showToast("Address copied to clipboard");
+    }
   };
 }
 
@@ -316,7 +323,7 @@ async function updateBalance() {
     console.log("Raw balance from adapter:", balance);
     console.log("Type of balance:", typeof balance);
 
-    const formattedBalance = window.formatBalance(balance);
+    const formattedBalance = window.EthereumUtils?.formatBalance(balance) || balance;
 
     console.log("Formatted balance:", formattedBalance);
 
@@ -965,28 +972,3 @@ function updateWalletInfo(wallet) {
   }
 }
 
-// [DEPRECATED] 아래 함수들은 모두 bridge/handler.js로 이동됨
-// 하위 호환성을 위해 스텁으로만 유지
-
-function handleDAppRequest(requestId, method, params) {
-  console.warn("handleDAppRequest moved to bridge/handler.js");
-  if (window.BridgeHandler) {
-    return window.BridgeHandler.handleDAppRequest(requestId, method, params);
-  }
-}
-
-function sendDAppResponse(requestId, result) {
-  if (window.BridgeHandler) {
-    return window.BridgeHandler.sendDAppResponse(requestId, result);
-  }
-}
-
-function sendDAppError(requestId, code, message) {
-  if (window.BridgeHandler) {
-    return window.BridgeHandler.sendDAppError(requestId, code, message);
-  }
-}
-
-function sendUniversalError(requestId, code, message) {
-  sendDAppError(requestId, code, message);
-}

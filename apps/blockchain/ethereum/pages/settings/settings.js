@@ -2,6 +2,9 @@
 
 let currentWallet = null;
 
+// Utils 함수 가져오기
+const { showToast, copyToClipboard: copyToClipboardUtil } = window.EthereumUtils || {};
+
 // Page initialization
 document.addEventListener("DOMContentLoaded", function () {
   console.log("Settings page loaded");
@@ -144,8 +147,21 @@ async function copyToClipboard() {
   const value = modalValue.dataset.value;
   const copyBtn = document.getElementById("copy-btn");
   
-  try {
-    await navigator.clipboard.writeText(value);
+  let success = false;
+  
+  if (copyToClipboardUtil) {
+    success = await copyToClipboardUtil(value);
+  } else {
+    // Fallback to direct clipboard API
+    try {
+      await navigator.clipboard.writeText(value);
+      success = true;
+    } catch (error) {
+      console.error("Failed to copy:", error);
+    }
+  }
+  
+  if (success) {
     copyBtn.textContent = "Copied!";
     copyBtn.classList.add("copied");
     
@@ -153,8 +169,7 @@ async function copyToClipboard() {
       copyBtn.textContent = "Copy";
       copyBtn.classList.remove("copied");
     }, 2000);
-  } catch (error) {
-    console.error("Failed to copy:", error);
+  } else {
     showToast("Failed to copy to clipboard");
   }
 }

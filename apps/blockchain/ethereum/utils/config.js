@@ -196,12 +196,6 @@
   // ================================================================
 
   window.EthereumConfig = EthereumConfig;
-  
-  // 하위 호환성을 위한 개별 내보내기
-  window.ETHERSCAN_API_KEY = API_KEYS.ETHERSCAN;
-  window.ETHERSCAN_BASE_URL = getCurrentNetwork().etherscanApiUrl;
-  window.TX_CACHE_KEY = CACHE_CONFIG.TX_CACHE_KEY;
-  window.TX_CACHE_TTL = CACHE_CONFIG.TX_CACHE_TTL;
 
   console.log('[EthereumConfig] Module loaded');
 })();
