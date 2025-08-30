@@ -4,6 +4,9 @@
 let adapter = null;
 let currentWallet = null;
 
+// Utils 함수 가져오기
+const { showToast, formatBalance, validateAmount, validateAddress } = window.BitcoinUtils || {};
+
 // 페이지 초기화
 document.addEventListener("DOMContentLoaded", function () {
   console.log("Send page loaded");
@@ -16,7 +19,7 @@ document.addEventListener("DOMContentLoaded", function () {
   
   if (!adapter) {
     console.error("BitcoinAdapter not initialized");
-    showToast("Bitcoin adapter initialization failed");
+    showToast && showToast("Bitcoin adapter initialization failed", "error");
   }
 
   // 테마 적용
@@ -36,8 +39,8 @@ function loadWalletInfo() {
     console.log("Wallet loaded:", currentWallet.address);
   } else {
     console.log("No wallet found");
-    // showToast("지갑이 없습니다");
-    // goBack();
+    showToast && showToast("No wallet found", "error");
+    setTimeout(goBack, 1500);
   }
 }
 
@@ -62,7 +65,9 @@ async function updateUI() {
   if (currentWallet && adapter) {
     try {
       const balance = await adapter.getBalance(currentWallet.address);
-      const formattedBalance = window.formatBalance(balance, CoinConfig.decimals);
+      const formattedBalance = formatBalance ? 
+        formatBalance(balance, CoinConfig.decimals) : 
+        (parseInt(balance) / 100000000).toFixed(8);
       document.getElementById('available-balance').textContent = formattedBalance;
     } catch (error) {
       console.error("Balance query failed:", error);
@@ -86,7 +91,7 @@ function goBack() {
 // 전송 확인
 async function confirmSend() {
   if (!currentWallet || !adapter) {
-    showToast("No wallet found");
+    showToast && showToast("No wallet found", "error");
     return;
   }
 
@@ -96,22 +101,37 @@ async function confirmSend() {
 
   // 유효성 검증
   if (!recipient || !amount) {
-    showToast("Please enter recipient address and amount");
+    showToast && showToast("Please enter recipient address and amount", "warning");
     return;
   }
 
-  if (!adapter.isValidAddress(recipient)) {
-    showToast("Invalid address format");
+  // 주소 검증 (BitcoinUtils 사용)
+  if (validateAddress) {
+    const addressValidation = validateAddress(recipient);
+    if (!addressValidation.valid) {
+      showToast && showToast(addressValidation.error, "error");
+      return;
+    }
+  } else if (!adapter.isValidAddress(recipient)) {
+    showToast && showToast("Invalid address format", "error");
     return;
   }
 
-  if (parseFloat(amount) <= 0) {
-    showToast("Please enter amount greater than 0");
+  // 금액 검증 (BitcoinUtils 사용)
+  if (validateAmount) {
+    const balance = await adapter.getBalance(currentWallet.address);
+    const amountValidation = validateAmount(amount, balance);
+    if (!amountValidation.valid) {
+      showToast && showToast(amountValidation.error, "error");
+      return;
+    }
+  } else if (parseFloat(amount) <= 0) {
+    showToast && showToast("Please enter amount greater than 0", "warning");
     return;
   }
 
   try {
-    showToast("Sending transaction...");
+    showToast && showToast("Sending transaction...", "info");
 
     // 수수료 가져오기
     const gasPrice = await adapter.getGasPrice();
@@ -132,7 +152,7 @@ async function confirmSend() {
 
     const result = await adapter.sendTransaction(txParams);
 
-    showToast(`Transaction sent successfully!`);
+    showToast && showToast("Transaction sent successfully!", "success");
     console.log("Transaction hash:", result.hash);
 
     // 메인 페이지로 돌아가기
@@ -142,7 +162,7 @@ async function confirmSend() {
 
   } catch (error) {
     console.error("Transaction failed:", error);
-    showToast("Transaction failed: " + error.message);
+    showToast && showToast("Transaction failed: " + error.message, "error");
   }
 }
 
@@ -166,7 +186,7 @@ function scanQRCode() {
     console.log("QR scanner requested to main process");
   } else {
     console.error("anamUI.scanQRCode API not available");
-    showToast("QR scan feature is not available");
+    showToast && showToast("QR scan feature is not available", "warning");
     
     // 개발 환경에서 테스트용
     const testAddress = prompt("Enter address (development mode):");
@@ -191,7 +211,7 @@ function handleQRScanned(event) {
     if (qrData && qrData.match(/^(1[a-km-zA-HJ-NP-Z1-9]{25,34}|3[a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-z0-9]{39,59}|tb1[a-z0-9]{39,59})$/)) {
       // 주소 필드에 입력
       document.getElementById("recipient-address").value = qrData;
-      showToast("Address imported successfully");
+      showToast && showToast("Address imported successfully", "success");
       
       // 금액 입력란으로 포커스 이동
       const amountInput = document.getElementById('send-amount');
@@ -200,12 +220,12 @@ function handleQRScanned(event) {
       }
     } else {
       console.error("Invalid Bitcoin address format:", qrData);
-      showToast("Invalid address format");
+      showToast && showToast("Invalid address format", "error");
     }
   } else {
     const error = event.detail ? event.detail.error : "Unknown error";
     console.error("QR scan failed:", error);
-    showToast("QR scan failed: " + error);
+    showToast && showToast("QR scan failed: " + error, "error");
   }
 }
 

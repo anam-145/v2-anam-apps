@@ -22,6 +22,31 @@
 
       <!-- Settings Content -->
       <div class="settings-content">
+        <!-- Network Section -->
+        <section class="settings-section">
+          <h2 class="section-title">Network Settings</h2>
+          <div class="settings-list">
+            <button class="settings-item" onclick="showNetworkSelector()">
+              <div class="settings-item-content">
+                <svg class="settings-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="10" cy="10" r="2" fill="currentColor"/>
+                  <circle cx="10" cy="10" r="5" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                  <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5" fill="none" stroke-dasharray="2 2"/>
+                </svg>
+                <div class="network-display">
+                  <div class="network-info">
+                    <span id="current-network-name" class="network-selected">Testnet4</span>
+                    <span class="network-status"></span>
+                  </div>
+                </div>
+              </div>
+              <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </section>
+
         <!-- Wallet Management Section -->
         <section class="settings-section">
           <h2 class="section-title">Wallet Management</h2>
@@ -94,11 +119,55 @@
           </div>
         </div>
       </div>
+      
+      <!-- Network Selector Modal -->
+      <div id="network-modal" class="modal" style="display: none;">
+        <div class="modal-content network-modal-content">
+          <div class="modal-header">
+            <h3>Select Network</h3>
+            <button class="modal-close" onclick="closeNetworkModal()">×</button>
+          </div>
+          <div class="modal-body">
+            <!-- Network List -->
+            <div class="network-list">
+              <div class="network-item" onclick="selectNetwork('mainnet')">
+                <div class="network-item-content">
+                  <div class="network-details">
+                    <span class="network-name">Bitcoin Mainnet</span>
+                    <span class="network-chain">Main Network</span>
+                  </div>
+                </div>
+                <span id="mainnet-check" class="network-check" style="display: none;">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7 10L9 12L13 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </div>
+              
+              <div class="network-item" onclick="selectNetwork('testnet4')">
+                <div class="network-item-content">
+                  <div class="network-details">
+                    <span class="network-name">Bitcoin Testnet4</span>
+                    <span class="network-chain">Test Network v4</span>
+                  </div>
+                </div>
+                <span id="testnet4-check" class="network-check">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7 10L9 12L13 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Scripts -->
     <script src="../../assets/bitcoin-bundle.iife.js"></script>
+    <script src="../../utils/config.js"></script>
     <script src="../../app.js"></script>
+    <script src="../../utils/helpers.js"></script>
     <script src="settings.js"></script>
   </body>
 </html>

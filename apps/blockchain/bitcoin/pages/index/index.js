@@ -4,9 +4,23 @@
 let adapter = null;
 let currentWallet = null;
 
+// Utils 함수를 전역 변수로 선언 (나중에 할당)
+let showToast, copyToClipboard, formatBalance, shortenAddress, shortenTxId, timeAgo, satoshiToBTC;
+
+// DOMContentLoaded 이벤트 전에 Utils 초기화 시도
+if (window.BitcoinUtils) {
+  ({ showToast, copyToClipboard, formatBalance, shortenAddress, shortenTxId, timeAgo, satoshiToBTC } = window.BitcoinUtils);
+}
+
 // 페이지 초기화
 document.addEventListener("DOMContentLoaded", function () {
   console.log(`${CoinConfig.name} wallet page loaded`);
+  
+  // Utils 함수 재초기화 (혹시 이전에 로드되지 않았을 경우)
+  if (window.BitcoinUtils && !shortenAddress) {
+    ({ showToast, copyToClipboard, formatBalance, shortenAddress, shortenTxId, timeAgo, satoshiToBTC } = window.BitcoinUtils);
+    console.log('Utils functions loaded in DOMContentLoaded');
+  }
 
   // Bridge API 초기화
   if (window.anam) {
@@ -20,7 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
     console.error(
       "BitcoinAdapter not initialized."
     );
-    showToast("Bitcoin adapter initialization failed");
+    showToast && showToast("Bitcoin adapter initialization failed", "error");
   }
 
   // UI 테마 적용
@@ -96,7 +110,7 @@ function checkWalletStatus() {
       loadTransactionHistory();
     } catch (error) {
       console.error("Wallet loading failed:", error);
-      showToast("Wallet loading failed");
+      showToast && showToast("Wallet loading failed", "error");
       resetWallet();
     }
   } else {
@@ -108,13 +122,13 @@ function checkWalletStatus() {
 // 새 지갑 생성
 async function createWallet() {
   if (!adapter) {
-    showToast("CoinAdapter not implemented");
+    showToast && showToast("CoinAdapter not implemented", "error");
     return;
   }
 
   try {
     console.log("Starting new wallet creation");
-    showToast("Creating wallet...");
+    showToast && showToast("Creating wallet...", "info");
 
     // 어댑터를 통해 지갑 생성
     const wallet = await adapter.generateWallet();
@@ -131,8 +145,9 @@ async function createWallet() {
     localStorage.setItem(walletKey, JSON.stringify(walletData));
     currentWallet = walletData;
 
-    console.log("Wallet created:", wallet.address);
-    showToast("Wallet created successfully!");
+    // 보안: 민감한 정보는 콘솔에 출력하지 않음
+    console.log("Wallet created successfully");
+    showToast && showToast("Wallet created successfully!", "success");
 
     document.getElementById("wallet-creation").style.display = "none";
     document.getElementById("wallet-main").style.display = "block";
@@ -142,26 +157,26 @@ async function createWallet() {
     loadTransactionHistory();
   } catch (error) {
     console.error("Wallet creation failed:", error);
-    showToast("Failed to create wallet: " + error.message);
+    showToast && showToast("Failed to create wallet: " + error.message, "error");
   }
 }
 
 // 니모닉으로 지갑 가져오기
 async function importFromMnemonic() {
   if (!adapter) {
-    showToast("CoinAdapter not implemented");
+    showToast && showToast("CoinAdapter not implemented", "error");
     return;
   }
 
   const mnemonicInput = document.getElementById("mnemonic-input").value.trim();
 
   if (!mnemonicInput) {
-    showToast("Please enter mnemonic");
+    showToast && showToast("Please enter mnemonic", "warning");
     return;
   }
 
   try {
-    showToast("Importing wallet...");
+    showToast && showToast("Importing wallet...", "info");
 
     const wallet = await adapter.importFromMnemonic(mnemonicInput);
 
@@ -177,7 +192,7 @@ async function importFromMnemonic() {
     localStorage.setItem(walletKey, JSON.stringify(walletData));
     currentWallet = walletData;
 
-    showToast("Wallet imported successfully!");
+    showToast && showToast("Wallet imported successfully!", "success");
 
     document.getElementById("wallet-creation").style.display = "none";
     document.getElementById("wallet-main").style.display = "block";
@@ -187,14 +202,14 @@ async function importFromMnemonic() {
     loadTransactionHistory();
   } catch (error) {
     console.error("Wallet import failed:", error);
-    showToast("Please enter valid mnemonic");
+    showToast && showToast("Please enter valid mnemonic", "error");
   }
 }
 
 // 개인키로 지갑 가져오기
 async function importFromPrivateKey() {
   if (!adapter) {
-    showToast("CoinAdapter not implemented");
+    showToast && showToast("CoinAdapter not implemented", "error");
     return;
   }
 
@@ -203,12 +218,12 @@ async function importFromPrivateKey() {
     .value.trim();
 
   if (!privateKeyInput) {
-    showToast("Please enter private key");
+    showToast && showToast("Please enter private key", "warning");
     return;
   }
 
   try {
-    showToast("Importing wallet...");
+    showToast && showToast("Importing wallet...", "info");
 
     const wallet = await adapter.importFromPrivateKey(privateKeyInput);
 
@@ -224,7 +239,7 @@ async function importFromPrivateKey() {
     localStorage.setItem(walletKey, JSON.stringify(walletData));
     currentWallet = walletData;
 
-    showToast("Wallet imported successfully!");
+    showToast && showToast("Wallet imported successfully!", "success");
 
     document.getElementById("wallet-creation").style.display = "none";
     document.getElementById("wallet-main").style.display = "block";
@@ -234,7 +249,7 @@ async function importFromPrivateKey() {
     loadTransactionHistory();
   } catch (error) {
     console.error("Wallet import failed:", error);
-    showToast("Please enter valid private key");
+    showToast && showToast("Please enter valid private key", "error");
   }
 }
 
@@ -245,15 +260,22 @@ function displayWalletInfo() {
   const address = currentWallet.address;
   const addressDisplay = document.getElementById("address-display");
 
-  // 주소 축약 표시
-  const shortAddress = window.shortenAddress(address);
+  // 주소 축약 표시 (BitcoinUtils 사용)
+  let shortAddress;
+  if (shortenAddress && typeof shortenAddress === 'function') {
+    shortAddress = shortenAddress(address);
+  } else if (address && typeof address === 'string') {
+    shortAddress = `${address.slice(0, 6)}...${address.slice(-6)}`;
+  } else {
+    shortAddress = 'Invalid Address';
+  }
   addressDisplay.textContent = shortAddress;
-  addressDisplay.title = address; // 전체 주소는 툴팁으로
+  addressDisplay.title = address || ''; // 전체 주소는 툴팁으로
 
   addressDisplay.style.cursor = "pointer";
   addressDisplay.onclick = () => {
     navigator.clipboard.writeText(address);
-    showToast("Address copied to clipboard");
+    showToast && showToast("Address copied to clipboard", "success");
   };
 }
 
@@ -263,7 +285,9 @@ async function updateBalance() {
 
   try {
     const balance = await adapter.getBalance(currentWallet.address);
-    const formattedBalance = window.formatBalance(balance, CoinConfig.decimals);
+    const formattedBalance = formatBalance ? 
+      formatBalance(balance, CoinConfig.decimals) : 
+      (parseInt(balance) / 100000000).toFixed(8);
 
     document.getElementById("balance-display").textContent = formattedBalance;
 
@@ -277,7 +301,7 @@ async function updateBalance() {
 // Send 페이지로 이동
 function navigateToSend() {
   if (!currentWallet) {
-    showToast("No wallet found");
+    showToast && showToast("No wallet found", "error");
     return;
   }
   // blockchain miniapp은 anamUI 네임스페이스 사용
@@ -294,7 +318,7 @@ function navigateToSend() {
 // Receive 페이지로 이동
 function navigateToReceive() {
   if (!currentWallet) {
-    showToast("No wallet found");
+    showToast && showToast("No wallet found", "error");
     return;
   }
   // blockchain miniapp은 anamUI 네임스페이스 사용
@@ -323,7 +347,7 @@ function resetWallet() {
   if (mnemonicInput) mnemonicInput.value = "";
   if (privateKeyInput) privateKeyInput.value = "";
 
-  showToast("Wallet has been reset");
+  showToast && showToast("Wallet has been reset", "info");
 }
 
 // 트랜잭션 요청 처리 (Bridge API)
@@ -418,9 +442,9 @@ async function loadTransactionHistory() {
     // 로딩 상태 표시
     showTransactionLoading();
 
-    // Mempool.space API 호출
-    const network = CoinConfig.network.networkName === 'mainnet' ? '' : 'testnet4/';
-    const url = `https://mempool.space/${network}api/address/${currentWallet.address}/txs`;
+    // Mempool.space API 호출 (config 사용)
+    const url = window.BitcoinConfig?.getApiUrl(`/address/${currentWallet.address}/txs`) || 
+                `https://mempool.space/testnet4/api/address/${currentWallet.address}/txs`;
     
     console.log("Fetching transactions from:", url);
     
@@ -543,7 +567,7 @@ function createBitcoinTransactionElement(tx) {
     <div class="tx-icon ${txType}">${isSent ? "↑" : "↓"}</div>
     <div class="tx-details">
       <div class="tx-type">${txLabel}</div>
-      <div class="tx-address">${window.shortenAddress(address, 6)}</div>
+      <div class="tx-address">${shortenAddress ? shortenAddress(address, 6) : address}</div>
     </div>
     <div class="tx-amount">
       <div class="tx-btc ${txType}">${isSent ? "-" : "+"}${btcAmount} BTC</div>

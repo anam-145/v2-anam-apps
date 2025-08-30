@@ -3,6 +3,9 @@
 // 전역 변수
 let currentWallet = null;
 
+// Utils 함수 가져오기
+const { showToast, copyToClipboard, generateQRCode, shortenAddress } = window.BitcoinUtils || {};
+
 // 페이지 초기화
 document.addEventListener("DOMContentLoaded", function () {
   console.log("Receive page loaded");
@@ -18,7 +21,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // QR 코드 생성
   if (currentWallet) {
-    generateQRCode();
+    generateQRCodeForAddress();
   }
 });
 
@@ -32,8 +35,8 @@ function loadWalletInfo() {
     console.log("Wallet loaded:", currentWallet.address);
   } else {
     console.log("No wallet found");
-    // showToast("지갑이 없습니다");
-    // goBack();
+    showToast && showToast("No wallet found", "error");
+    setTimeout(goBack, 1500);
   }
 }
 
@@ -65,24 +68,18 @@ function updateUI() {
   }
 }
 
-// QR 코드 생성
-function generateQRCode() {
-  const qrContainer = document.getElementById('qr-code');
-  qrContainer.innerHTML = '';
+// QR 코드 생성 (BitcoinUtils 사용)
+function generateQRCodeForAddress() {
+  if (!currentWallet) return;
   
-  try {
-    // QRCode.js 라이브러리 사용
-    new QRCode(qrContainer, {
-      text: currentWallet.address,
-      width: 200,
-      height: 200,
-      colorDark: "#000000",
-      colorLight: "#FFFFFF",
-      correctLevel: QRCode.CorrectLevel.M
-    });
-  } catch (error) {
-    console.error('QR code generation failed:', error);
-    qrContainer.innerHTML = '<div style="padding: 20px; color: #999;">QR code generation failed</div>';
+  if (generateQRCode) {
+    generateQRCode('qr-code', currentWallet.address);
+  } else {
+    console.error('QRCode generation function not available');
+    const qrContainer = document.getElementById('qr-code');
+    if (qrContainer) {
+      qrContainer.innerHTML = '<div style="padding: 20px; color: #999;">QR code generation failed</div>';
+    }
   }
 }
 
@@ -99,18 +96,22 @@ function goBack() {
   }
 }
 
-// 주소 복사
-function copyAddress() {
+// 주소 복사 (BitcoinUtils 사용)
+async function copyAddress() {
   if (!currentWallet) return;
-
-  navigator.clipboard.writeText(currentWallet.address)
-    .then(() => {
-      showToast("Address copied to clipboard");
-    })
-    .catch(err => {
+  
+  if (copyToClipboard) {
+    await copyToClipboard(currentWallet.address);
+  } else {
+    // 폴백: 직접 복사 시도
+    try {
+      await navigator.clipboard.writeText(currentWallet.address);
+      showToast && showToast("Address copied to clipboard", "success");
+    } catch (err) {
       console.error('Copy failed:', err);
-      showToast("Failed to copy");
-    });
+      showToast && showToast("Failed to copy", "error");
+    }
+  }
 }
 
 // HTML onclick을 위한 전역 함수 등록
