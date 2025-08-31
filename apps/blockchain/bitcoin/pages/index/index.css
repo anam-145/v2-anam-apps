@@ -1,4 +1,4 @@
-/* Coin 지갑 스타일 */
+/* Coin 지갑 스타일 - 인덱스 페이지 */
 
 /* 지갑 화면 공통 */
 .wallet-screen {
@@ -7,50 +7,75 @@
   flex-direction: column;
 }
 
-/* 지갑 생성 화면 */
-.creation-content {
+/* MetaMask Style Initial Screen */
+.creation-content-metamask {
   max-width: 400px;
   margin: 0 auto;
-  padding: 60px 20px;
+  padding: 80px 20px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  justify-content: center;
 }
 
-.coin-logo-large {
-  width: 80px;
-  height: 80px;
-  margin-bottom: 20px;
-  filter: drop-shadow(0 0 20px rgba(67, 56, 202, 0.3));
-}
-
-.creation-title {
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: #222;
-}
-
-.creation-description {
-  font-size: 16px;
-  color: #666;
+.btc-logo-container {
   margin-bottom: 40px;
+  animation: float 3s ease-in-out infinite;
 }
 
-.create-wallet-btn {
-  width: 100%;
-  padding: 16px;
-  background: var(--coin-gradient);
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.btc-logo {
+  width: 120px;
+  height: 120px;
+  filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.15));
+}
+
+.creation-title-metamask {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 40px;
+  color: #333;
+}
+
+.create-wallet-btn-metamask {
+  width: 280px;
+  padding: 14px 24px;
+  background: #F7931A; /* Bitcoin Orange */
   color: white;
   border: none;
-  border-radius: 12px;
+  border-radius: 100px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  margin-bottom: 16px;
 }
 
-.create-wallet-btn:hover {
+.create-wallet-btn-metamask:hover {
+  background: #E88A00; /* Darker Bitcoin Orange */
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(67, 56, 202, 0.4);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.import-wallet-btn-text {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px;
+  transition: color 0.3s;
+}
+
+.import-wallet-btn-text:hover {
+  color: #333;
+  text-decoration: underline;
 }
 
 .divider {
@@ -77,73 +102,148 @@
   font-size: 14px;
 }
 
-/* 가져오기 섹션 */
-.import-section {
-  text-align: left;
+/* Import Options Container */
+.import-options-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  min-height: 100vh;
 }
 
-.import-section h3 {
-  font-size: 18px;
-  margin-bottom: 20px;
+.import-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.back-to-start {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: #f3f4f6;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.back-to-start:hover {
+  background: #e5e7eb;
+}
+
+.import-header h2 {
+  flex: 1;
+  font-size: 24px;
+  font-weight: 700;
   color: #333;
-  text-align: center;
+  margin: 0;
 }
 
-.import-option {
-  margin-bottom: 20px;
-  padding: 15px;
-  background: #f8f9fa;
+/* Import Tabs */
+.import-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  background: #f3f4f6;
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.import-tab {
+  flex: 1;
+  padding: 10px;
+  background: none;
+  border: none;
   border-radius: 8px;
-}
-
-.import-option h4 {
   font-size: 14px;
-  margin-bottom: 10px;
-  color: #555;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s;
 }
 
-.import-input {
+.import-tab.active {
+  background: white;
+  color: #333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.import-tab:hover:not(.active) {
+  color: #333;
+}
+
+/* Import Content */
+.import-content {
+  margin-top: 24px;
+}
+
+.import-tab-content {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.import-description {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.import-input-metamask {
   width: 100%;
-  padding: 12px;
-  border: 2px solid #e0e0e0;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-size: 14px;
-  margin-bottom: 10px;
-  transition: border-color 0.3s;
+  margin-bottom: 16px;
+  transition: all 0.3s;
+  background: #f9fafb;
 }
 
-.import-input:focus {
-  border-color: var(--coin-primary);
+.import-input-metamask:focus {
+  border-color: #F7931A; /* Bitcoin Orange */
+  background: white;
   outline: none;
 }
 
-textarea.import-input {
+textarea.import-input-metamask {
   resize: none;
   font-family: 'Courier New', monospace;
+  min-height: 100px;
 }
 
-.import-btn {
+.import-btn-metamask {
   width: 100%;
-  padding: 12px;
-  background: white;
-  color: var(--coin-primary);
-  border: 2px solid var(--coin-primary);
+  padding: 14px;
+  background: #F7931A; /* Bitcoin Orange */
+  color: white;
+  border: none;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
-.import-btn:hover {
-  background: var(--coin-primary);
-  color: white;
+.import-btn-metamask:hover {
+  background: #E88A00; /* Darker Bitcoin Orange */
+  transform: translateY(-1px);
 }
 
-/* 헤더 스타일 */
-.header {
-  padding: 16px 20px;
+.import-btn-metamask:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
 }
+
+/* 헤더 스타일 - 레이아웃만 정의 */
 
 .header-content {
   display: flex;
@@ -151,6 +251,12 @@ textarea.import-input {
   align-items: center;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .logo {
@@ -172,7 +278,8 @@ textarea.import-input {
   color: #222;
 }
 
-.reset-wallet-btn {
+/* Icon buttons */
+.icon-btn {
   background: none;
   border: none;
   color: #666;
@@ -180,22 +287,6 @@ textarea.import-input {
   padding: 8px;
   border-radius: 8px;
   transition: all 0.3s;
-}
-
-.reset-wallet-btn:hover {
-  background: #f5f5f5;
-  color: #333;
-}
-
-/* Settings button styles */
-.icon-btn {
-  background: none;
-  border: none;
-  color: #666;
-  padding: 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -210,6 +301,16 @@ textarea.import-input {
   display: block;
   width: 20px;
   height: 20px;
+}
+
+/* Reset button - next to logo */
+.reset-btn {
+  margin-left: 8px;
+}
+
+/* QR button - right side */
+.qr-btn {
+  margin-left: auto;
 }
 
 /* 카드 스타일 */
@@ -339,46 +440,50 @@ textarea.import-input {
   transform: translateY(-1px);
 }
 
-/* Transaction History Section */
+
+
+/* 거래 내역 섹션 */
 .transactions-section {
-  padding: 20px;
-  background: #f8f9fa;
-  min-height: 200px;
+  padding: 0 20px 20px;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .section-title {
   font-size: 18px;
   font-weight: 700;
-  color: #222;
-  margin-bottom: 16px;
+  color: #333;
+  margin-bottom: 12px;
+  padding-left: 4px;
 }
 
 .tx-list {
   background: white;
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .tx-item {
   display: flex;
   align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
-  transition: background 0.2s;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f5f5f5;
+  transition: all 0.3s ease;
+}
+
+.tx-item:hover {
+  background: #f9f9f9;
 }
 
 .tx-item:last-child {
   border-bottom: none;
 }
 
-.tx-item:hover {
-  background: #fafafa;
-}
-
 .tx-icon {
   width: 40px;
   height: 40px;
-  border-radius: 20px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -388,13 +493,13 @@ textarea.import-input {
 }
 
 .tx-icon.send {
-  background: #fff3e0;
+  background: rgba(67, 56, 202, 0.1);
   color: var(--coin-primary);
   transform: rotate(-45deg);
 }
 
 .tx-icon.receive {
-  background: var(--coin-light);
+  background: rgba(99, 102, 241, 0.1);
   color: var(--coin-secondary);
   transform: rotate(45deg);
 }
@@ -420,16 +525,16 @@ textarea.import-input {
   text-align: right;
 }
 
-.tx-btc {
+.tx-eth {
   font-size: 15px;
   font-weight: 700;
 }
 
-.tx-btc.send {
+.tx-eth.send {
   color: #333;
 }
 
-.tx-btc.receive {
+.tx-eth.receive {
   color: var(--coin-primary);
 }
 
@@ -437,6 +542,47 @@ textarea.import-input {
   font-size: 12px;
   color: #999;
   margin-top: 2px;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 600px) {
+  .card {
+    margin: 12px;
+  }
+  
+  .coin-balance {
+    font-size: 28px;
+  }
+  
+  .coin-unit {
+    font-size: 16px;
+  }
+  
+  .transactions-section {
+    padding: 12px;
+  }
+  
+  .tx-item {
+    padding: 12px;
+  }
+  
+  .tx-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+  
+  .tx-type {
+    font-size: 15px;
+  }
+  
+  .tx-address {
+    font-size: 13px;
+  }
+  
+  .tx-eth {
+    font-size: 15px;
+  }
 }
 
 /* Transaction Loading and Empty States */
@@ -506,61 +652,25 @@ textarea.import-input {
   text-align: center;
 }
 
-.tx-error-icon {
-  font-size: 48px;
+.tx-error-text {
+  font-size: 14px;
   color: #ff4444;
   margin-bottom: 16px;
 }
 
-.tx-error-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
-}
-
-.tx-error-text {
+.tx-retry-btn {
+  padding: 8px 20px;
+  background: var(--coin-primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
   font-size: 14px;
-  color: #999;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-/* 반응형 디자인 */
-@media (max-width: 600px) {
-  .card {
-    margin: 12px;
-  }
-  
-  .coin-balance {
-    font-size: 28px;
-  }
-  
-  .coin-unit {
-    font-size: 16px;
-  }
-  
-  .transactions-section {
-    padding: 12px;
-  }
-  
-  .tx-item {
-    padding: 12px;
-  }
-  
-  .tx-icon {
-    width: 36px;
-    height: 36px;
-    font-size: 18px;
-  }
-  
-  .tx-type {
-    font-size: 15px;
-  }
-  
-  .tx-address {
-    font-size: 13px;
-  }
-  
-  .tx-btc {
-    font-size: 15px;
-  }
+.tx-retry-btn:hover {
+  background: var(--coin-secondary);
+  transform: translateY(-1px);
 }

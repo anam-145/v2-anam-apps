@@ -1,4 +1,4 @@
-// Ethereum Mnemonic Flow Manager
+// Bitcoin Mnemonic Flow Manager
 // Manages the entire mnemonic generation flow
 
 class MnemonicFlowManager {
@@ -87,10 +87,10 @@ class MnemonicFlowManager {
     try {
       console.log('[MnemonicFlow] Generating wallet...');
       
-      // Ethereum 어댑터 가져오기
+      // Bitcoin 어댑터 가져오기
       const adapter = window.getAdapter ? window.getAdapter() : null;
       if (!adapter) {
-        throw new Error('Ethereum adapter not found');
+        throw new Error('Bitcoin adapter not found');
       }
       
       // 지갑 생성

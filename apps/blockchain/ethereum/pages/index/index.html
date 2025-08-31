@@ -39,13 +39,8 @@
             <h2>Import Wallet</h2>
           </div>
           
-          <div class="import-tabs">
-            <button class="import-tab active" onclick="switchImportTab('mnemonic')">Recovery Phrase</button>
-            <button class="import-tab" onclick="switchImportTab('privatekey')">Private Key</button>
-          </div>
-          
           <div class="import-content">
-            <!-- Mnemonic Import -->
+            <!-- Mnemonic Import Only -->
             <div id="mnemonic-import-content" class="import-tab-content">
               <p class="import-description">Enter your 12 or 24 word recovery phrase</p>
               <textarea 
@@ -55,20 +50,6 @@
                 rows="4"
               ></textarea>
               <button class="import-btn-metamask" onclick="importFromMnemonic()">
-                Import Wallet
-              </button>
-            </div>
-            
-            <!-- Private Key Import -->
-            <div id="privatekey-import-content" class="import-tab-content" style="display: none;">
-              <p class="import-description">Enter your private key</p>
-              <input 
-                type="password"
-                id="privatekey-input" 
-                class="import-input-metamask" 
-                placeholder="Enter private key"
-              />
-              <button class="import-btn-metamask" onclick="importFromPrivateKey()">
                 Import Wallet
               </button>
             </div>

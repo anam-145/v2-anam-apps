@@ -10,7 +10,6 @@ document.addEventListener("DOMContentLoaded", function () {
   console.log("Settings page loaded");
   loadWalletData();
   applyTheme();
-  checkRecoveryPhraseAvailability();
   updateNetworkDisplay(); // 현재 네트워크 표시
 });
 
@@ -39,29 +38,11 @@ function navigateBack() {
   window.location.href = "../index/index.html";
 }
 
-// Check if recovery phrase is available
-function checkRecoveryPhraseAvailability() {
-  if (!currentWallet || !currentWallet.mnemonic) {
-    // Disable recovery phrase button if no mnemonic
-    const recoveryBtn = document.getElementById("recovery-phrase-btn");
-    const recoveryText = document.getElementById("recovery-phrase-text");
-    
-    if (recoveryBtn) {
-      recoveryBtn.disabled = true;
-      recoveryBtn.style.opacity = "0.5";
-      recoveryBtn.style.cursor = "not-allowed";
-      recoveryBtn.onclick = null;
-    }
-    
-    if (recoveryText) {
-      recoveryText.textContent = "Recovery Phrase Not Available";
-    }
-  }
-}
 
 // Show recovery phrase
 function showRecoveryPhrase() {
   if (!currentWallet || !currentWallet.mnemonic) {
+    // This should not happen anymore as all wallets have mnemonic
     showToast("No recovery phrase available");
     return;
   }
@@ -435,3 +416,4 @@ function updateNetworkDisplay() {
     }
   }
 }
+

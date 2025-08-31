@@ -111,25 +111,40 @@ class BitcoinAdapter {
         throw new Error("Bitcoin library not loaded");
       }
 
-      const { bip39, hdWalletFromMnemonic, generateAddress } = window.BitcoinJS;
+      const { bip39, hdWalletFromMnemonic, generateAddress, networks } = window.BitcoinJS;
 
       // 1. 니모닉 생성
       const mnemonic = bip39.generateMnemonic();
 
-      // 2. HD 지갑 생성
-      const network = this.getNetworkObject();
-      const hdWallet = hdWalletFromMnemonic(mnemonic, network);
+      // 2. 양쪽 네트워크 주소 동시 생성
+      const mainnetHdWallet = hdWalletFromMnemonic(mnemonic, networks.bitcoin);
+      const testnetHdWallet = hdWalletFromMnemonic(mnemonic, networks.testnet);
 
-      // 3. 첫 번째 주소 생성
-      const addressData = generateAddress(hdWallet, 0, network);
+      const mainnetAddress = generateAddress(mainnetHdWallet, 0, networks.bitcoin);
+      const testnetAddress = generateAddress(testnetHdWallet, 0, networks.testnet);
+
+      // 3. 현재 활성 네트워크 확인
+      const currentNetwork = window.BitcoinConfig?.getActiveNetwork() || 'testnet4';
 
       // 보안: 민감한 정보는 콘솔에 출력하지 않음
-      console.log("Wallet generated successfully");
+      console.log("Wallet generated successfully for both networks");
 
       return {
-        address: addressData.address,
-        privateKey: addressData.privateKey,
         mnemonic: mnemonic,
+        networks: {
+          mainnet: {
+            address: mainnetAddress.address,
+            privateKey: mainnetAddress.privateKey
+          },
+          testnet4: {
+            address: testnetAddress.address,
+            privateKey: testnetAddress.privateKey
+          }
+        },
+        activeNetwork: currentNetwork,
+        // 하위 호환성을 위한 현재 네트워크 정보
+        address: currentNetwork === 'mainnet' ? mainnetAddress.address : testnetAddress.address,
+        privateKey: currentNetwork === 'mainnet' ? mainnetAddress.privateKey : testnetAddress.privateKey
       };
     } catch (error) {
       console.error("Failed to generate wallet:", error);
@@ -146,22 +161,37 @@ class BitcoinAdapter {
         throw new Error("Bitcoin library not loaded");
       }
 
-      const { hdWalletFromMnemonic, generateAddress } = window.BitcoinJS;
+      const { hdWalletFromMnemonic, generateAddress, networks } = window.BitcoinJS;
 
-      // HD 지갑 생성
-      const network = this.getNetworkObject();
-      const hdWallet = hdWalletFromMnemonic(mnemonic, network);
+      // 양쪽 네트워크 주소 동시 생성
+      const mainnetHdWallet = hdWalletFromMnemonic(mnemonic, networks.bitcoin);
+      const testnetHdWallet = hdWalletFromMnemonic(mnemonic, networks.testnet);
 
-      // 첫 번째 주소 생성
-      const addressData = generateAddress(hdWallet, 0, network);
+      const mainnetAddress = generateAddress(mainnetHdWallet, 0, networks.bitcoin);
+      const testnetAddress = generateAddress(testnetHdWallet, 0, networks.testnet);
+
+      // 현재 활성 네트워크 확인
+      const currentNetwork = window.BitcoinConfig?.getActiveNetwork() || 'testnet4';
 
       // 보안: 민감한 정보는 콘솔에 출력하지 않음
-      console.log("Wallet imported from mnemonic");
+      console.log("Wallet imported from mnemonic for both networks");
 
       return {
-        address: addressData.address,
-        privateKey: addressData.privateKey,
         mnemonic: mnemonic,
+        networks: {
+          mainnet: {
+            address: mainnetAddress.address,
+            privateKey: mainnetAddress.privateKey
+          },
+          testnet4: {
+            address: testnetAddress.address,
+            privateKey: testnetAddress.privateKey
+          }
+        },
+        activeNetwork: currentNetwork,
+        // 하위 호환성을 위한 현재 네트워크 정보
+        address: currentNetwork === 'mainnet' ? mainnetAddress.address : testnetAddress.address,
+        privateKey: currentNetwork === 'mainnet' ? mainnetAddress.privateKey : testnetAddress.privateKey
       };
     } catch (error) {
       console.error("Failed to import from mnemonic:", error);

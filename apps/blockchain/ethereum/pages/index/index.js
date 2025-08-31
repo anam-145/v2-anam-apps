@@ -5,7 +5,8 @@ let adapter = null; // 코인 어댑터 인스턴스
 let currentWallet = null; // 현재 지갑 정보
 
 // 설정은 EthereumConfig에서 가져옴 (utils/config.js)
-const { CACHE, getCurrentNetwork, getEtherscanApiUrl } = window.EthereumConfig || {};
+const { CACHE, getCurrentNetwork, getEtherscanApiUrl } =
+  window.EthereumConfig || {};
 const TX_CACHE_KEY = CACHE?.TX_CACHE_KEY || "eth_tx_cache";
 const TX_CACHE_TTL = CACHE?.TX_CACHE_TTL || 5 * 60 * 1000;
 
@@ -28,9 +29,9 @@ document.addEventListener("DOMContentLoaded", function () {
     console.log("EthereumAdapter not initialized");
     showToast("Failed to initialize Ethereum adapter");
   }
-  
+
   // 네트워크 변경 이벤트 리스너
-  window.addEventListener('providerUpdated', handleNetworkChange);
+  window.addEventListener("providerUpdated", handleNetworkChange);
 
   // UI 테마 적용
   applyTheme();
@@ -52,7 +53,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // 트랜잭션 요청 이벤트 리스너 등록 (기존 방식 지원)
   window.addEventListener("transactionRequest", handleTransactionRequest);
   window.handleTransactionRequest = handleTransactionRequest; // Bridge Handler에서 사용
-  
+
   // Bridge Handler 초기화 (지갑이 없어도 Handler는 초기화)
   initBridgeHandler();
 });
@@ -74,7 +75,7 @@ function applyTheme() {
 
   // 타이틀 변경
   document.title = `${CoinConfig.name} Wallet`;
-  
+
   // 이제 MetaMask 스타일이므로 이 요소들이 없음
   // document.querySelector(".creation-title")?.textContent = `${CoinConfig.name} Wallet`;
   // document.querySelector(".creation-description")?.textContent = `Create a secure ${CoinConfig.name} wallet`;
@@ -103,14 +104,14 @@ async function checkWalletStatus() {
     // 지갑이 있으면 메인 화면 표시
     try {
       currentWallet = JSON.parse(walletData);
-      console.log('[checkWalletStatus] Wallet loaded:', currentWallet.address);
-      
+      console.log("[checkWalletStatus] Wallet loaded:", currentWallet.address);
+
       // Bridge Handler 초기화
       initBridgeHandler();
 
       document.getElementById("wallet-creation").style.display = "none";
       document.getElementById("wallet-main").style.display = "block";
-      console.log('[checkWalletStatus] Switched to main screen');
+      console.log("[checkWalletStatus] Switched to main screen");
 
       displayWalletInfo();
 
@@ -126,7 +127,7 @@ async function checkWalletStatus() {
       } catch (error) {
         console.log("Failed to load wallet data:", error);
       }
-      
+
       // 백업 리마인더 체크 (니모닉 플로우에서 스킵한 경우)
       if (window.mnemonicFlow) {
         window.mnemonicFlow.checkBackupReminder();
@@ -138,7 +139,7 @@ async function checkWalletStatus() {
     }
   } else {
     // 지갑이 없으면 생성 화면 표시
-    console.log('[checkWalletStatus] No wallet found, showing creation screen');
+    console.log("[checkWalletStatus] No wallet found, showing creation screen");
     document.getElementById("wallet-creation").style.display = "block";
     document.getElementById("wallet-main").style.display = "none";
   }
@@ -153,7 +154,7 @@ async function createWallet() {
 
   try {
     console.log("Starting mnemonic flow for wallet creation");
-    
+
     // 니모닉 플로우 시작
     if (window.mnemonicFlow) {
       window.mnemonicFlow.start();
@@ -220,58 +221,6 @@ async function importFromMnemonic() {
 }
 
 // 개인키로 지갑 가져오기
-async function importFromPrivateKey() {
-  if (!adapter) {
-    showToast("CoinAdapter not implemented");
-    return;
-  }
-
-  const privateKeyInput = document
-    .getElementById("privatekey-input")
-    .value.trim();
-
-  if (!privateKeyInput) {
-    showToast("Please enter the private key");
-    return;
-  }
-
-  try {
-    showToast("Importing wallet...");
-
-    const wallet = await adapter.importFromPrivateKey(privateKeyInput);
-
-    // localStorage에 저장
-    const walletData = {
-      address: wallet.address,
-      privateKey: privateKeyInput,
-      mnemonic: null,
-      createdAt: new Date().toISOString(),
-    };
-
-    const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
-    localStorage.setItem(walletKey, JSON.stringify(walletData));
-    currentWallet = walletData;
-    updateWalletInfo(walletData);
-
-    showToast("Wallet imported successfully!");
-
-    // 화면 전환
-    document.getElementById("wallet-creation").style.display = "none";
-    document.getElementById("wallet-main").style.display = "block";
-
-    displayWalletInfo();
-    updateBalance();
-
-    // 트랜잭션 로딩 표시 후 조회
-    showTransactionLoading();
-    setTimeout(() => {
-      loadTransactionHistory(true); // skipLoadingUI = true
-    }, 100);
-  } catch (error) {
-    console.log("Failed to import wallet:", error);
-    showToast("Please enter a valid private key");
-  }
-}
 
 // 지갑 정보 표시
 function displayWalletInfo() {
@@ -307,7 +256,8 @@ async function updateBalance() {
     console.log("Raw balance from adapter:", balance);
     console.log("Type of balance:", typeof balance);
 
-    const formattedBalance = window.EthereumUtils?.formatBalance(balance) || balance;
+    const formattedBalance =
+      window.EthereumUtils?.formatBalance(balance) || balance;
 
     console.log("Formatted balance:", formattedBalance);
 
@@ -363,11 +313,11 @@ async function loadTransactionHistory(skipLoadingUI = false) {
 
 // Etherscan API로 트랜잭션 조회
 async function fetchTransactionHistory(address) {
-  const url = EthereumConfig.getEtherscanApiUrl('account', 'txlist', {
+  const url = EthereumConfig.getEtherscanApiUrl("account", "txlist", {
     address: address,
     startblock: 0,
     endblock: 99999999,
-    sort: 'desc'
+    sort: "desc",
   });
 
   const response = await fetch(url);
@@ -439,7 +389,7 @@ function createTransactionElement(tx, isSent) {
   // 클릭 시 Etherscan으로 이동
   div.style.cursor = "pointer";
   div.onclick = () => {
-    const explorerUrl = EthereumUtils.getEtherscanUrl('tx', tx.hash, 'sepolia');
+    const explorerUrl = EthereumUtils.getEtherscanUrl("tx", tx.hash, "sepolia");
     window.open(explorerUrl, "_blank");
   };
 
@@ -905,25 +855,27 @@ function analyzeQRData(data) {
 
 // 네트워크 변경 핸들러
 function handleNetworkChange() {
-  console.log('[Index] Network changed, refreshing page data');
-  console.log('Page visibility:', document.visibilityState);
-  console.log('Is background:', document.hidden);
-  console.log('Timestamp:', new Date().toISOString());
-  
+  console.log("[Index] Network changed, refreshing page data");
+  console.log("Page visibility:", document.visibilityState);
+  console.log("Is background:", document.hidden);
+  console.log("Timestamp:", new Date().toISOString());
+
   // 현재 네트워크 정보 업데이트
   const currentNetwork = window.EthereumConfig?.getCurrentNetwork();
   if (currentNetwork) {
-    console.log(`Switched to network: ${currentNetwork.name} (Chain ID: ${currentNetwork.chainId})`);
+    console.log(
+      `Switched to network: ${currentNetwork.name} (Chain ID: ${currentNetwork.chainId})`
+    );
   }
-  
+
   // 지갑이 있다면 잔액과 트랜잭션 다시 로드
   if (currentWallet && currentWallet.address) {
     updateBalance();
     loadTransactionHistory();
   }
-  
+
   // 네트워크 표시 업데이트 (있다면)
-  const networkDisplay = document.querySelector('.network-indicator');
+  const networkDisplay = document.querySelector(".network-indicator");
   if (networkDisplay && currentNetwork) {
     networkDisplay.textContent = currentNetwork.name;
   }
@@ -932,7 +884,6 @@ function handleNetworkChange() {
 // HTML onclick을 위한 전역 함수 등록
 window.createWallet = createWallet;
 window.importFromMnemonic = importFromMnemonic;
-window.importFromPrivateKey = importFromPrivateKey;
 window.navigateToSend = navigateToSend;
 window.navigateToReceive = navigateToReceive;
 
@@ -946,58 +897,40 @@ window.loadTransactionHistory = loadTransactionHistory;
 
 // Import UI Functions
 function showImportOptions() {
-  document.querySelector('.creation-content-metamask').style.display = 'none';
-  document.getElementById('import-options').style.display = 'block';
+  document.querySelector(".creation-content-metamask").style.display = "none";
+  document.getElementById("import-options").style.display = "block";
 }
 
 function hideImportOptions() {
-  document.querySelector('.creation-content-metamask').style.display = 'flex';
-  document.getElementById('import-options').style.display = 'none';
+  document.querySelector(".creation-content-metamask").style.display = "flex";
+  document.getElementById("import-options").style.display = "none";
   // Clear inputs
-  document.getElementById('mnemonic-input').value = '';
-  document.getElementById('privatekey-input').value = '';
-}
-
-function switchImportTab(tab) {
-  // Update tab buttons
-  document.querySelectorAll('.import-tab').forEach(btn => {
-    btn.classList.remove('active');
-  });
-  event.target.classList.add('active');
-  
-  // Show/hide content
-  if (tab === 'mnemonic') {
-    document.getElementById('mnemonic-import-content').style.display = 'block';
-    document.getElementById('privatekey-import-content').style.display = 'none';
-  } else {
-    document.getElementById('mnemonic-import-content').style.display = 'none';
-    document.getElementById('privatekey-import-content').style.display = 'block';
-  }
+  document.getElementById("mnemonic-input").value = "";
+  document.getElementById("privatekey-input").value = "";
 }
 
 window.showImportOptions = showImportOptions;
 window.hideImportOptions = hideImportOptions;
-window.switchImportTab = switchImportTab;
 
 // 니모닉 플로우 완료 콜백
-window.onMnemonicFlowComplete = function(walletData) {
+window.onMnemonicFlowComplete = function (walletData) {
   console.log("Mnemonic flow completed, wallet created:", walletData.address);
-  
+
   // 현재 지갑 설정
   currentWallet = walletData;
   updateWalletInfo(walletData);
-  
+
   // Bridge Handler 초기화
   initBridgeHandler();
-  
+
   // 화면 전환
   document.getElementById("wallet-creation").style.display = "none";
   document.getElementById("wallet-main").style.display = "block";
-  
+
   // 지갑 정보 표시
   displayWalletInfo();
   updateBalance();
-  
+
   // 트랜잭션 로딩 표시 후 조회
   showTransactionLoading();
   setTimeout(() => {
@@ -1014,10 +947,13 @@ function initBridgeHandler() {
   if (window.BridgeHandler) {
     // Handler 초기화
     window.BridgeHandler.initHandler(currentWallet, adapter, CoinConfig);
-    
+
     // Universal Bridge 요청 이벤트 리스너
-    window.addEventListener("universalRequest", window.BridgeHandler.handleUniversalRequest);
-    
+    window.addEventListener(
+      "universalRequest",
+      window.BridgeHandler.handleUniversalRequest
+    );
+
     // DApp 트랜잭션 완료 콜백
     window.onDAppTransactionSent = (txHash) => {
       console.log("DApp transaction sent:", txHash);
@@ -1042,4 +978,3 @@ function updateWalletInfo(wallet) {
     window.BridgeHandler.updateWallet(wallet);
   }
 }
-

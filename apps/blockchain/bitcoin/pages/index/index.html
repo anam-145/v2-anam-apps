@@ -11,47 +11,46 @@
     <div class="container">
       <!-- Wallet Creation Screen -->
       <div id="wallet-creation" class="wallet-screen" style="display: none;">
-        <div class="creation-content">
-          <img src="../../assets/icons/app_icon.png" alt="Bitcoin Logo" class="coin-logo-large" />
-          <h1 class="creation-title">Bitcoin Wallet</h1>
-          <p class="creation-description">Create a secure Bitcoin wallet</p>
+        <div class="creation-content-metamask">
+          <!-- Bitcoin Logo -->
+          <div class="btc-logo-container">
+            <img src="../../assets/icons/app_icon.png" alt="Bitcoin Logo" class="btc-logo" />
+          </div>
           
-          <button class="create-wallet-btn" onclick="createWallet()">
+          <h1 class="creation-title-metamask">Get Started</h1>
+          
+          <button class="create-wallet-btn-metamask" onclick="createWallet()">
             Create New Wallet
           </button>
           
-          <div class="divider">
-            <span>or</span>
+          <button class="import-wallet-btn-text" onclick="showImportOptions()">
+            I already have a wallet
+          </button>
+        </div>
+        
+        <!-- Import Options (Initially Hidden) -->
+        <div id="import-options" class="import-options-container" style="display: none;">
+          <div class="import-header">
+            <button class="back-to-start" onclick="hideImportOptions()">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <h2>Import Wallet</h2>
           </div>
           
-          <div class="import-section">
-            <h3>Import Wallet</h3>
-            
-            <!-- Import from Mnemonic -->
-            <div class="import-option" id="mnemonic-import">
-              <h4>Recover with Mnemonic</h4>
+          <div class="import-content">
+            <!-- Mnemonic Import Only -->
+            <div id="mnemonic-import-content" class="import-tab-content">
+              <p class="import-description">Enter your 12 or 24 word recovery phrase</p>
               <textarea 
                 id="mnemonic-input" 
-                class="import-input" 
-                placeholder="Enter 12 or 24 words separated by spaces"
-                rows="3"
+                class="import-input-metamask" 
+                placeholder="Enter each word separated by spaces"
+                rows="4"
               ></textarea>
-              <button class="import-btn" onclick="importFromMnemonic()">
-                Import with Mnemonic
-              </button>
-            </div>
-            
-            <!-- Import from Private Key -->
-            <div class="import-option" id="privatekey-import">
-              <h4>Recover with Private Key</h4>
-              <input 
-                type="password"
-                id="privatekey-input" 
-                class="import-input" 
-                placeholder="Enter your private key"
-              />
-              <button class="import-btn" onclick="importFromPrivateKey()">
-                Import with Private Key
+              <button class="import-btn-metamask" onclick="importFromMnemonic()">
+                Import Wallet
               </button>
             </div>
           </div>
@@ -78,15 +77,15 @@
         <!-- Balance Card -->
         <div class="card balance-card">
           <div class="balance-header">
-            <span class="balance-label">Mainnet</span>
+            <span class="balance-label">Testnet</span>
             <span class="network-status" id="network-status">●</span>
           </div>
-          <div class="balance-amount">
-            <div class="coin-balance">
-              <span id="balance-display">0.0000</span>
-              <span class="coin-unit">BTC</span>
-            </div>
-            <div class="fiat-value" id="fiat-value">≈ $0.00</div>
+          <div class="balance-content">
+            <h2 class="balance-amount" id="balance-display">0.00000000</h2>
+            <span class="balance-unit">BTC</span>
+          </div>
+          <div class="balance-subtext">
+            <span class="fiat-value" id="fiat-value">≈ $0.00</span>
           </div>
           
           <!-- Address Display -->
@@ -110,29 +109,38 @@
 
         <!-- Transaction History Section -->
         <section class="transactions-section">
-          <h2 class="section-title">Recent Transactions</h2>
-          <div class="tx-list" id="tx-list">
-            <!-- Transactions will be loaded dynamically -->
+          <h3 class="section-title">Recent Transactions</h3>
+          <div id="tx-list" class="tx-list">
+            <!-- 트랜잭션이 여기에 동적으로 추가됩니다 -->
           </div>
         </section>
       </div>
 
+      <!-- Mnemonic Flow Container -->
+      <div id="mnemonic-flow-container" style="display: none;"></div>
     </div>
 
     <!-- Required Libraries -->
-    <!-- 1. 외부 라이브러리 먼저 로드 -->
+    <!-- Bitcoin Bundle (bitcoinjs-lib) -->
     <script src="../../assets/bitcoin-bundle.iife.js"></script>
     
-    <!-- 2. 설정 모듈 -->
+    <!-- Bitcoin Config (Must be loaded before app.js) -->
     <script src="../../utils/config.js"></script>
     
-    <!-- 3. 설정 및 어댑터 (app.js) -->
+    <!-- Bitcoin Adapter -->
     <script src="../../app.js"></script>
     
-    <!-- 4. 유틸리티 함수 -->
+    <!-- Bitcoin Utils -->
     <script src="../../utils/helpers.js"></script>
     
-    <!-- 4. 페이지별 로직 -->
+    <!-- Main Logic -->
     <script src="index.js"></script>
+
+    <!-- Mnemonic Flow Scripts -->
+    <link rel="stylesheet" href="mnemonic/mnemonic-flow.css" />
+    <script src="mnemonic/step1-warning.js"></script>
+    <script src="mnemonic/step2-display.js"></script>
+    <script src="mnemonic/step3-verify.js"></script>
+    <script src="mnemonic/mnemonic-flow.js"></script>
   </body>
 </html>

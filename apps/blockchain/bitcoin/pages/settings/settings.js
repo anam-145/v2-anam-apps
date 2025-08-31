@@ -10,7 +10,6 @@ document.addEventListener("DOMContentLoaded", function () {
   console.log("Settings page loaded");
   loadWalletData();
   applyTheme();
-  checkRecoveryPhraseAvailability();
   updateNetworkDisplay(); // 현재 네트워크 표시
 });
 
@@ -37,8 +36,19 @@ function loadWalletData() {
   
   if (walletData) {
     currentWallet = JSON.parse(walletData);
+    
+    // 새 구조 지갑인 경우 현재 네트워크 주소 사용
+    if (currentWallet.networks && currentWallet.activeNetwork) {
+      const activeNetwork = currentWallet.activeNetwork;
+      const networkData = currentWallet.networks[activeNetwork];
+      if (networkData) {
+        // 하위 호환성을 위해 최상위 레벨에도 현재 네트워크 정보 저장
+        currentWallet.address = networkData.address;
+        currentWallet.privateKey = networkData.privateKey;
+      }
+    }
   } else {
-    showToast && showToast("No wallet found", "error");
+    showToast && showToast("No wallet found");
     navigateBack();
   }
 }
@@ -48,29 +58,11 @@ function navigateBack() {
   window.location.href = "../index/index.html";
 }
 
-// Check if recovery phrase is available
-function checkRecoveryPhraseAvailability() {
-  if (!currentWallet || !currentWallet.mnemonic) {
-    // Disable recovery phrase button if no mnemonic
-    const recoveryBtn = document.getElementById("recovery-phrase-btn");
-    const recoveryText = document.getElementById("recovery-phrase-text");
-    
-    if (recoveryBtn) {
-      recoveryBtn.disabled = true;
-      recoveryBtn.style.opacity = "0.5";
-      recoveryBtn.style.cursor = "not-allowed";
-      recoveryBtn.onclick = null;
-    }
-    
-    if (recoveryText) {
-      recoveryText.textContent = "Recovery Phrase Not Available";
-    }
-  }
-}
 
 // Show recovery phrase
 function showRecoveryPhrase() {
   if (!currentWallet || !currentWallet.mnemonic) {
+    // This should not happen anymore as all wallets have mnemonic
     showToast && showToast("No recovery phrase available", "warning");
     return;
   }
@@ -217,8 +209,9 @@ async function selectNetwork(networkId) {
   console.log("Selecting network:", networkId);
   
   try {
-    // 현재 지갑의 니모닉 저장 (있는 경우)
-    const currentMnemonic = currentWallet?.mnemonic;
+    // 현재 지갑 데이터 확인
+    const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
+    const currentWalletData = { ...currentWallet };
     
     // 네트워크 변경
     const success = window.BitcoinConfig.setActiveNetwork(networkId);
@@ -236,7 +229,6 @@ async function selectNetwork(networkId) {
     
     // 성공 메시지
     const networkName = window.BitcoinConfig.displayName;
-    showToast && showToast(`Switching to ${networkName}...`, 'info');
     
     // 현재 네트워크 표시 업데이트
     updateNetworkDisplay();
@@ -244,52 +236,61 @@ async function selectNetwork(networkId) {
     // 모달 닫기
     closeNetworkModal();
     
-    // 니모닉이 있는 경우 같은 시드로 새 네트워크 주소 생성
-    if (currentMnemonic) {
-      showToast && showToast('Regenerating wallet for new network...', 'info');
+    // 새로운 구조의 지갑인지 확인
+    if (currentWalletData?.networks) {
+      // 이미 양쪽 네트워크 주소가 있는 경우 - 즉시 전환
+      currentWalletData.activeNetwork = networkId;
+      
+      // 현재 네트워크 주소를 하위 호환성 필드에 복사
+      const networkData = currentWalletData.networks[networkId];
+      if (networkData) {
+        currentWalletData.address = networkData.address;
+        currentWalletData.privateKey = networkData.privateKey;
+      }
+      
+      localStorage.setItem(walletKey, JSON.stringify(currentWalletData));
+      
+      showToast && showToast(`Switched to ${networkName}`, 'success');
+      
+      // 페이지 새로고침 (빠르게)
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+      
+    } else if (currentWalletData?.mnemonic) {
+      // 구 버전 지갑 - 새 구조로 마이그레이션
+      showToast && showToast('Migrating wallet structure...', 'info');
       
       try {
-        // 어댑터 가져오기
         const adapter = window.getAdapter();
+        const newWallet = await adapter.importFromMnemonic(currentWalletData.mnemonic);
         
-        // 같은 니모닉으로 새 네트워크 주소 생성
-        const newWallet = await adapter.importFromMnemonic(currentMnemonic);
+        // 새 구조로 저장
+        const walletData = {
+          ...currentWalletData,  // 기존 데이터 유지
+          ...newWallet,  // 새 구조 덮어쓰기
+          activeNetwork: networkId
+        };
         
-        // 새 지갑 데이터 저장
-        const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
-        localStorage.setItem(walletKey, JSON.stringify(newWallet));
+        localStorage.setItem(walletKey, JSON.stringify(walletData));
         
-        showToast && showToast(`Wallet regenerated for ${networkName}`, 'success');
+        showToast && showToast(`Migrated and switched to ${networkName}`, 'success');
         
-        // 페이지 새로고침
         setTimeout(() => {
           window.location.reload();
-        }, 1500);
+        }, 1000);
         
       } catch (error) {
-        console.error('Failed to regenerate wallet:', error);
-        showToast && showToast('Failed to regenerate wallet. Please import manually.', 'error');
-        
-        // 실패 시 지갑 데이터 초기화하고 새로고침
-        const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
-        localStorage.removeItem(walletKey);
-        
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
+        console.error('Failed to migrate wallet:', error);
+        showToast && showToast('Migration failed', 'error');
       }
     } else {
-      // 니모닉이 없는 경우 (개인키로 가져온 경우) 경고
-      showToast && showToast('Cannot regenerate wallet without seed phrase', 'warning');
-      showToast && showToast('Please create a new wallet or import with seed phrase', 'info');
-      
-      // 지갑 데이터 초기화
-      const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
-      localStorage.removeItem(walletKey);
+      // 지갑이 없는 경우
+      showToast && showToast('No wallet to switch', 'info');
       
       setTimeout(() => {
         window.location.reload();
-      }, 2000);
+      }, 1000);
     }
     
   } catch (error) {
@@ -311,16 +312,4 @@ function updateNetworkCheckmarks(networkId) {
   }
 }
 
-// ================================================================
-// 전역 스코프에 함수 노출 (HTML onclick 이벤트용)
-// ================================================================
-window.navigateBack = navigateBack;
-window.deleteWallet = deleteWallet;
-window.showPrivateKey = showPrivateKey;
-window.showRecoveryPhrase = showRecoveryPhrase;
-window.closeModal = closeModal;
-window.copyToClipboard = copyToClipboard;
-window.showNetworkSelector = showNetworkSelector;
-window.closeNetworkModal = closeNetworkModal;
-window.selectNetwork = selectNetwork;
 
