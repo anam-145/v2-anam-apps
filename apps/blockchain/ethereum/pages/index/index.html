@@ -11,47 +11,65 @@
     <div class="container">
       <!-- Wallet Creation Screen -->
       <div id="wallet-creation" class="wallet-screen" style="display: none;">
-        <div class="creation-content">
-          <img src="../../assets/icons/app_icon.png" alt="Coin Logo" class="coin-logo-large" />
-          <h1 class="creation-title">Coin Wallet</h1>
-          <p class="creation-description">Create a secure Coin wallet</p>
-          
-          <button class="create-wallet-btn" onclick="createWallet()">
-            Create New Wallet
-          </button>
-          
-          <div class="divider">
-            <span>or</span>
+        <div class="creation-content-metamask">
+          <!-- Ethereum Logo -->
+          <div class="eth-logo-container">
+            <img src="../../assets/icons/app_icon.png" alt="Ethereum Logo" class="eth-logo" />
           </div>
           
-          <div class="import-section">
-            <h3>Import Wallet</h3>
-            
-            <!-- Import from Mnemonic -->
-            <div class="import-option" id="mnemonic-import">
-              <h4>Recover with Mnemonic</h4>
+          <h1 class="creation-title-metamask">시작하기!</h1>
+          
+          <button class="create-wallet-btn-metamask" onclick="createWallet()">
+            새 지갑 생성
+          </button>
+          
+          <button class="import-wallet-btn-text" onclick="showImportOptions()">
+            기존 지갑이 있습니다
+          </button>
+        </div>
+        
+        <!-- Import Options (Initially Hidden) -->
+        <div id="import-options" class="import-options-container" style="display: none;">
+          <div class="import-header">
+            <button class="back-to-start" onclick="hideImportOptions()">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <h2>지갑 가져오기</h2>
+          </div>
+          
+          <div class="import-tabs">
+            <button class="import-tab active" onclick="switchImportTab('mnemonic')">복구 구문</button>
+            <button class="import-tab" onclick="switchImportTab('privatekey')">개인키</button>
+          </div>
+          
+          <div class="import-content">
+            <!-- Mnemonic Import -->
+            <div id="mnemonic-import-content" class="import-tab-content">
+              <p class="import-description">12개 또는 24개의 복구 구문을 입력하세요</p>
               <textarea 
                 id="mnemonic-input" 
-                class="import-input" 
-                placeholder="Enter 12 or 24 words separated by spaces"
-                rows="3"
+                class="import-input-metamask" 
+                placeholder="각 단어를 공백으로 구분하여 입력"
+                rows="4"
               ></textarea>
-              <button class="import-btn" onclick="importFromMnemonic()">
-                Import from Mnemonic
+              <button class="import-btn-metamask" onclick="importFromMnemonic()">
+                지갑 가져오기
               </button>
             </div>
             
-            <!-- Import from Private Key -->
-            <div class="import-option" id="privatekey-import">
-              <h4>Recover with Private Key</h4>
+            <!-- Private Key Import -->
+            <div id="privatekey-import-content" class="import-tab-content" style="display: none;">
+              <p class="import-description">개인키를 입력하세요</p>
               <input 
                 type="password"
                 id="privatekey-input" 
-                class="import-input" 
-                placeholder="Enter your private key"
+                class="import-input-metamask" 
+                placeholder="개인키 입력"
               />
-              <button class="import-btn" onclick="importFromPrivateKey()">
-                Import from Private Key
+              <button class="import-btn-metamask" onclick="importFromPrivateKey()">
+                지갑 가져오기
               </button>
             </div>
           </div>
@@ -117,6 +135,8 @@
         </section>
       </div>
 
+      <!-- Mnemonic Flow Container -->
+      <div id="mnemonic-flow-container" style="display: none;"></div>
     </div>
 
     <!-- Required Libraries -->
@@ -137,5 +157,12 @@
     
     <!-- Main Logic -->
     <script src="index.js"></script>
+
+    <!-- Mnemonic Flow Scripts -->
+    <link rel="stylesheet" href="mnemonic/mnemonic-flow.css" />
+    <script src="mnemonic/step1-warning.js"></script>
+    <script src="mnemonic/step2-display.js"></script>
+    <script src="mnemonic/step3-verify.js"></script>
+    <script src="mnemonic/mnemonic-flow.js"></script>
   </body>
 </html>

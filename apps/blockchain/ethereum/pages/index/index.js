@@ -74,12 +74,10 @@ function applyTheme() {
 
   // 타이틀 변경
   document.title = `${CoinConfig.name} Wallet`;
-  document.querySelector(
-    ".creation-title"
-  ).textContent = `${CoinConfig.name} Wallet`;
-  document.querySelector(
-    ".creation-description"
-  ).textContent = `Create a secure ${CoinConfig.name} wallet`;
+  
+  // 이제 MetaMask 스타일이므로 이 요소들이 없음
+  // document.querySelector(".creation-title")?.textContent = `${CoinConfig.name} Wallet`;
+  // document.querySelector(".creation-description")?.textContent = `Create a secure ${CoinConfig.name} wallet`;
 }
 
 // 네트워크 상태 확인
@@ -105,12 +103,14 @@ async function checkWalletStatus() {
     // 지갑이 있으면 메인 화면 표시
     try {
       currentWallet = JSON.parse(walletData);
+      console.log('[checkWalletStatus] Wallet loaded:', currentWallet.address);
       
       // Bridge Handler 초기화
       initBridgeHandler();
 
       document.getElementById("wallet-creation").style.display = "none";
       document.getElementById("wallet-main").style.display = "block";
+      console.log('[checkWalletStatus] Switched to main screen');
 
       displayWalletInfo();
 
@@ -126,6 +126,11 @@ async function checkWalletStatus() {
       } catch (error) {
         console.error("Failed to load wallet data:", error);
       }
+      
+      // 백업 리마인더 체크 (니모닉 플로우에서 스킵한 경우)
+      if (window.mnemonicFlow) {
+        window.mnemonicFlow.checkBackupReminder();
+      }
     } catch (error) {
       console.error("Failed to load wallet:", error);
       showToast("Failed to load wallet");
@@ -133,12 +138,13 @@ async function checkWalletStatus() {
     }
   } else {
     // 지갑이 없으면 생성 화면 표시
+    console.log('[checkWalletStatus] No wallet found, showing creation screen');
     document.getElementById("wallet-creation").style.display = "block";
     document.getElementById("wallet-main").style.display = "none";
   }
 }
 
-// 새 지갑 생성
+// 새 지갑 생성 - 니모닉 플로우 시작
 async function createWallet() {
   if (!adapter) {
     showToast("CoinAdapter not implemented");
@@ -146,43 +152,18 @@ async function createWallet() {
   }
 
   try {
-    console.log("Starting new wallet creation");
-    showToast("Creating wallet...");
-
-    // 어댑터를 통해 지갑 생성
-    const wallet = await adapter.generateWallet();
-
-    // localStorage에 저장
-    const walletData = {
-      address: wallet.address,
-      privateKey: wallet.privateKey, // 실제로는 암호화 필요
-      mnemonic: wallet.mnemonic, // 실제로는 암호화 필요
-      createdAt: new Date().toISOString(),
-    };
-
-    const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
-    localStorage.setItem(walletKey, JSON.stringify(walletData));
-    currentWallet = walletData;
-    updateWalletInfo(walletData);
-
-    console.log("Wallet created:", wallet.address);
-    showToast("Wallet created successfully!");
-
-    // 화면 전환
-    document.getElementById("wallet-creation").style.display = "none";
-    document.getElementById("wallet-main").style.display = "block";
-
-    displayWalletInfo();
-    updateBalance();
-
-    // 트랜잭션 로딩 표시 후 조회
-    showTransactionLoading();
-    setTimeout(() => {
-      loadTransactionHistory(true); // skipLoadingUI = true
-    }, 100);
+    console.log("Starting mnemonic flow for wallet creation");
+    
+    // 니모닉 플로우 시작
+    if (window.mnemonicFlow) {
+      window.mnemonicFlow.start();
+    } else {
+      console.error("Mnemonic flow not initialized");
+      showToast("Failed to initialize wallet creation flow");
+    }
   } catch (error) {
-    console.error("Failed to create wallet:", error);
-    showToast("Failed to create wallet: " + error.message);
+    console.error("Failed to start wallet creation:", error);
+    showToast("Failed to start wallet creation: " + error.message);
   }
 }
 
@@ -962,6 +943,67 @@ function navigateToSettings() {
 window.navigateToSettings = navigateToSettings;
 window.resetWallet = resetWallet;
 window.loadTransactionHistory = loadTransactionHistory;
+
+// Import UI Functions
+function showImportOptions() {
+  document.querySelector('.creation-content-metamask').style.display = 'none';
+  document.getElementById('import-options').style.display = 'block';
+}
+
+function hideImportOptions() {
+  document.querySelector('.creation-content-metamask').style.display = 'flex';
+  document.getElementById('import-options').style.display = 'none';
+  // Clear inputs
+  document.getElementById('mnemonic-input').value = '';
+  document.getElementById('privatekey-input').value = '';
+}
+
+function switchImportTab(tab) {
+  // Update tab buttons
+  document.querySelectorAll('.import-tab').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  
+  // Show/hide content
+  if (tab === 'mnemonic') {
+    document.getElementById('mnemonic-import-content').style.display = 'block';
+    document.getElementById('privatekey-import-content').style.display = 'none';
+  } else {
+    document.getElementById('mnemonic-import-content').style.display = 'none';
+    document.getElementById('privatekey-import-content').style.display = 'block';
+  }
+}
+
+window.showImportOptions = showImportOptions;
+window.hideImportOptions = hideImportOptions;
+window.switchImportTab = switchImportTab;
+
+// 니모닉 플로우 완료 콜백
+window.onMnemonicFlowComplete = function(walletData) {
+  console.log("Mnemonic flow completed, wallet created:", walletData.address);
+  
+  // 현재 지갑 설정
+  currentWallet = walletData;
+  updateWalletInfo(walletData);
+  
+  // Bridge Handler 초기화
+  initBridgeHandler();
+  
+  // 화면 전환
+  document.getElementById("wallet-creation").style.display = "none";
+  document.getElementById("wallet-main").style.display = "block";
+  
+  // 지갑 정보 표시
+  displayWalletInfo();
+  updateBalance();
+  
+  // 트랜잭션 로딩 표시 후 조회
+  showTransactionLoading();
+  setTimeout(() => {
+    loadTransactionHistory(true); // skipLoadingUI = true
+  }, 100);
+};
 
 // ================================================================
 // Universal Bridge 요청 처리 (bridge/handler.js 사용)
