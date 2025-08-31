@@ -22,7 +22,7 @@
         return ethers.formatEther(balance);
       }
     } catch (error) {
-      console.error("Error formatting balance:", error);
+      console.log("Error formatting balance:", error);
     }
     
     // Fallback: BigInt 사용 (정밀도 손실 최소화)
@@ -38,7 +38,7 @@
       
       return `${wholePart}.${displayFraction}`;
     } catch (fallbackError) {
-      console.error("Fallback formatting error:", fallbackError);
+      console.log("Fallback formatting error:", fallbackError);
       return "0.0000";
     }
   }
@@ -55,7 +55,7 @@
         }
       }
     } catch (error) {
-      console.error("Error parsing amount with ethers:", error);
+      console.log("Error parsing amount with ethers:", error);
     }
     
     // Fallback
@@ -117,7 +117,7 @@
       document.body.removeChild(textArea);
       return result;
     } catch (error) {
-      console.error("Copy to clipboard failed:", error);
+      console.log("Copy to clipboard failed:", error);
       return false;
     }
   }
@@ -231,7 +231,7 @@
       
       return cacheData.data;
     } catch (error) {
-      console.error("Cache read error:", error);
+      console.log("Cache read error:", error);
       return null;
     }
   }

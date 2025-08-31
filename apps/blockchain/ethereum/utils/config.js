@@ -73,7 +73,7 @@
     try {
       return JSON.parse(localStorage.getItem('eth_custom_networks') || '[]');
     } catch (error) {
-      console.error('Failed to load custom networks:', error);
+      console.log('Failed to load custom networks:', error);
       return [];
     }
   }

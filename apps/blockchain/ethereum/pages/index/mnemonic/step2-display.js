@@ -1,5 +1,5 @@
 // Ethereum Mnemonic Flow - Step 2: Mnemonic Display
-// 니모닉 표시 화면 컴포넌트
+// Mnemonic display screen component
 
 class MnemonicDisplayStep {
   constructor(flowManager) {
@@ -18,18 +18,18 @@ class MnemonicDisplayStep {
               <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
-          <span class="step-indicator">2단계/3단계</span>
-          <h2 class="step-title">비밀복구구문을 저장하세요</h2>
+          <span class="step-indicator">Step 2 of 3</span>
+          <h2 class="step-title">Write Down Your Recovery Phrase</h2>
         </div>
         
         <div class="step-content">
           <p class="description">
-            이것이 회원님의 비밀복구구문입니다. 올바른 순서로 적어두고 안전하게 보관하세요.
+            This is your Secret Recovery Phrase. Write it down in the correct order and store it safely.
           </p>
           
           <div class="security-notice">
-            <span class="lock-icon">🔒</span>
-            <span>절대 누구와도 공유하지 마세요.</span>
+            <span class="lock-icon"></span>
+            <span>Never share this with anyone.</span>
           </div>
           
           <div class="mnemonic-container">
@@ -48,32 +48,32 @@ class MnemonicDisplayStep {
                   <rect x="7" y="7" width="10" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/>
                   <path d="M4 13V4C4 3.44772 4.44772 3 5 3H14" stroke="currentColor" stroke-width="1.5"/>
                 </svg>
-                <span id="copy-text">클립보드에 복사</span>
+                <span id="copy-text">Copy to Clipboard</span>
               </button>
             </div>
           </div>
           
           <div class="warning-tips">
-            <h4>안전한 보관 방법:</h4>
+            <h4>Safe Storage Tips:</h4>
             <ul>
-              <li>종이에 적어서 안전한 곳에 보관</li>
-              <li>여러 장소에 나누어 보관</li>
-              <li>신뢰할 수 있는 가족과 공유 (필요시)</li>
+              <li>Write it on paper and keep it in a safe place</li>
+              <li>Store copies in multiple secure locations</li>
+              <li>Share with trusted family members if necessary</li>
             </ul>
             
-            <h4 class="danger-title">절대 하지 마세요:</h4>
+            <h4 class="danger-title">Never Do This:</h4>
             <ul class="danger-list">
-              <li>온라인 메모장이나 클라우드에 저장</li>
-              <li>이메일이나 메신저로 전송</li>
-              <li>스크린샷으로 저장</li>
-              <li>공공장소에서 큰 소리로 읽기</li>
+              <li>Save in online notes or cloud storage</li>
+              <li>Send via email or messenger</li>
+              <li>Take a screenshot</li>
+              <li>Read aloud in public places</li>
             </ul>
           </div>
         </div>
         
         <div class="step-actions">
           <button class="btn btn-primary" id="next-btn">
-            다음
+            Continue
           </button>
         </div>
       </div>
@@ -81,26 +81,26 @@ class MnemonicDisplayStep {
   }
 
   attachEvents() {
-    // 뒤로가기 버튼
+    // Back button
     document.getElementById('back-btn').addEventListener('click', () => {
       this.handleBack();
     });
 
-    // 복사 버튼
+    // Copy button
     document.getElementById('copy-btn').addEventListener('click', () => {
       this.handleCopy();
     });
 
-    // 다음 버튼
+    // Next button
     document.getElementById('next-btn').addEventListener('click', () => {
       this.handleNext();
     });
   }
 
   handleBack() {
-    // 이전 단계로 돌아가기 확인
-    if (!this.copied || confirm('비밀복구구문을 저장하셨나요? 이전 페이지로 돌아가면 다시 생성됩니다.')) {
-      // 니모닉 초기화하고 처음부터
+    // Confirm going back
+    if (!this.copied || confirm('Have you saved your recovery phrase? Going back will generate a new one.')) {
+      // Reset mnemonic and start over
       this.flowManager.reset();
       this.flowManager.showStep(1);
     }
@@ -110,28 +110,28 @@ class MnemonicDisplayStep {
     try {
       await navigator.clipboard.writeText(this.flowManager.mnemonic);
       
-      // 버튼 상태 변경
+      // Change button state
       const copyBtn = document.getElementById('copy-btn');
       const copyText = document.getElementById('copy-text');
       
       copyBtn.classList.add('copied');
-      copyText.textContent = '복사됨!';
+      copyText.textContent = 'Copied!';
       
-      // 복사 플래그 설정
+      // Set copy flag
       this.copied = true;
       
-      // 토스트 메시지
+      // Toast message
       if (window.showToast) {
-        window.showToast('📋 복구 문구가 복사되었습니다. 안전한 곳에 보관하세요!', 'success', 4000);
+        window.showToast('Recovery phrase copied. Store it in a safe place!', 'success', 4000);
       }
       
-      // 3초 후 원래대로
+      // Reset after 3 seconds
       setTimeout(() => {
         copyBtn.classList.remove('copied');
-        copyText.textContent = '클립보드에 복사';
+        copyText.textContent = 'Copy to Clipboard';
       }, 3000);
       
-      // 복사 이벤트 로깅 (보안 감사용)
+      // Log copy event (for security audit)
       const event = {
         action: 'mnemonic_copied',
         timestamp: new Date().toISOString(),
@@ -140,29 +140,15 @@ class MnemonicDisplayStep {
       console.log('Security Event:', event);
       
     } catch (err) {
-      console.error('Failed to copy:', err);
+      console.log('Failed to copy:', err);
       if (window.showToast) {
-        window.showToast('복사에 실패했습니다. 수동으로 적어주세요.', 'error');
+        window.showToast('Failed to copy. Please write it down manually.', 'error');
       }
     }
   }
 
   handleNext() {
-    // 복사 여부 확인
-    if (!this.copied) {
-      // 경고 모달 표시
-      const confirmed = confirm(
-        '⚠️ 비밀복구구문을 아직 저장하지 않으셨습니다.\n\n' +
-        '이 문구 없이는 지갑을 복구할 수 없습니다.\n' +
-        '정말 계속하시겠습니까?'
-      );
-      
-      if (!confirmed) {
-        return;
-      }
-    }
-    
-    // 다음 단계로
+    // 바로 다음 단계로 이동
     this.flowManager.showStep(3);
   }
 }

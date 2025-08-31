@@ -73,7 +73,7 @@ function generateQRCode() {
       correctLevel: QRCode.CorrectLevel.M
     });
   } catch (error) {
-    console.error('Failed to generate QR code:', error);
+    console.log('Failed to generate QR code:', error);
     qrContainer.innerHTML = '<div style="padding: 20px; color: #999;">Failed to generate QR code</div>';
   }
 }
@@ -105,7 +105,7 @@ async function copyAddress() {
       await navigator.clipboard.writeText(currentWallet.address);
       showToast("Address copied to clipboard");
     } catch (err) {
-      console.error('Copy failed:', err);
+      console.log('Copy failed:', err);
       showToast("Failed to copy");
     }
   }

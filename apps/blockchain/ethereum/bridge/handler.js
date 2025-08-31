@@ -60,7 +60,7 @@
       // 알 수 없는 요청 타입
       sendUniversalError(requestId, -32000, "Unknown request type");
     } catch (error) {
-      console.error("Failed to parse universal request:", error);
+      console.log("Failed to parse universal request:", error);
       sendUniversalError(requestId, -32700, "Parse error");
     }
   }
@@ -81,7 +81,7 @@
           currentWallet = JSON.parse(walletData);
           console.log("Wallet info reloaded for DApp request");
         } catch (e) {
-          console.error("Failed to load wallet:", e);
+          console.log("Failed to load wallet:", e);
           sendDAppError(requestId, -32000, "No wallet found");
           return;
         }
@@ -196,7 +196,7 @@
           sendDAppError(requestId, -32601, `Method not supported: ${method}`);
       }
     } catch (error) {
-      console.error("Error handling DApp request:", error);
+      console.log("Error handling DApp request:", error);
       sendDAppError(requestId, -32603, error.message);
     }
   }
@@ -245,7 +245,7 @@
         window.onDAppTransactionSent(result.hash);
       }
     } catch (error) {
-      console.error("DApp transaction failed:", error);
+      console.log("DApp transaction failed:", error);
       sendDAppError(requestId, -32000, error.message);
     }
   }
@@ -277,7 +277,7 @@
 
       sendDAppResponse(requestId, signature);
     } catch (error) {
-      console.error("DApp signing failed:", error);
+      console.log("DApp signing failed:", error);
       sendDAppError(requestId, -32000, error.message);
     }
   }
@@ -310,7 +310,7 @@
 
       sendDAppResponse(requestId, signature);
     } catch (error) {
-      console.error("DApp typed data signing failed:", error);
+      console.log("DApp typed data signing failed:", error);
       sendDAppError(requestId, -32000, error.message);
     }
   }
@@ -342,7 +342,7 @@
       window.anam.sendUniversalResponse(requestId, JSON.stringify(response));
       console.log("Universal response sent:", response);
     } else {
-      console.error("Universal Bridge not available for response");
+      console.log("Universal Bridge not available for response");
     }
   }
 

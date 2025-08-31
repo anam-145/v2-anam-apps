@@ -107,7 +107,7 @@ function deleteWallet() {
       window.location.href = "../index/index.html";
     }, 500);
   } catch (error) {
-    console.error("Failed to delete wallet:", error);
+    console.log("Failed to delete wallet:", error);
     showToast("Failed to delete wallet");
   }
 }
@@ -158,7 +158,7 @@ async function copyToClipboard() {
       await navigator.clipboard.writeText(value);
       success = true;
     } catch (error) {
-      console.error("Failed to copy:", error);
+      console.log("Failed to copy:", error);
     }
   }
   
@@ -238,7 +238,7 @@ async function selectNetwork(networkId) {
     }, 1000);
     
   } catch (error) {
-    console.error('Failed to switch network:', error);
+    console.log('Failed to switch network:', error);
     showToast('Failed to switch network');
   }
 }
@@ -331,7 +331,7 @@ async function addCustomRPC(event) {
     const blockNumber = await testProvider.getBlockNumber();
     console.log("RPC connection successful, block number:", blockNumber);
   } catch (error) {
-    console.error("RPC connection failed:", error);
+    console.log("RPC connection failed:", error);
     showToast("Failed to connect to RPC endpoint");
     return;
   }

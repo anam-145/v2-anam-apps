@@ -28,7 +28,7 @@
                 
                 // Native 호출 (v2.0: WalletNative만 사용)
                 if (!window.WalletNative) {
-                    console.error('[WalletBridge] WalletNative not found');
+                    console.log('[WalletBridge] WalletNative not found');
                     reject(new Error('WalletNative interface not found'));
                     delete this._callbacks[requestId];
                     return;
@@ -37,7 +37,7 @@
                 try {
                     window.WalletNative.universalBridge(requestId, payload);
                 } catch (e) {
-                    console.error('[WalletBridge] Native call failed:', e);
+                    console.log('[WalletBridge] Native call failed:', e);
                     reject(e);
                     delete this._callbacks[requestId];
                     return;
@@ -74,7 +74,7 @@
                     callback.resolve(response);
                 }
             } catch (e) {
-                console.error('[WalletBridge] Response handling error:', e);
+                console.log('[WalletBridge] Response handling error:', e);
                 callback.reject(e);
             }
             
@@ -163,7 +163,7 @@
                     
                     // RPC 에러 처리
                     if (rpc.error) {
-                        console.error(`[Ethereum] RPC Error:`, rpc.error);
+                        console.log(`[Ethereum] RPC Error:`, rpc.error);
                         throw rpc.error;
                     }
                     
@@ -228,7 +228,7 @@
                 console.log(`[Ethereum] Final result for ${method}:`, finalResult);
                 return finalResult;
             } catch (error) {
-                console.error(`[Ethereum] Error in ${method}:`, error);
+                console.log(`[Ethereum] Error in ${method}:`, error);
                 // 에러 발생 시에도 pending 목록에서 제거
                 this._pendingRequests.delete(method);
                 throw error;
@@ -266,7 +266,7 @@
                 try {
                     handler(...args);
                 } catch (err) {
-                    console.error(`[Ethereum] Event handler error:`, err);
+                    console.log(`[Ethereum] Event handler error:`, err);
                 }
             });
         },

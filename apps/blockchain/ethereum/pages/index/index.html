@@ -17,14 +17,14 @@
             <img src="../../assets/icons/app_icon.png" alt="Ethereum Logo" class="eth-logo" />
           </div>
           
-          <h1 class="creation-title-metamask">시작하기!</h1>
+          <h1 class="creation-title-metamask">Get Started</h1>
           
           <button class="create-wallet-btn-metamask" onclick="createWallet()">
-            새 지갑 생성
+            Create New Wallet
           </button>
           
           <button class="import-wallet-btn-text" onclick="showImportOptions()">
-            기존 지갑이 있습니다
+            I already have a wallet
           </button>
         </div>
         
@@ -36,40 +36,40 @@
                 <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
-            <h2>지갑 가져오기</h2>
+            <h2>Import Wallet</h2>
           </div>
           
           <div class="import-tabs">
-            <button class="import-tab active" onclick="switchImportTab('mnemonic')">복구 구문</button>
-            <button class="import-tab" onclick="switchImportTab('privatekey')">개인키</button>
+            <button class="import-tab active" onclick="switchImportTab('mnemonic')">Recovery Phrase</button>
+            <button class="import-tab" onclick="switchImportTab('privatekey')">Private Key</button>
           </div>
           
           <div class="import-content">
             <!-- Mnemonic Import -->
             <div id="mnemonic-import-content" class="import-tab-content">
-              <p class="import-description">12개 또는 24개의 복구 구문을 입력하세요</p>
+              <p class="import-description">Enter your 12 or 24 word recovery phrase</p>
               <textarea 
                 id="mnemonic-input" 
                 class="import-input-metamask" 
-                placeholder="각 단어를 공백으로 구분하여 입력"
+                placeholder="Enter each word separated by spaces"
                 rows="4"
               ></textarea>
               <button class="import-btn-metamask" onclick="importFromMnemonic()">
-                지갑 가져오기
+                Import Wallet
               </button>
             </div>
             
             <!-- Private Key Import -->
             <div id="privatekey-import-content" class="import-tab-content" style="display: none;">
-              <p class="import-description">개인키를 입력하세요</p>
+              <p class="import-description">Enter your private key</p>
               <input 
                 type="password"
                 id="privatekey-input" 
                 class="import-input-metamask" 
-                placeholder="개인키 입력"
+                placeholder="Enter private key"
               />
               <button class="import-btn-metamask" onclick="importFromPrivateKey()">
-                지갑 가져오기
+                Import Wallet
               </button>
             </div>
           </div>

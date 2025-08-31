@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", function () {
   adapter = window.getAdapter();
   
   if (!adapter) {
-    console.error("EthereumAdapter not initialized");
+    console.log("EthereumAdapter not initialized");
     showToast("Failed to initialize Ethereum adapter");
   }
 
@@ -60,7 +60,7 @@ async function updateUI() {
       const formattedBalance = formatBalance ? formatBalance(balance) : balance;
       document.getElementById('available-balance').textContent = formattedBalance;
     } catch (error) {
-      console.error("Failed to fetch balance:", error);
+      console.log("Failed to fetch balance:", error);
     }
   }
 }
@@ -137,7 +137,7 @@ async function confirmSend() {
     }, 2000);
 
   } catch (error) {
-    console.error("Transaction failed:", error);
+    console.log("Transaction failed:", error);
     showToast("Transaction failed: " + error.message);
   }
 }
@@ -188,7 +188,7 @@ function scanQRCode() {
     
     console.log("QR scanner requested to main process");
   } else {
-    console.error("anamUI.scanQRCode API not available");
+    console.log("anamUI.scanQRCode API not available");
     showToast("QR scan feature is not available");
     
     // 개발 환경에서 테스트용
@@ -222,12 +222,12 @@ function handleQRScanned(event) {
         amountInput.focus();
       }
     } else {
-      console.error("Invalid Ethereum address format:", qrData);
+      console.log("Invalid Ethereum address format:", qrData);
       showToast("Invalid address format");
     }
   } else {
     const error = event.detail ? event.detail.error : "Unknown error";
-    console.error("QR scan failed:", error);
+    console.log("QR scan failed:", error);
     showToast("QR scan failed: " + error);
   }
 }

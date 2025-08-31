@@ -1,5 +1,5 @@
 // Ethereum Mnemonic Flow - Step 1: Security Warning
-// 보안 경고 화면 컴포넌트
+// Security warning screen component
 
 class SecurityWarningStep {
   constructor(flowManager) {
@@ -15,8 +15,8 @@ class SecurityWarningStep {
               <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
-          <span class="step-indicator">1단계/3단계</span>
-          <h2 class="step-title">지갑 보호하기</h2>
+          <span class="step-indicator">Step 1 of 3</span>
+          <h2 class="step-title">Secure Your Wallet</h2>
         </div>
         
         <div class="step-content">
@@ -31,38 +31,38 @@ class SecurityWarningStep {
           </div>
           
           <p class="main-message">
-            자산을 잃지 않으려면 비밀복구구문을(를) 신뢰할 수 있는 장소에 저장해 지갑을 보호하세요.
+            Secure your wallet by saving your Secret Recovery Phrase in a trusted place.
           </p>
           
           <div class="warning-box">
-            <span class="warning-icon">⚠️</span>
+            <span class="warning-icon">!</span>
             <div class="warning-text">
-              <p>앱이 잠기거나 새 기기를 사용할 때 지갑을 복구할 수 있는 유일한 방법입니다.</p>
+              <p>This is the only way to recover your wallet if your app is locked or you get a new device.</p>
             </div>
           </div>
           
           <div class="info-list">
             <div class="info-item">
-              <span class="info-icon">🔐</span>
-              <span>비밀복구구문은 12개의 영어 단어로 구성됩니다</span>
+              <span class="info-icon"></span>
+              <span>Your recovery phrase consists of 12 English words</span>
             </div>
             <div class="info-item">
-              <span class="info-icon">📝</span>
-              <span>종이에 적어 안전한 곳에 보관하세요</span>
+              <span class="info-icon"></span>
+              <span>Write it down on paper and keep it in a safe place</span>
             </div>
             <div class="info-item">
-              <span class="info-icon">🚫</span>
-              <span>절대 온라인이나 스크린샷으로 저장하지 마세요</span>
+              <span class="info-icon"></span>
+              <span>Never save it online or as a screenshot</span>
             </div>
           </div>
         </div>
         
         <div class="step-actions">
           <button class="btn btn-secondary" id="skip-btn">
-            나중에 알림받기
+            Remind Me Later
           </button>
           <button class="btn btn-primary" id="continue-btn">
-            지갑 보호 시작
+            Start Securing
           </button>
         </div>
       </div>
@@ -92,47 +92,47 @@ class SecurityWarningStep {
   }
 
   handleSkip() {
-    // 스킵 횟수 증가
+    // Increment skip count
     const skipCount = parseInt(localStorage.getItem('eth_mnemonic_skip_count') || '0') + 1;
     localStorage.setItem('eth_mnemonic_skip_count', skipCount.toString());
     localStorage.setItem('eth_mnemonic_skipped', 'true');
     
-    // 토스트 메시지
+    // Toast message
     if (window.showToast) {
-      window.showToast('나중에 지갑을 보호하실 수 있습니다.', 'info');
+      window.showToast('You can secure your wallet later.', 'info');
     }
     
-    // 지갑 생성 (니모닉 백업 없이)
+    // Create wallet (without mnemonic backup)
     this.flowManager.skipAndCreateWallet();
   }
 
   async handleContinue() {
     try {
-      // 로딩 상태 표시
+      // Show loading state
       const continueBtn = document.getElementById('continue-btn');
       const originalText = continueBtn.textContent;
       continueBtn.disabled = true;
-      continueBtn.innerHTML = '<span class="spinner"></span> 지갑 생성 중...';
+      continueBtn.innerHTML = '<span class="spinner"></span> Creating wallet...';
       
-      // 지갑 생성
+      // Generate wallet
       await this.flowManager.generateWallet();
       
-      // 버튼 복원
+      // Restore button
       continueBtn.disabled = false;
       continueBtn.textContent = originalText;
       
-      // 다음 단계로 이동
+      // Move to next step
       this.flowManager.showStep(2);
     } catch (error) {
-      console.error('Failed to generate wallet:', error);
+      console.log('Failed to generate wallet:', error);
       if (window.showToast) {
-        window.showToast('지갑 생성에 실패했습니다. 다시 시도해주세요.', 'error');
+        window.showToast('Failed to create wallet. Please try again.', 'error');
       }
       
-      // 버튼 복원
+      // Restore button
       const continueBtn = document.getElementById('continue-btn');
       continueBtn.disabled = false;
-      continueBtn.innerHTML = '지갑 보호 시작';
+      continueBtn.innerHTML = 'Start Securing';
     }
   }
 }

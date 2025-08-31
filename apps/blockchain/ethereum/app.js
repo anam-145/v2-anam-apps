@@ -25,8 +25,8 @@ const EthereumAdapterConfig = {
   
   // UI 테마 설정
   theme: {
-    primaryColor: "#4338CA",      // 이더리움 보라색
-    secondaryColor: "#6366F1",    // 밝은 보라색
+    primaryColor: "#627EEA",      // 이더리움 메인 색상
+    secondaryColor: "#8198F9",    // 이더리움 보조 색상  
     logoText: "Ethereum",
   },
   
@@ -84,7 +84,7 @@ class EthereumAdapter {
 
   // Provider 재초기화 (네트워크 변경 시)
   async reinitProvider() {
-    console.log('Reinitializing provider for network change');
+    console.log('Provider 재초기화 중...');
     this.provider = null; // 기존 provider 제거
     await this.initProvider(); // 새로운 provider 생성
     return this.provider;
@@ -138,11 +138,6 @@ class EthereumAdapter {
   async getBalance(address) {
     await this.initProvider();
     const balance = await this.provider.getBalance(address);
-    
-    // 디버깅 로그
-    console.log("Raw balance (BigNumber):", balance);
-    console.log("Balance in Wei:", balance.toString());
-    console.log("Balance in ETH:", ethers.utils.formatEther(balance));
     
     return balance.toString(); // Wei 단위 BigNumber를 문자열로
   }
@@ -250,7 +245,8 @@ class EthereumAdapter {
 
   // 트랜잭션 내역 조회 (Etherscan API 사용)
   async getTransactionHistory(address, apiKey) {
-    const ETHERSCAN_BASE_URL = "https://api-sepolia.etherscan.io/api";
+    const network = window.EthereumConfig?.getCurrentNetwork();
+    const ETHERSCAN_BASE_URL = network?.blockExplorer?.apiUrl || "https://api-sepolia.etherscan.io/api";
     
     try {
       const response = await fetch(
@@ -262,11 +258,11 @@ class EthereumAdapter {
       if (data.status === "1") {
         return data.result;
       } else {
-        console.log("No transactions found or API error:", data.message);
+        console.log("트랜잭션 없음 또는 API 에러:", data.message);
         return [];
       }
     } catch (error) {
-      console.error("Failed to fetch transaction history:", error);
+      console.log("트랜잭션 내역 조회 실패:", error);
       return [];
     }
   }
@@ -286,11 +282,11 @@ window.getAdapter = () => ethereumAdapter;
 
 // 네트워크 변경 이벤트 리스너
 window.addEventListener('networkChanged', async () => {
-  console.log('[EthereumAdapter] Network changed, reinitializing provider');
+  console.log('[EthereumAdapter] 네트워크 변경됨');
   await ethereumAdapter.reinitProvider();
   
   // 모든 페이지에 provider 업데이트 알림
   window.dispatchEvent(new Event('providerUpdated'));
 });
 
-console.log("[EthereumAdapter] Module loaded");
+console.log("[EthereumAdapter] 모듈 로드 완료");

@@ -1,5 +1,5 @@
 // Ethereum Mnemonic Flow Manager
-// 니모닉 생성 플로우 전체 관리
+// Manages the entire mnemonic generation flow
 
 class MnemonicFlowManager {
   constructor() {
@@ -68,7 +68,7 @@ class MnemonicFlowManager {
     const step = this.steps[stepNumber];
     
     if (!step) {
-      console.error(`[MnemonicFlow] Step ${stepNumber} not found`);
+      console.log(`[MnemonicFlow] Step ${stepNumber} not found`);
       return;
     }
     
@@ -105,7 +105,7 @@ class MnemonicFlowManager {
       
       return this.wallet;
     } catch (error) {
-      console.error('[MnemonicFlow] Failed to generate wallet:', error);
+      console.log('[MnemonicFlow] Failed to generate wallet:', error);
       throw error;
     }
   }
@@ -140,9 +140,9 @@ class MnemonicFlowManager {
         window.onMnemonicFlowComplete(walletData);
       }
     } catch (error) {
-      console.error('[MnemonicFlow] Failed to skip and create wallet:', error);
+      console.log('[MnemonicFlow] Failed to skip and create wallet:', error);
       if (window.showToast) {
-        window.showToast('지갑 생성에 실패했습니다.', 'error');
+        window.showToast('Failed to create wallet.', 'error');
       }
     }
   }
@@ -180,7 +180,7 @@ class MnemonicFlowManager {
         window.onMnemonicFlowComplete(walletData);
       }
     } catch (error) {
-      console.error('[MnemonicFlow] Failed to complete flow:', error);
+      console.log('[MnemonicFlow] Failed to complete flow:', error);
       throw error;
     }
   }
@@ -265,7 +265,7 @@ class MnemonicFlowManager {
   // 백업 리마인더 표시
   showBackupReminder() {
     if (window.showToast) {
-      window.showToast('⚠️ 지갑 백업을 완료해주세요. 설정에서 복구 문구를 확인할 수 있습니다.', 'warning', 5000);
+      window.showToast('Please complete wallet backup. You can check your recovery phrase in settings.', 'warning', 5000);
     }
   }
 }

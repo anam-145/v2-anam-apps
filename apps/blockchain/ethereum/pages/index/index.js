@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", function () {
   adapter = window.getAdapter();
 
   if (!adapter) {
-    console.error("EthereumAdapter not initialized");
+    console.log("EthereumAdapter not initialized");
     showToast("Failed to initialize Ethereum adapter");
   }
   
@@ -89,7 +89,7 @@ async function checkNetworkStatus() {
     console.log("Current block number:", blockNumber);
     document.getElementById("network-status").style.color = "#4cff4c";
   } catch (error) {
-    console.error("Network connection failed:", error);
+    console.log("Network connection failed:", error);
     document.getElementById("network-status").style.color = "#ff4444";
   }
 }
@@ -124,7 +124,7 @@ async function checkWalletStatus() {
           loadTransactionHistory(true), // skipLoadingUI = true (이미 표시했으므로)
         ]);
       } catch (error) {
-        console.error("Failed to load wallet data:", error);
+        console.log("Failed to load wallet data:", error);
       }
       
       // 백업 리마인더 체크 (니모닉 플로우에서 스킵한 경우)
@@ -132,7 +132,7 @@ async function checkWalletStatus() {
         window.mnemonicFlow.checkBackupReminder();
       }
     } catch (error) {
-      console.error("Failed to load wallet:", error);
+      console.log("Failed to load wallet:", error);
       showToast("Failed to load wallet");
       resetWallet();
     }
@@ -158,11 +158,11 @@ async function createWallet() {
     if (window.mnemonicFlow) {
       window.mnemonicFlow.start();
     } else {
-      console.error("Mnemonic flow not initialized");
+      console.log("Mnemonic flow not initialized");
       showToast("Failed to initialize wallet creation flow");
     }
   } catch (error) {
-    console.error("Failed to start wallet creation:", error);
+    console.log("Failed to start wallet creation:", error);
     showToast("Failed to start wallet creation: " + error.message);
   }
 }
@@ -214,7 +214,7 @@ async function importFromMnemonic() {
       loadTransactionHistory(true); // skipLoadingUI = true
     }, 100);
   } catch (error) {
-    console.error("Failed to import wallet:", error);
+    console.log("Failed to import wallet:", error);
     showToast("Please enter a valid mnemonic");
   }
 }
@@ -268,7 +268,7 @@ async function importFromPrivateKey() {
       loadTransactionHistory(true); // skipLoadingUI = true
     }, 100);
   } catch (error) {
-    console.error("Failed to import wallet:", error);
+    console.log("Failed to import wallet:", error);
     showToast("Please enter a valid private key");
   }
 }
@@ -316,7 +316,7 @@ async function updateBalance() {
     // 실시간 가격 API 연동 시 여기에 추가
     document.getElementById("fiat-value").textContent = "";
   } catch (error) {
-    console.error("Failed to fetch balance:", error);
+    console.log("Failed to fetch balance:", error);
   }
 }
 
@@ -356,7 +356,7 @@ async function loadTransactionHistory(skipLoadingUI = false) {
     // UI 업데이트
     displayTransactions(transactions);
   } catch (error) {
-    console.error("Failed to load transactions:", error);
+    console.log("Failed to load transactions:", error);
     showTransactionError(error.message);
   }
 }
@@ -606,13 +606,13 @@ async function handleTransactionRequest(event) {
         currentWallet = JSON.parse(walletData);
         console.log("Wallet info reloaded");
       } catch (e) {
-        console.error("Failed to load wallet:", e);
+        console.log("Failed to load wallet:", e);
       }
     }
   }
 
   if (!currentWallet || !adapter) {
-    console.error("No wallet found");
+    console.log("No wallet found");
     return;
   }
 
@@ -676,7 +676,7 @@ async function handleTransactionRequest(event) {
       loadTransactionHistory();
     }, 3000);
   } catch (error) {
-    console.error("Transaction failed:", error);
+    console.log("Transaction failed:", error);
 
     // 에러 응답 전송
     if (window.anam && window.anam.sendTransactionResponse) {
@@ -706,13 +706,13 @@ async function handleTransactionRequest(event) {
         currentWallet = JSON.parse(walletData);
         console.log("Wallet info reloaded");
       } catch (e) {
-        console.error("Failed to load wallet:", e);
+        console.log("Failed to load wallet:", e);
       }
     }
   }
 
   if (!currentWallet || !adapter) {
-    console.error("No wallet found");
+    console.log("No wallet found");
     // 에러 응답 전송
     if (window.anam && window.anam.sendTransactionResponse) {
       const requestId = event.detail.requestId;
@@ -792,7 +792,7 @@ async function handleTransactionRequest(event) {
       loadTransactionHistory();
     }, 3000);
   } catch (error) {
-    console.error("Transaction failed:", error);
+    console.log("Transaction failed:", error);
 
     // 에러 응답 전송
     if (window.anam && window.anam.sendTransactionResponse) {
@@ -832,7 +832,7 @@ function scanQRCode() {
 
     console.log("QR scanner requested to main process");
   } else {
-    console.error("anamUI.scanQRCode API not available");
+    console.log("anamUI.scanQRCode API not available");
     showToast("QR scan feature is not available");
   }
 }
@@ -858,7 +858,7 @@ function handleQRScanned(event) {
     showToast("QR scan completed");
   } else {
     const error = event.detail ? event.detail.error : "Unknown error";
-    console.error("QR scan failed:", error);
+    console.log("QR scan failed:", error);
     showToast("QR scan failed: " + error);
   }
 }
@@ -1031,7 +1031,7 @@ function initBridgeHandler() {
     };
     console.log("BridgeHandler initialized");
   } else {
-    console.error("BridgeHandler not loaded");
+    console.log("BridgeHandler not loaded");
   }
 }
 
