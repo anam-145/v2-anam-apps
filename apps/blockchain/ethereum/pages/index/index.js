@@ -299,6 +299,24 @@ async function loadTransactionHistory(skipLoadingUI = false) {
       cached.address.toLowerCase() === currentWallet.address.toLowerCase()
     ) {
       console.log("Using cached transactions for:", cached.address);
+      
+      // 캐시된 트랜잭션에서 pending 트랜잭션 확인
+      // Send에서 추가한 pending이 있을 수 있으므로 캐시를 다시 읽어서 표시
+      const cacheKey = `eth_tx_${currentWallet.address.toLowerCase()}`;
+      const rawCache = localStorage.getItem(cacheKey);
+      if (rawCache) {
+        try {
+          const cacheData = JSON.parse(rawCache);
+          if (cacheData.data && Array.isArray(cacheData.data)) {
+            displayTransactions(cacheData.data);
+            return;
+          }
+        } catch (e) {
+          console.log("Error reading cache:", e);
+        }
+      }
+      
+      // 캐시 데이터가 유효하지 않으면 기존 cached 사용
       displayTransactions(cached.transactions);
       return;
     }
@@ -343,8 +361,46 @@ async function fetchTransactionHistory(address) {
     throw new Error(data.message || "Failed to fetch transactions");
   }
 
-  // 최근 10개만 반환
-  return data.result.slice(0, 10);
+  // API에서 가져온 트랜잭션 (최근 10개)
+  const apiTransactions = data.result.slice(0, 10);
+  
+  // pending 트랜잭션 정리: API 결과에 있는 해시는 pending에서 제거
+  const cacheKey = `eth_tx_${address.toLowerCase()}`;
+  const cached = localStorage.getItem(cacheKey);
+  
+  if (cached) {
+    try {
+      const cacheData = JSON.parse(cached);
+      if (cacheData.data && Array.isArray(cacheData.data)) {
+        // API 결과의 해시 목록
+        const confirmedHashes = new Set(apiTransactions.map(tx => tx.hash.toLowerCase()));
+        
+        // pending 트랜잭션 중 확정되지 않은 것만 유지
+        const remainingPending = cacheData.data.filter(tx => 
+          tx.isPending && !confirmedHashes.has(tx.hash.toLowerCase())
+        );
+        
+        // 30분 이상 된 pending 트랜잭션 제거
+        const thirtyMinutesAgo = Math.floor(Date.now() / 1000) - (30 * 60);
+        const validPending = remainingPending.filter(tx => 
+          parseInt(tx.timeStamp) > thirtyMinutesAgo
+        );
+        
+        // 캐시 업데이트: pending + API 결과
+        const mergedTransactions = [...validPending, ...apiTransactions];
+        cacheData.data = mergedTransactions;
+        localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+        
+        // 병합된 결과 반환
+        return mergedTransactions;
+      }
+    } catch (e) {
+      console.log("Error processing cache:", e);
+    }
+  }
+  
+  // 캐시가 없으면 API 결과만 반환
+  return apiTransactions;
 }
 
 // 트랜잭션 표시
@@ -358,7 +414,27 @@ function displayTransactions(transactions) {
 
   txList.innerHTML = "";
 
+  // pending 트랜잭션과 확정된 트랜잭션 분리
+  const pendingTxs = [];
+  const confirmedTxs = [];
+  
   transactions.forEach((tx) => {
+    if (tx.isPending) {
+      pendingTxs.push(tx);
+    } else {
+      confirmedTxs.push(tx);
+    }
+  });
+  
+  // pending 트랜잭션 먼저 표시
+  pendingTxs.forEach((tx) => {
+    const isSent = EthereumUtils.isTransactionSent(tx, currentWallet.address);
+    const txElement = createTransactionElement(tx, isSent);
+    txList.appendChild(txElement);
+  });
+  
+  // 확정된 트랜잭션 표시
+  confirmedTxs.forEach((tx) => {
     const isSent = EthereumUtils.isTransactionSent(tx, currentWallet.address);
     const txElement = createTransactionElement(tx, isSent);
     txList.appendChild(txElement);
@@ -378,12 +454,23 @@ function createTransactionElement(tx, isSent) {
 
   // 컨트랙트 호출인지 확인
   const isContract = tx.input && tx.input !== "0x";
-  const txLabel = isContract ? "Contract" : isSent ? "Sent" : "Received";
+  
+  // Pending 상태 확인 및 라벨 설정
+  let txLabel;
+  let statusIcon = "";
+  
+  if (tx.isPending) {
+    txLabel = "Pending";
+    statusIcon = "⏳ ";  // pending 아이콘
+    div.className += " tx-pending";  // pending 스타일 클래스 추가
+  } else {
+    txLabel = isContract ? "Contract" : isSent ? "Sent" : "Received";
+  }
 
   div.innerHTML = `
     <div class="tx-icon ${txType}">${isSent ? "↑" : "↓"}</div>
     <div class="tx-details">
-      <div class="tx-type">${txLabel}</div>
+      <div class="tx-type">${statusIcon}${txLabel}</div>
       <div class="tx-address">${EthereumUtils.shortenAddress(address, 6)}</div>
     </div>
     <div class="tx-amount">

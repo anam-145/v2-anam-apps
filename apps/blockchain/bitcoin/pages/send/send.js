@@ -8,7 +8,7 @@ let currentWallet = null;
 const { showToast, formatBalance, validateAmount, validateAddress } = window.BitcoinUtils || {};
 
 // 페이지 초기화
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
   console.log("Send page loaded");
 
   // 지갑 정보 로드
@@ -27,6 +27,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // UI 초기화
   updateUI();
+  
+  // 최소 금액 계산 및 표시
+  await updateMinAmount();
+  
+  // 수수료 변경 시 최소 금액 재계산
+  const feeSelect = document.getElementById("tx-fee");
+  if (feeSelect) {
+    feeSelect.addEventListener("change", updateMinAmount);
+  }
 });
 
 // 지갑 정보 로드
@@ -87,6 +96,43 @@ async function updateUI() {
   }
 }
 
+// 최소 금액 업데이트
+async function updateMinAmount() {
+  try {
+    if (!adapter) return;
+    
+    const feeLevel = document.getElementById("tx-fee")?.value || "medium";
+    const fees = await adapter.getGasPrice();
+    const feeRate = fees[feeLevel] || 10; // 기본값 10 sat/vB
+    
+    // 동적 dust limit 계산
+    const dustLimit = window.BitcoinUtils?.calculateDustLimit(feeRate) || 546;
+    const minBTC = (dustLimit / 100000000).toFixed(8);
+    
+    // UI 업데이트
+    const minAmountElement = document.getElementById('min-amount-hint');
+    if (minAmountElement) {
+      minAmountElement.textContent = `Minimum: ${minBTC} BTC`;
+    }
+    
+    // input min 속성 업데이트
+    const amountInput = document.getElementById('send-amount');
+    if (amountInput) {
+      amountInput.min = minBTC;
+    }
+    
+    return dustLimit;
+  } catch (error) {
+    console.error("Failed to update minimum amount:", error);
+    // 에러 시 기본값 표시
+    const minAmountElement = document.getElementById('min-amount-hint');
+    if (minAmountElement) {
+      minAmountElement.textContent = `Minimum: 0.00000546 BTC`;
+    }
+    return 546;
+  }
+}
+
 // 뒤로 가기
 function goBack() {
   // blockchain miniapp은 anamUI 네임스페이스 사용
@@ -102,7 +148,10 @@ function goBack() {
 
 // 전송 확인
 async function confirmSend() {
+  console.log("confirmSend called");
+  
   if (!currentWallet || !adapter) {
+    console.log("No wallet or adapter:", { currentWallet, adapter });
     showToast && showToast("No wallet found", "error");
     return;
   }
@@ -110,44 +159,80 @@ async function confirmSend() {
   const recipient = document.getElementById("recipient-address").value.trim();
   const amount = document.getElementById("send-amount").value.trim();
   const feeLevel = document.getElementById("tx-fee").value;
+  
+  console.log("Input values:", { recipient, amount, feeLevel });
 
   // 유효성 검증
   if (!recipient || !amount) {
+    console.log("Missing recipient or amount");
     showToast && showToast("Please enter recipient address and amount", "warning");
     return;
   }
 
+  console.log("Validating address...");
   // 주소 검증 (BitcoinUtils 사용)
   if (validateAddress) {
+    console.log("Using validateAddress function");
     const addressValidation = validateAddress(recipient);
     if (!addressValidation.valid) {
+      console.log("Address validation failed:", addressValidation);
       showToast && showToast(addressValidation.error, "error");
       return;
     }
-  } else if (!adapter.isValidAddress(recipient)) {
-    showToast && showToast("Invalid address format", "error");
-    return;
-  }
-
-  // 금액 검증 (BitcoinUtils 사용)
-  if (validateAmount) {
-    const balance = await adapter.getBalance(currentWallet.address);
-    const amountValidation = validateAmount(amount, balance);
-    if (!amountValidation.valid) {
-      showToast && showToast(amountValidation.error, "error");
+  } else if (adapter.isValidAddress) {
+    console.log("Using adapter.isValidAddress");
+    const isValid = adapter.isValidAddress(recipient);
+    console.log("Address valid?", isValid);
+    if (!isValid) {
+      showToast && showToast("Invalid address format", "error");
       return;
     }
-  } else if (parseFloat(amount) <= 0) {
-    showToast && showToast("Please enter amount greater than 0", "warning");
+  }
+
+  console.log("Validating amount...");
+  // 금액 기본 검증
+  const amountValue = parseFloat(amount);
+  if (isNaN(amountValue) || amountValue <= 0) {
+    console.log("Invalid amount value");
+    showToast && showToast("Please enter a valid amount greater than 0", "warning");
+    return;
+  }
+  
+  // 잔액 검증
+  const balance = await adapter.getBalance(currentWallet.address);
+  const amountSatoshi = window.BitcoinUtils?.btcToSatoshi(amount) || Math.floor(amountValue * 100000000);
+  const balanceSatoshi = parseInt(balance);
+  
+  if (amountSatoshi > balanceSatoshi) {
+    console.log("Insufficient balance");
+    showToast && showToast("Insufficient balance", "error");
     return;
   }
 
   try {
-    showToast && showToast("Sending transaction...", "info");
-
     // 수수료 가져오기
     const gasPrice = await adapter.getGasPrice();
-    const fee = gasPrice[feeLevel];
+    const feeRate = gasPrice[feeLevel] || 10;
+    
+    // 동적 dust limit 검증 (amountSatoshi는 이미 위에서 계산됨)
+    const dustLimit = window.BitcoinUtils?.calculateDustLimit(feeRate) || 546;
+    
+    // 디버깅 로그
+    console.log("Amount validation:", {
+      inputAmount: amount,
+      amountSatoshi: amountSatoshi,
+      dustLimit: dustLimit,
+      feeRate: feeRate,
+      comparison: `${amountSatoshi} < ${dustLimit} = ${amountSatoshi < dustLimit}`
+    });
+    
+    if (amountSatoshi < dustLimit) {
+      const minBTC = (dustLimit / 100000000).toFixed(8);
+      showToast && showToast(`Minimum amount is ${minBTC} BTC`, "error");
+      return;
+    }
+    
+    showToast && showToast("Sending transaction...", "info");
 
     // 트랜잭션 전송
     const txParams = {
@@ -158,14 +243,52 @@ async function confirmSend() {
     };
 
     // Bitcoin은 feeRate를 사용 (sat/vByte)
-    if (feeLevel && fee) {
-      txParams.feeRate = parseInt(fee);
+    if (feeLevel && feeRate) {
+      txParams.feeRate = parseInt(feeRate);
     }
 
     const result = await adapter.sendTransaction(txParams);
 
     showToast && showToast("Transaction sent successfully!", "success");
     console.log("Transaction hash:", result.hash);
+
+    // Pending 트랜잭션을 localStorage에 저장
+    const pendingTx = {
+      txid: result.hash,  // Bitcoin uses txid instead of hash
+      from: currentWallet.address,
+      to: recipient,
+      amount: parseFloat(amount),  // BTC 단위로 저장
+      timestamp: Math.floor(Date.now() / 1000),
+      isPending: true,  // pending 플래그
+      fee: txParams.feeRate || 0
+    };
+
+    // 기존 캐시 가져오기
+    const cacheKey = `btc_tx_${currentWallet.address}`;
+    const cached = localStorage.getItem(cacheKey);
+    
+    if (cached) {
+      try {
+        const cacheData = JSON.parse(cached);
+        if (cacheData.data && Array.isArray(cacheData.data)) {
+          // pending 트랜잭션을 맨 앞에 추가
+          cacheData.data.unshift(pendingTx);
+          localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+          console.log("Pending transaction added to cache");
+        }
+      } catch (e) {
+        console.log("Failed to update cache with pending tx:", e);
+      }
+    } else {
+      // 캐시가 없으면 새로 생성
+      const newCache = {
+        data: [pendingTx],
+        timestamp: Date.now(),
+        ttl: 300000  // 5분
+      };
+      localStorage.setItem(cacheKey, JSON.stringify(newCache));
+      console.log("New cache created with pending transaction");
+    }
 
     // 메인 페이지로 돌아가기
     setTimeout(() => {

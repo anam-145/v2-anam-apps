@@ -336,6 +336,29 @@ class BitcoinAdapter {
       // 3. 금액 변환 (BTC -> satoshi)
       const amountSatoshi = window.BitcoinUtils?.btcToSatoshi(amount) || Math.floor(parseFloat(amount) * 100000000);
       const feeRateSatPerByte = feeRate || this.config.transaction.feeRate;
+      
+      // 디버깅 로그 추가
+      console.log("BitcoinAdapter sendTransaction:", {
+        amount: amount,
+        amountSatoshi: amountSatoshi,
+        feeRate: feeRateSatPerByte,
+        btcToSatoshi: window.BitcoinUtils?.btcToSatoshi,
+        calculateDustLimit: window.BitcoinUtils?.calculateDustLimit
+      });
+      
+      // 동적 Dust limit 계산 및 검증
+      const dustLimit = window.BitcoinUtils?.calculateDustLimit(feeRateSatPerByte) || 546;
+      
+      console.log("Dust limit check:", {
+        dustLimit: dustLimit,
+        amountSatoshi: amountSatoshi,
+        willFail: amountSatoshi < dustLimit
+      });
+      
+      if (amountSatoshi < dustLimit) {
+        const dustBTC = (dustLimit / 100000000).toFixed(8);
+        throw new Error(`Amount below dust limit. Minimum is ${dustBTC} BTC`);
+      }
 
       // 4. UTXO 선택
       const { utxos: selectedUTXOs, totalValue, fee, change } = 
@@ -374,8 +397,9 @@ class BitcoinAdapter {
         value: amountSatoshi,
       });
 
-      // 8. 거스름돈 추가
-      if (change > 546) { // dust limit
+      // 8. 거스름돈 추가 (동적 dust limit 체크)
+      const changeDustLimit = window.BitcoinUtils?.calculateDustLimit(feeRateSatPerByte) || 546;
+      if (change > changeDustLimit) {
         psbt.addOutput({
           address: fromAddress,
           value: change,

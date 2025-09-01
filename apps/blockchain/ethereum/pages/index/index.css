@@ -544,6 +544,23 @@ textarea.import-input-metamask {
   margin-top: 2px;
 }
 
+/* Pending 트랜잭션 스타일 */
+.tx-item.tx-pending {
+  opacity: 0.8;
+  background: linear-gradient(90deg, #f0f0f0 0%, #ffffff 50%, #f0f0f0 100%);
+  background-size: 200% 100%;
+  animation: pendingPulse 2s ease-in-out infinite;
+}
+
+@keyframes pendingPulse {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 /* 반응형 디자인 */
 @media (max-width: 600px) {
   .card {

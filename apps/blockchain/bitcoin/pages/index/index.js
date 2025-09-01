@@ -321,12 +321,30 @@ async function loadTransactionHistory(skipLoadingUI = false) {
       cached.address.toLowerCase() === currentWallet.address.toLowerCase()
     ) {
       console.log("Using cached transactions for:", cached.address);
+      
+      // 캐시된 트랜잭션에서 pending 트랜잭션 확인
+      // Send에서 추가한 pending이 있을 수 있으므로 캐시를 다시 읽어서 표시
+      const cacheKey = `btc_tx_${currentWallet.address}`;
+      const rawCache = localStorage.getItem(cacheKey);
+      if (rawCache) {
+        try {
+          const cacheData = JSON.parse(rawCache);
+          if (cacheData.data && Array.isArray(cacheData.data)) {
+            displayTransactions(cacheData.data);
+            return;
+          }
+        } catch (e) {
+          console.log("Error reading cache:", e);
+        }
+      }
+      
+      // 캐시 데이터가 유효하지 않으면 기존 cached 사용
       displayTransactions(cached.transactions);
       return;
     }
 
     // API 호출
-    console.log("Fetching transactions from Etherscan...");
+    console.log("Fetching transactions from Mempool.space...");
     const transactions = await fetchTransactionHistory(currentWallet.address);
 
     // 캐시 저장
@@ -360,8 +378,46 @@ async function fetchTransactionHistory(address) {
     return [];
   }
 
-  // 최근 10개만 반환
-  return data.slice(0, 10);
+  // API에서 가져온 트랜잭션 (최근 10개)
+  const apiTransactions = data.slice(0, 10);
+  
+  // pending 트랜잭션 정리: API 결과에 있는 해시는 pending에서 제거
+  const cacheKey = `btc_tx_${address}`;
+  const cached = localStorage.getItem(cacheKey);
+  
+  if (cached) {
+    try {
+      const cacheData = JSON.parse(cached);
+      if (cacheData.data && Array.isArray(cacheData.data)) {
+        // API 결과의 txid 목록
+        const confirmedTxids = new Set(apiTransactions.map(tx => tx.txid));
+        
+        // pending 트랜잭션 중 확정되지 않은 것만 유지
+        const remainingPending = cacheData.data.filter(tx => 
+          tx.isPending && !confirmedTxids.has(tx.txid)
+        );
+        
+        // 14일 이상 된 pending 트랜잭션 제거 (Bitcoin mempool expiry)
+        const fourteenDaysAgo = Math.floor(Date.now() / 1000) - (14 * 24 * 60 * 60);
+        const validPending = remainingPending.filter(tx => 
+          parseInt(tx.timestamp) > fourteenDaysAgo
+        );
+        
+        // 캐시 업데이트: pending + API 결과
+        const mergedTransactions = [...validPending, ...apiTransactions];
+        cacheData.data = mergedTransactions;
+        localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+        
+        // 병합된 결과 반환
+        return mergedTransactions;
+      }
+    } catch (e) {
+      console.log("Error processing cache:", e);
+    }
+  }
+  
+  // 캐시가 없으면 API 결과만 반환
+  return apiTransactions;
 }
 
 // 트랜잭션 표시
@@ -375,7 +431,27 @@ function displayTransactions(transactions) {
 
   txList.innerHTML = "";
 
+  // pending 트랜잭션과 확정된 트랜잭션 분리
+  const pendingTxs = [];
+  const confirmedTxs = [];
+  
   transactions.forEach((tx) => {
+    if (tx.isPending) {
+      pendingTxs.push(tx);
+    } else {
+      confirmedTxs.push(tx);
+    }
+  });
+  
+  // pending 트랜잭션 먼저 표시
+  pendingTxs.forEach((tx) => {
+    const isSent = BitcoinUtils.isTransactionSent(tx, currentWallet.address);
+    const txElement = createTransactionElement(tx, isSent);
+    txList.appendChild(txElement);
+  });
+  
+  // 확정된 트랜잭션 표시
+  confirmedTxs.forEach((tx) => {
     const isSent = BitcoinUtils.isTransactionSent(tx, currentWallet.address);
     const txElement = createTransactionElement(tx, isSent);
     txList.appendChild(txElement);
@@ -388,19 +464,38 @@ function createTransactionElement(tx, isSent) {
   div.className = "tx-item";
 
   const txType = isSent ? "send" : "receive";
-  // Bitcoin 트랜잭션 금액 계산
-  const amountSatoshi = BitcoinUtils.calculateTransactionAmount(tx, currentWallet.address);
-  // formatBalance를 사용하여 작은 금액도 제대로 표시
-  const formattedAmount = BitcoinUtils.formatBalance(amountSatoshi);
-  const timeAgo = BitcoinUtils.getTimeAgo(tx.status?.block_time || Date.now() / 1000);
   
-  // Bitcoin 트랜잭션의 경우 여러 입출력이 있을 수 있음
-  const txLabel = isSent ? "Sent" : "Received";
+  // Pending 트랜잭션 처리
+  let formattedAmount;
+  let timeAgo;
+  let txLabel;
+  let statusIcon = "";
+  
+  if (tx.isPending) {
+    // Pending 트랜잭션 처리
+    txLabel = "Pending";
+    statusIcon = "⏳ ";  // pending 아이콘
+    div.className += " tx-pending";  // pending 스타일 클래스 추가
+    
+    // Pending tx는 간단한 구조로 저장했으므로 직접 사용
+    formattedAmount = BitcoinUtils.formatBalance(
+      BitcoinUtils.BTCtoSatoshi(tx.amount || 0)
+    );
+    timeAgo = BitcoinUtils.getTimeAgo(tx.timestamp || Date.now() / 1000);
+  } else {
+    // 확정된 트랜잭션 처리
+    txLabel = isSent ? "Sent" : "Received";
+    
+    // Bitcoin 트랜잭션 금액 계산
+    const amountSatoshi = BitcoinUtils.calculateTransactionAmount(tx, currentWallet.address);
+    formattedAmount = BitcoinUtils.formatBalance(amountSatoshi);
+    timeAgo = BitcoinUtils.getTimeAgo(tx.status?.block_time || Date.now() / 1000);
+  }
 
   div.innerHTML = `
     <div class="tx-icon ${txType}">${isSent ? "↑" : "↓"}</div>
     <div class="tx-details">
-      <div class="tx-type">${txLabel}</div>
+      <div class="tx-type">${statusIcon}${txLabel}</div>
       <div class="tx-address">${BitcoinUtils.shortenAddress(tx.txid, 6)}</div>
     </div>
     <div class="tx-amount">

@@ -96,6 +96,12 @@
   display: block;
 }
 
+.input-hint.min-amount {
+  color: #f7931a;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
 /* 버튼 그룹 */
 .button-group {
   margin-top: 40px;

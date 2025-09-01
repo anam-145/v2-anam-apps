@@ -131,6 +131,35 @@
   // 수수료 관련 함수
   // ================================================================
 
+  // 동적 dust limit 계산 (Bitcoin Core 공식)
+  // dustRelayFee = 3 sat/vB (기본값)
+  // dust threshold = 3 * (input size + output size) * feeRate
+  function calculateDustLimit(feeRate, outputType = 'P2WPKH') {
+    // 출력 타입별 크기 (vBytes)
+    const outputSizes = {
+      'P2PKH': 34,     // Legacy
+      'P2SH': 32,      // Wrapped SegWit
+      'P2WPKH': 31,    // Native SegWit (우리가 사용)
+      'P2WSH': 43,     // Native SegWit Script
+      'P2TR': 43       // Taproot
+    };
+    
+    // Input 크기 (P2WPKH witness input)
+    const inputSize = 68; // Witness input is smaller
+    const outputSize = outputSizes[outputType] || 31;
+    
+    // Bitcoin Core dust relay fee multiplier (default: 3)
+    const DUST_RELAY_FEE_MULTIPLIER = 3;
+    
+    // Dust limit 계산
+    const dustLimit = Math.ceil(
+      DUST_RELAY_FEE_MULTIPLIER * (inputSize + outputSize) * feeRate
+    );
+    
+    // 최소값 보장 (546 satoshi는 역사적 최소값)
+    return Math.max(dustLimit, 546);
+  }
+
   // 트랜잭션 크기 추정 (vBytes)
   // inputs * 148 + outputs * 34 + 10 (대략적인 추정)
   function estimateTxSize(inputCount, outputCount) {
@@ -350,7 +379,10 @@
       return { valid: false, error: 'Invalid amount' };
     }
     
-    if (amountSatoshi < BitcoinConfig?.TRANSACTION?.MIN_AMOUNT || 546) {
+    // 동적 dust limit 사용 (수수료 기반)
+    // 여기서는 기본값 546을 사용하지만, 실제로는 send.js에서 동적으로 체크
+    const minAmount = BitcoinConfig?.TRANSACTION?.MIN_AMOUNT || 546;
+    if (amountSatoshi < minAmount) {
       return { valid: false, error: 'Amount below dust limit' };
     }
     
@@ -457,6 +489,7 @@
     // 포맷팅
     satoshiToBTC,
     btcToSatoshi,
+    BTCtoSatoshi: btcToSatoshi,  // 별칭 (대소문자 호환성)
     formatBalance,
     parseAmount,
     shortenAddress,
@@ -468,6 +501,7 @@
     formatTimestamp,
     
     // 수수료
+    calculateDustLimit,
     estimateTxSize,
     calculateFee,
     formatFee,

@@ -115,9 +115,9 @@
     // 기본 수수료율
     DEFAULT_FEE_RATE: 10,
     
-    // 트랜잭션 한도
-    MIN_AMOUNT: 546,  // dust limit (satoshi)
-    MIN_AMOUNT_BTC: "0.00000546",
+    // 트랜잭션 한도 (동적으로 계산됨, 기본값만 제공)
+    MIN_AMOUNT: 546,  // 기본 최소 금액 (satoshi) - 실제로는 수수료에 따라 동적 계산
+    MIN_AMOUNT_BTC: "0.00000546",  // 기본 최소 금액 (BTC)
     
     // 확인 설정
     CONFIRMATION_TIME: 600000,  // 10분 (평균 블록 시간)

@@ -131,6 +131,45 @@ async function confirmSend() {
     showToast(`Transaction sent successfully!`);
     console.log("Transaction hash:", result.hash);
 
+    // Pending 트랜잭션을 localStorage에 저장
+    const pendingTx = {
+      hash: result.hash,
+      from: currentWallet.address.toLowerCase(),
+      to: recipient.toLowerCase(),
+      value: ethers.utils.parseEther(amount).toString(),
+      timeStamp: Math.floor(Date.now() / 1000).toString(),
+      isPending: true,  // pending 플래그
+      gasUsed: "21000",  // 기본 가스
+      gasPrice: txParams.gasPrice ? ethers.utils.parseUnits(txParams.gasPrice, 'gwei').toString() : "0"
+    };
+
+    // 기존 캐시 가져오기
+    const cacheKey = `eth_tx_${currentWallet.address.toLowerCase()}`;
+    const cached = localStorage.getItem(cacheKey);
+    
+    if (cached) {
+      try {
+        const cacheData = JSON.parse(cached);
+        if (cacheData.data && Array.isArray(cacheData.data)) {
+          // pending 트랜잭션을 맨 앞에 추가
+          cacheData.data.unshift(pendingTx);
+          localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+          console.log("Pending transaction added to cache");
+        }
+      } catch (e) {
+        console.log("Failed to update cache with pending tx:", e);
+      }
+    } else {
+      // 캐시가 없으면 새로 생성
+      const newCache = {
+        data: [pendingTx],
+        timestamp: Date.now(),
+        ttl: 300000  // 5분
+      };
+      localStorage.setItem(cacheKey, JSON.stringify(newCache));
+      console.log("New cache created with pending transaction");
+    }
+
     // 메인 페이지로 돌아가기
     setTimeout(() => {
       goBack();
