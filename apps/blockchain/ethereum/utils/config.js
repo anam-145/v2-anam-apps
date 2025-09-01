@@ -30,7 +30,7 @@
     mainnet: {
       name: "mainnet",
       chainId: 1,
-      rpcEndpoint: `https://eth-mainnet.g.alchemy.com/v2/${API_KEYS.ALCHEMY || 'demo'}`,
+      rpcEndpoint: "https://aged-alien-patron.quiknode.pro/01fbb61e4177142bfff978b14e0a574a0d359d88/",
       etherscanUrl: "https://etherscan.io",
       etherscanApiUrl: "https://api.etherscan.io/api"
     },
@@ -57,7 +57,7 @@
   // 활성 네트워크 가져오기 (동적)
   function getActiveNetwork() {
     const saved = localStorage.getItem('eth_active_network');
-    return saved || 'sepolia'; // 기본값을 sepolia로 설정 (테스트넷)
+    return saved || 'mainnet'; // 기본값을 mainnet으로 설정
   }
 
   // 활성 네트워크 설정

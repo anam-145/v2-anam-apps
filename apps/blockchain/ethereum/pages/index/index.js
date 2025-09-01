@@ -39,6 +39,9 @@ document.addEventListener("DOMContentLoaded", function () {
   // 지갑 존재 여부 확인 (UI 먼저 표시)
   checkWalletStatus();
 
+  // 네트워크 라벨 업데이트
+  updateNetworkLabel();
+
   // 네트워크 상태는 비동기로 확인 (블로킹하지 않음)
   checkNetworkStatus();
 
@@ -75,10 +78,17 @@ function applyTheme() {
 
   // 타이틀 변경
   document.title = `${CoinConfig.name} Wallet`;
+}
 
-  // 이제 MetaMask 스타일이므로 이 요소들이 없음
-  // document.querySelector(".creation-title")?.textContent = `${CoinConfig.name} Wallet`;
-  // document.querySelector(".creation-description")?.textContent = `Create a secure ${CoinConfig.name} wallet`;
+// 네트워크 라벨 업데이트
+function updateNetworkLabel() {
+  const networkLabel = document.getElementById('network-label');
+  if (networkLabel) {
+    const currentNetwork = window.EthereumConfig?.getCurrentNetwork();
+    if (currentNetwork) {
+      networkLabel.textContent = currentNetwork.name;
+    }
+  }
 }
 
 // 네트워크 상태 확인
@@ -262,9 +272,6 @@ async function updateBalance() {
     console.log("Formatted balance:", formattedBalance);
 
     document.getElementById("balance-display").textContent = formattedBalance;
-
-    // 실시간 가격 API 연동 시 여기에 추가
-    document.getElementById("fiat-value").textContent = "";
   } catch (error) {
     console.log("Failed to fetch balance:", error);
   }
@@ -364,7 +371,8 @@ function createTransactionElement(tx, isSent) {
   div.className = "tx-item";
 
   const txType = isSent ? "send" : "receive";
-  const amount = ethers.utils.formatEther(tx.value || "0");
+  // formatBalance를 사용하여 작은 금액도 제대로 표시
+  const formattedAmount = EthereumUtils.formatBalance(tx.value || "0");
   const timeAgo = EthereumUtils.getTimeAgo(parseInt(tx.timeStamp) * 1000);
   const address = isSent ? tx.to : tx.from;
 
@@ -379,9 +387,7 @@ function createTransactionElement(tx, isSent) {
       <div class="tx-address">${EthereumUtils.shortenAddress(address, 6)}</div>
     </div>
     <div class="tx-amount">
-      <div class="tx-eth ${txType}">${isSent ? "-" : "+"}${parseFloat(
-    amount
-  ).toFixed(4)} ETH</div>
+      <div class="tx-eth ${txType}">${isSent ? "-" : "+"}${formattedAmount} ETH</div>
       <div class="tx-time">${timeAgo}</div>
     </div>
   `;
@@ -395,9 +401,6 @@ function createTransactionElement(tx, isSent) {
 
   return div;
 }
-
-// 시간 계산 - utils/helpers.js로 이동됨
-const getTimeAgo = EthereumUtils.getTimeAgo;
 
 // 로딩 상태 표시
 function showTransactionLoading() {
@@ -867,6 +870,9 @@ function handleNetworkChange() {
       `Switched to network: ${currentNetwork.name} (Chain ID: ${currentNetwork.chainId})`
     );
   }
+
+  // 네트워크 라벨 업데이트
+  updateNetworkLabel();
 
   // 지갑이 있다면 잔액과 트랜잭션 다시 로드
   if (currentWallet && currentWallet.address) {

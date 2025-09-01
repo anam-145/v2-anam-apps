@@ -77,15 +77,14 @@
         <!-- Balance Card -->
         <div class="card balance-card">
           <div class="balance-header">
-            <span class="balance-label">Testnet</span>
+            <span class="balance-label" id="network-label">Loading...</span>
             <span class="network-status" id="network-status">●</span>
           </div>
-          <div class="balance-content">
-            <h2 class="balance-amount" id="balance-display">0.00000000</h2>
-            <span class="balance-unit">BTC</span>
-          </div>
-          <div class="balance-subtext">
-            <span class="fiat-value" id="fiat-value">≈ $0.00</span>
+          <div class="balance-amount">
+            <div class="coin-balance">
+              <span id="balance-display">0.00000000</span>
+              <span class="coin-unit">BTC</span>
+            </div>
           </div>
           
           <!-- Address Display -->

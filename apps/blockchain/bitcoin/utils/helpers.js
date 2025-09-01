@@ -20,10 +20,62 @@
     return Math.floor(parseFloat(btc) * 100000000);
   }
 
-  // 잔액을 사람이 읽기 쉬운 형식으로 변환
+  // 잔액을 사람이 읽기 쉬운 형식으로 변환 (개선된 버전)
   function formatBalance(satoshi, decimals = 8) {
-    const btc = satoshiToBTC(satoshi);
-    return parseFloat(btc).toFixed(decimals);
+    // 기본값 및 설정
+    const DUST_LIMIT = 546; // Bitcoin dust limit in satoshi
+    const MIN_DISPLAY_BTC = 0.00000001; // 1 satoshi in BTC
+    
+    // satoshi를 BTC로 변환
+    const btc = parseFloat(satoshiToBTC(satoshi));
+    const absBtc = Math.abs(btc);
+    
+    // 0인 경우
+    if (absBtc === 0) {
+      return '0.00000000';
+    }
+    
+    // Dust limit 미만 (546 satoshi = 0.00000546 BTC)
+    if (Math.abs(satoshi) < DUST_LIMIT && Math.abs(satoshi) > 0) {
+      return `< 0.00000546`; // dust limit 표시
+    }
+    
+    // 매우 작은 금액 (0.0001 BTC 미만)
+    if (absBtc < 0.0001) {
+      // 최소 2개의 유효 숫자 표시
+      const significantDigits = 2;
+      const magnitude = Math.floor(Math.log10(absBtc));
+      const requiredDecimals = Math.max(8, Math.abs(magnitude) + significantDigits);
+      
+      // 8자리까지만 표시 (Bitcoin 표준)
+      if (requiredDecimals <= 8) {
+        return btc.toFixed(8);
+      } else {
+        // 너무 작으면 근사치 표시
+        return `≈ ${btc.toFixed(8)}`;
+      }
+    }
+    
+    // 일반 금액 - 동적 정밀도
+    // 1 BTC 이상: 4자리
+    // 0.1-1 BTC: 5자리
+    // 0.01-0.1 BTC: 6자리
+    // 0.0001-0.01 BTC: 8자리
+    let displayDecimals;
+    if (absBtc >= 1) {
+      displayDecimals = 4;
+    } else if (absBtc >= 0.1) {
+      displayDecimals = 5;
+    } else if (absBtc >= 0.01) {
+      displayDecimals = 6;
+    } else {
+      displayDecimals = 8;
+    }
+    
+    // decimals 파라미터가 지정되면 우선 사용 (하위 호환성)
+    const finalDecimals = (decimals !== 8) ? decimals : displayDecimals;
+    
+    return btc.toFixed(finalDecimals);
   }
 
   // 금액을 최소 단위로 변환
@@ -137,6 +189,67 @@
       fee: estimatedFee,
       change: totalValue - targetAmount - estimatedFee
     };
+  }
+
+  // ================================================================
+  // 트랜잭션 분석 함수
+  // ================================================================
+
+  // 트랜잭션이 보낸 것인지 판별 (Bitcoin 트랜잭션 구조에 맞게)
+  function isTransactionSent(tx, currentAddress) {
+    // Bitcoin 트랜잭션은 여러 입력과 출력을 가질 수 있음
+    // 입력(vin)에 현재 주소가 있으면 보낸 것
+    if (tx.vin && Array.isArray(tx.vin)) {
+      for (const input of tx.vin) {
+        if (input.prevout && input.prevout.scriptpubkey_address === currentAddress) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // 트랜잭션 금액 계산 (satoshi 단위)
+  function calculateTransactionAmount(tx, currentAddress) {
+    let amount = 0;
+    
+    // 받은 경우: vout에서 현재 주소로 온 금액 합계
+    if (tx.vout && Array.isArray(tx.vout)) {
+      for (const output of tx.vout) {
+        if (output.scriptpubkey_address === currentAddress) {
+          amount += output.value;
+        }
+      }
+    }
+    
+    // 보낸 경우: vin에서 빠져나간 금액에서 자신에게 돌아온 금액(change) 제외
+    if (isTransactionSent(tx, currentAddress)) {
+      let totalInput = 0;
+      let changeOutput = 0;
+      
+      // 입력 금액 계산
+      if (tx.vin && Array.isArray(tx.vin)) {
+        for (const input of tx.vin) {
+          if (input.prevout && input.prevout.scriptpubkey_address === currentAddress) {
+            totalInput += input.prevout.value;
+          }
+        }
+      }
+      
+      // 자신에게 돌아온 금액 (change) 계산
+      if (tx.vout && Array.isArray(tx.vout)) {
+        for (const output of tx.vout) {
+          if (output.scriptpubkey_address === currentAddress) {
+            changeOutput += output.value;
+          }
+        }
+      }
+      
+      // 실제 보낸 금액 = 입력 - 거스름돈
+      amount = totalInput - changeOutput;
+    }
+    
+    return amount;
   }
 
   // ================================================================
@@ -351,6 +464,7 @@
     
     // 시간
     timeAgo,
+    getTimeAgo: timeAgo,  // 별칭 (하위 호환성)
     formatTimestamp,
     
     // 수수료
@@ -360,6 +474,10 @@
     
     // UTXO
     selectUTXOs,
+    
+    // 트랜잭션 분석
+    isTransactionSent,
+    calculateTransactionAmount,
     
     // UI
     showToast,

@@ -38,6 +38,9 @@ document.addEventListener("DOMContentLoaded", function () {
   // 지갑 존재 여부 확인 (UI 먼저 표시)
   checkWalletStatus();
 
+  // 네트워크 라벨 업데이트
+  updateNetworkLabel();
+
   // 네트워크 상태는 비동기로 확인 (블로킹하지 않음)
   checkNetworkStatus();
 
@@ -74,17 +77,33 @@ function applyTheme() {
 
   // 타이틀 변경
   document.title = `${CoinConfig.name} Wallet`;
-  
-  // 이제 MetaMask 스타일이므로 이 요소들이 없음
-  // document.querySelector(".creation-title")?.textContent = `${CoinConfig.name} Wallet`;
-  // document.querySelector(".creation-description")?.textContent = `Create a secure ${CoinConfig.name} wallet`;
+}
+
+// 네트워크 라벨 업데이트
+function updateNetworkLabel() {
+  const networkLabel = document.getElementById('network-label');
+  if (networkLabel) {
+    const currentNetwork = window.BitcoinConfig?.getCurrentNetwork();
+    if (currentNetwork) {
+      // Use displayName if available, otherwise use name
+      const displayText = currentNetwork.displayName || currentNetwork.name || 'Unknown';
+      networkLabel.textContent = displayText;
+    } else {
+      networkLabel.textContent = 'Network Error';
+    }
+  }
 }
 
 // 네트워크 상태 확인
 async function checkNetworkStatus() {
   try {
     // Bitcoin 네트워크 상태 확인 - Mempool API 사용
-    const response = await fetch('https://mempool.space/testnet/api/blocks/tip/height');
+    const url = window.BitcoinConfig?.getApiUrl('/blocks/tip/height');
+    if (!url) {
+      throw new Error('API URL configuration not found');
+    }
+    
+    const response = await fetch(url);
     if (response.ok) {
       const blockHeight = await response.text();
       console.log("Current block height:", blockHeight);
@@ -275,9 +294,6 @@ async function updateBalance() {
     console.log("Formatted balance:", formattedBalance);
 
     document.getElementById("balance-display").textContent = formattedBalance;
-
-    // 실시간 가격 API 연동 시 여기에 추가
-    document.getElementById("fiat-value").textContent = "";
   } catch (error) {
     console.log("Failed to fetch balance:", error);
   }
@@ -326,7 +342,11 @@ async function loadTransactionHistory(skipLoadingUI = false) {
 
 // Mempool API로 트랜잭션 조회
 async function fetchTransactionHistory(address) {
-  const url = `https://mempool.space/testnet/api/address/${address}/txs`;
+  const url = window.BitcoinConfig?.getApiUrl(`/address/${address}/txs`);
+  
+  if (!url) {
+    throw new Error('API URL configuration not found');
+  }
 
   const response = await fetch(url);
 
@@ -369,8 +389,10 @@ function createTransactionElement(tx, isSent) {
 
   const txType = isSent ? "send" : "receive";
   // Bitcoin 트랜잭션 금액 계산
-  const amount = BitcoinUtils.calculateTransactionAmount(tx, currentWallet.address) / 100000000;
-  const timeAgo = BitcoinUtils.getTimeAgo(tx.status.block_time * 1000);
+  const amountSatoshi = BitcoinUtils.calculateTransactionAmount(tx, currentWallet.address);
+  // formatBalance를 사용하여 작은 금액도 제대로 표시
+  const formattedAmount = BitcoinUtils.formatBalance(amountSatoshi);
+  const timeAgo = BitcoinUtils.getTimeAgo(tx.status?.block_time || Date.now() / 1000);
   
   // Bitcoin 트랜잭션의 경우 여러 입출력이 있을 수 있음
   const txLabel = isSent ? "Sent" : "Received";
@@ -382,7 +404,7 @@ function createTransactionElement(tx, isSent) {
       <div class="tx-address">${BitcoinUtils.shortenAddress(tx.txid, 6)}</div>
     </div>
     <div class="tx-amount">
-      <div class="tx-eth ${txType}">${isSent ? "-" : "+"}${amount.toFixed(8)} BTC</div>
+      <div class="tx-eth ${txType}">${isSent ? "-" : "+"}${formattedAmount} BTC</div>
       <div class="tx-time">${timeAgo}</div>
     </div>
   `;
@@ -390,15 +412,13 @@ function createTransactionElement(tx, isSent) {
   // 클릭 시 Mempool explorer로 이동
   div.style.cursor = "pointer";
   div.onclick = () => {
-    const explorerUrl = `https://mempool.space/testnet/tx/${tx.txid}`;
+    const baseUrl = window.BitcoinConfig?.explorerUrl || 'https://mempool.space';
+    const explorerUrl = `${baseUrl}/tx/${tx.txid}`;
     window.open(explorerUrl, "_blank");
   };
 
   return div;
 }
-
-// 시간 계산 - utils/helpers.js로 이동됨
-const getTimeAgo = BitcoinUtils.getTimeAgo;
 
 // 로딩 상태 표시
 function showTransactionLoading() {
@@ -860,6 +880,9 @@ function handleNetworkChange() {
   if (currentNetwork) {
     console.log(`Switched to network: ${currentNetwork.name}`);
   }
+  
+  // 네트워크 라벨 업데이트
+  updateNetworkLabel();
   
   // 지갑이 있다면 잔액과 트랜잭션 다시 로드
   if (currentWallet && currentWallet.address) {

@@ -10,36 +10,74 @@
   // 포맷팅 유틸리티
   // ================================================================
 
-  // 잔액을 사람이 읽기 쉬운 형식으로 변환
+  // 잔액을 사람이 읽기 쉬운 형식으로 변환 (개선된 버전)
   function formatBalance(balance, decimals = 18) {
     try {
-      // ethers v5 사용
+      let ethValue;
+      
+      // ethers를 사용하여 기본 변환
       if (typeof ethers !== 'undefined' && ethers.utils && ethers.utils.formatUnits) {
-        return ethers.utils.formatUnits(balance, decimals);
+        ethValue = ethers.utils.formatUnits(balance, decimals);
+      } else if (typeof ethers !== 'undefined' && ethers.formatEther && decimals === 18) {
+        ethValue = ethers.formatEther(balance);
+      } else {
+        // Fallback: BigInt 사용 (정밀도 손실 최소화)
+        const divisor = BigInt(10) ** BigInt(decimals);
+        const balanceBigInt = BigInt(balance);
+        const wholePart = balanceBigInt / divisor;
+        const fractionalPart = balanceBigInt % divisor;
+        const fractionalStr = fractionalPart.toString().padStart(decimals, '0');
+        ethValue = `${wholePart}.${fractionalStr}`;
       }
-      // ethers v6 (미래 호환성)
-      if (typeof ethers !== 'undefined' && ethers.formatEther && decimals === 18) {
-        return ethers.formatEther(balance);
+      
+      // 숫자로 변환
+      const eth = parseFloat(ethValue);
+      const absEth = Math.abs(eth);
+      
+      // 설정값
+      const DUST_THRESHOLD = 0.000001; // 1e-6 ETH (1000 gwei)
+      const GAS_MINIMUM = 0.000021; // 21000 gwei (minimum gas)
+      
+      // 0인 경우
+      if (absEth === 0) {
+        return '0.0000';
       }
+      
+      // 매우 작은 금액 (dust threshold 미만)
+      if (absEth < DUST_THRESHOLD && absEth > 0) {
+        return `< 0.000001`; // 1e-6 ETH
+      }
+      
+      // 가스 최소값 미만도 작은 금액으로 처리
+      if (absEth < 0.0001) {
+        return `< 0.0001`; // 0.0001 ETH 미만
+      }
+      
+      // 일반 금액 - 동적 정밀도
+      // 1 ETH 이상: 4자리
+      // 0.1-1 ETH: 5자리  
+      // 0.01-0.1 ETH: 6자리
+      // < 0.01 ETH: 6자리 (최대)
+      let displayDecimals;
+      if (absEth >= 1) {
+        displayDecimals = 4;
+      } else if (absEth >= 0.1) {
+        displayDecimals = 5;
+      } else {
+        displayDecimals = 6;
+      }
+      
+      // 원래 decimals 파라미터가 18이 아니면 토큰일 수 있으므로 조정
+      if (decimals !== 18) {
+        // 토큰의 경우 해당 토큰의 decimals에 맞춰 표시
+        displayDecimals = Math.min(decimals, 6);
+      }
+      
+      return eth.toFixed(displayDecimals);
+      
     } catch (error) {
       console.log("Error formatting balance:", error);
-    }
-    
-    // Fallback: BigInt 사용 (정밀도 손실 최소화)
-    try {
-      const divisor = BigInt(10) ** BigInt(decimals);
-      const balanceBigInt = BigInt(balance);
-      const wholePart = balanceBigInt / divisor;
-      const fractionalPart = balanceBigInt % divisor;
-      
-      // 소수점 4자리까지만 표시
-      const fractionalStr = fractionalPart.toString().padStart(decimals, '0');
-      const displayFraction = fractionalStr.substring(0, 4);
-      
-      return `${wholePart}.${displayFraction}`;
-    } catch (fallbackError) {
-      console.log("Fallback formatting error:", fallbackError);
-      return "0.0000";
+      return '0.0000';
     }
   }
 

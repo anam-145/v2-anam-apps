@@ -51,7 +51,7 @@
   // 활성 네트워크 가져오기
   function getActiveNetwork() {
     const saved = localStorage.getItem('btc_active_network');
-    return saved || 'testnet4'; // 기본값을 testnet4로 설정
+    return saved || 'mainnet'; // 기본값을 mainnet으로 설정
   }
 
   // 활성 네트워크 설정
@@ -74,7 +74,7 @@
   // 현재 네트워크 설정 가져오기
   function getCurrentNetwork() {
     const activeId = getActiveNetwork();
-    return NETWORKS[activeId] || NETWORKS.testnet4;
+    return NETWORKS[activeId] || NETWORKS.mainnet;
   }
 
   // ================================================================
