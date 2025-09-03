@@ -161,7 +161,12 @@ class BitcoinAdapter {
         throw new Error("Bitcoin library not loaded");
       }
 
-      const { hdWalletFromMnemonic, generateAddress, networks } = window.BitcoinJS;
+      const { hdWalletFromMnemonic, generateAddress, networks, validateMnemonic } = window.BitcoinJS;
+
+      // 니모닉 유효성 검증 추가
+      if (!validateMnemonic(mnemonic)) {
+        throw new Error("Invalid mnemonic phrase. Please check your recovery phrase and try again.");
+      }
 
       // 양쪽 네트워크 주소 동시 생성
       const mainnetHdWallet = hdWalletFromMnemonic(mnemonic, networks.bitcoin);

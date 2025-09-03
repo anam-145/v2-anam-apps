@@ -249,8 +249,16 @@ async function importFromMnemonic() {
       loadTransactionHistory(true); // skipLoadingUI = true
     }, 100);
   } catch (error) {
-    console.log("Failed to import wallet:", error);
-    showToast("Please enter a valid mnemonic");
+    console.error("Failed to import wallet:", error);
+    
+    // 더 구체적인 에러 메시지 제공
+    if (error.message && error.message.includes("Invalid mnemonic")) {
+      showToast("Invalid recovery phrase. Please check that all words are correct and in the right order.", "error");
+    } else if (error.message && error.message.includes("library not loaded")) {
+      showToast("Bitcoin library is not loaded. Please refresh the page and try again.", "error");
+    } else {
+      showToast("Failed to import wallet. Please check your recovery phrase and try again.", "error");
+    }
   }
 }
 
