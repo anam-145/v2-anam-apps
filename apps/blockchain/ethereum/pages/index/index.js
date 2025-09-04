@@ -3,6 +3,15 @@
 // 전역 변수
 let adapter = null; // 코인 어댑터 인스턴스
 let currentWallet = null; // 현재 지갑 정보
+let pollTimer = null; // 폴링 타이머
+let currentPollingInterval = null; // 현재 폴링 간격
+
+// 폴링 설정
+const POLLING_CONFIG = {
+  PENDING: 15000,      // 15초 - Pending 있을 때
+  NORMAL: 30000,       // 30초 - 기존 유지
+  MAX_PENDING_TIME: 300000  // 5분 - 최대 pending 체크 시간
+};
 
 // 설정은 EthereumConfig에서 가져옴 (utils/config.js)
 const { CACHE, getCurrentNetwork, getEtherscanApiUrl } =
@@ -45,13 +54,15 @@ document.addEventListener("DOMContentLoaded", function () {
   // 네트워크 상태는 비동기로 확인 (블로킹하지 않음)
   checkNetworkStatus();
 
-  // 주기적으로 잔액 및 트랜잭션 업데이트 (30초마다)
-  setInterval(() => {
-    if (currentWallet) {
-      updateBalance();
-      loadTransactionHistory();
-    }
-  }, 30000);
+  // 동적 폴링 설정
+  setupDynamicPolling();
+  
+  // Send에서 돌아왔을 때 즉시 업데이트 (pending TX가 있을 수 있음)
+  if (localStorage.getItem('eth_has_pending_tx') === 'true') {
+    console.log('Pending transaction detected, updating immediately');
+    updateBalance();
+    loadTransactionHistory();
+  }
 
   // 트랜잭션 요청 이벤트 리스너 등록 (기존 방식 지원)
   window.addEventListener("transactionRequest", handleTransactionRequest);
@@ -88,6 +99,69 @@ function updateNetworkLabel() {
     if (currentNetwork) {
       networkLabel.textContent = currentNetwork.name;
     }
+  }
+}
+
+// 동적 폴링 설정
+function setupDynamicPolling() {
+  // Pending TX 체크
+  const hasPending = localStorage.getItem('eth_has_pending_tx') === 'true';
+  const interval = hasPending ? POLLING_CONFIG.PENDING : POLLING_CONFIG.NORMAL;
+  
+  // 이미 같은 간격으로 실행 중이면 변경 안 함
+  if (currentPollingInterval === interval) return;
+  
+  // 기존 타이머 정리
+  if (pollTimer) {
+    clearInterval(pollTimer);
+  }
+  
+  // 새 타이머 설정
+  pollTimer = setInterval(() => {
+    if (currentWallet) {
+      updateBalance();
+      loadTransactionHistory();
+      checkPendingComplete(); // Pending 완료 체크
+    }
+  }, interval);
+  
+  currentPollingInterval = interval;
+  console.log(`Polling mode: ${hasPending ? 'FAST (15s)' : 'NORMAL (30s)'}`);
+}
+
+// Pending 트랜잭션 완료 확인
+async function checkPendingComplete() {
+  const hasPending = localStorage.getItem('eth_has_pending_tx') === 'true';
+  if (!hasPending) return;
+  
+  // 캐시에서 pending TX 확인
+  const cacheKey = `eth_tx_${currentWallet.address.toLowerCase()}`;
+  const cached = localStorage.getItem(cacheKey);
+  
+  if (cached) {
+    try {
+      const data = JSON.parse(cached);
+      const stillPending = data.data?.some(tx => tx.isPending);
+      
+      if (!stillPending) {
+        // Pending 완료 → Normal 모드로
+        console.log('All pending transactions confirmed, switching to normal mode');
+        localStorage.removeItem('eth_has_pending_tx');
+        localStorage.removeItem('eth_pending_start_time');
+        setupDynamicPolling(); // 재설정 (30초로)
+      }
+    } catch (e) {
+      console.log('Error checking pending status:', e);
+    }
+  }
+  
+  // 5분 타임아웃 (안전장치)
+  const pendingStart = localStorage.getItem('eth_pending_start_time');
+  if (pendingStart && Date.now() - parseInt(pendingStart) > POLLING_CONFIG.MAX_PENDING_TIME) {
+    console.log('Pending timeout reached, switching to normal mode');
+    localStorage.removeItem('eth_has_pending_tx');
+    localStorage.removeItem('eth_pending_start_time');
+    setupDynamicPolling();
   }
 }
 
@@ -289,7 +363,19 @@ async function loadTransactionHistory(skipLoadingUI = false) {
   }
 
   try {
-    // 캐시 확인 (주소가 일치하는 경우만 사용)
+    // Pending TX가 있으면 캐시를 무시하고 API 호출
+    const hasPending = localStorage.getItem('eth_has_pending_tx') === 'true';
+    
+    if (hasPending) {
+      console.log('Pending transaction exists, forcing API call');
+      // API 직접 호출하여 최신 데이터 가져오기
+      const transactions = await fetchTransactionHistory(currentWallet.address);
+      saveTransactionCache(currentWallet.address, transactions);
+      displayTransactions(transactions);
+      return;
+    }
+    
+    // Pending이 없을 때는 기존 캐시 로직 사용
     const cached = getTransactionCache();
     if (
       cached &&
@@ -299,24 +385,6 @@ async function loadTransactionHistory(skipLoadingUI = false) {
       cached.address.toLowerCase() === currentWallet.address.toLowerCase()
     ) {
       console.log("Using cached transactions for:", cached.address);
-      
-      // 캐시된 트랜잭션에서 pending 트랜잭션 확인
-      // Send에서 추가한 pending이 있을 수 있으므로 캐시를 다시 읽어서 표시
-      const cacheKey = `eth_tx_${currentWallet.address.toLowerCase()}`;
-      const rawCache = localStorage.getItem(cacheKey);
-      if (rawCache) {
-        try {
-          const cacheData = JSON.parse(rawCache);
-          if (cacheData.data && Array.isArray(cacheData.data)) {
-            displayTransactions(cacheData.data);
-            return;
-          }
-        } catch (e) {
-          console.log("Error reading cache:", e);
-        }
-      }
-      
-      // 캐시 데이터가 유효하지 않으면 기존 cached 사용
       displayTransactions(cached.transactions);
       return;
     }
@@ -457,11 +525,11 @@ function createTransactionElement(tx, isSent) {
   
   // Pending 상태 확인 및 라벨 설정
   let txLabel;
-  let statusIcon = "";
+  let statusSuffix = "";
   
   if (tx.isPending) {
     txLabel = "Pending";
-    statusIcon = "⏳ ";  // pending 아이콘
+    statusSuffix = "...";  // pending 표시
     div.className += " tx-pending";  // pending 스타일 클래스 추가
   } else {
     txLabel = isContract ? "Contract" : isSent ? "Sent" : "Received";
@@ -470,7 +538,7 @@ function createTransactionElement(tx, isSent) {
   div.innerHTML = `
     <div class="tx-icon ${txType}">${isSent ? "↑" : "↓"}</div>
     <div class="tx-details">
-      <div class="tx-type">${statusIcon}${txLabel}</div>
+      <div class="tx-type">${txLabel}${statusSuffix}</div>
       <div class="tx-address">${EthereumUtils.shortenAddress(address, 6)}</div>
     </div>
     <div class="tx-amount">

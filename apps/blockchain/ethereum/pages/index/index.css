@@ -480,6 +480,16 @@ textarea.import-input-metamask {
   border-bottom: none;
 }
 
+/* Pending 트랜잭션 스타일 */
+.tx-item.tx-pending {
+  background: rgba(98, 126, 234, 0.03);
+}
+
+.tx-item.tx-pending .tx-type {
+  color: #627EEA;
+  font-weight: 500;
+}
+
 .tx-icon {
   width: 40px;
   height: 40px;

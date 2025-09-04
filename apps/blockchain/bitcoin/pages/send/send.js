@@ -290,6 +290,10 @@ async function confirmSend() {
       console.log("New cache created with pending transaction");
     }
 
+    // Pending 트랜잭션 플래그 설정
+    localStorage.setItem('btc_has_pending_tx', 'true');
+    localStorage.setItem('btc_pending_start_time', Date.now().toString());
+    
     // 메인 페이지로 돌아가기
     setTimeout(() => {
       goBack();

@@ -319,7 +319,19 @@ async function loadTransactionHistory(skipLoadingUI = false) {
   }
 
   try {
-    // 캐시 확인 (주소가 일치하는 경우만 사용)
+    // Pending TX가 있으면 캐시를 무시하고 API 호출
+    const hasPending = localStorage.getItem('btc_has_pending_tx') === 'true';
+    
+    if (hasPending) {
+      console.log('Pending transaction exists, forcing API call');
+      // API 직접 호출하여 최신 데이터 가져오기
+      const transactions = await fetchTransactionHistory(currentWallet.address);
+      saveTransactionCache(currentWallet.address, transactions);
+      displayTransactions(transactions);
+      return;
+    }
+    
+    // Pending이 없을 때는 기존 캐시 로직 사용
     const cached = getTransactionCache();
     if (
       cached &&
@@ -329,24 +341,6 @@ async function loadTransactionHistory(skipLoadingUI = false) {
       cached.address.toLowerCase() === currentWallet.address.toLowerCase()
     ) {
       console.log("Using cached transactions for:", cached.address);
-      
-      // 캐시된 트랜잭션에서 pending 트랜잭션 확인
-      // Send에서 추가한 pending이 있을 수 있으므로 캐시를 다시 읽어서 표시
-      const cacheKey = `btc_tx_${currentWallet.address}`;
-      const rawCache = localStorage.getItem(cacheKey);
-      if (rawCache) {
-        try {
-          const cacheData = JSON.parse(rawCache);
-          if (cacheData.data && Array.isArray(cacheData.data)) {
-            displayTransactions(cacheData.data);
-            return;
-          }
-        } catch (e) {
-          console.log("Error reading cache:", e);
-        }
-      }
-      
-      // 캐시 데이터가 유효하지 않으면 기존 cached 사용
       displayTransactions(cached.transactions);
       return;
     }
@@ -477,12 +471,12 @@ function createTransactionElement(tx, isSent) {
   let formattedAmount;
   let timeAgo;
   let txLabel;
-  let statusIcon = "";
+  let statusSuffix = "";
   
   if (tx.isPending) {
     // Pending 트랜잭션 처리
     txLabel = "Pending";
-    statusIcon = "⏳ ";  // pending 아이콘
+    statusSuffix = "...";  // pending 표시
     div.className += " tx-pending";  // pending 스타일 클래스 추가
     
     // Pending tx는 간단한 구조로 저장했으므로 직접 사용
@@ -503,7 +497,7 @@ function createTransactionElement(tx, isSent) {
   div.innerHTML = `
     <div class="tx-icon ${txType}">${isSent ? "↑" : "↓"}</div>
     <div class="tx-details">
-      <div class="tx-type">${statusIcon}${txLabel}</div>
+      <div class="tx-type">${txLabel}${statusSuffix}</div>
       <div class="tx-address">${BitcoinUtils.shortenAddress(tx.txid, 6)}</div>
     </div>
     <div class="tx-amount">
