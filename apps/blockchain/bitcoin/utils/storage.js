@@ -1,5 +1,5 @@
 // ================================================================
-// Ethereum Wallet Storage Manager
+// Bitcoin Wallet Storage Manager
 // localStorage와 sessionStorage를 효율적으로 관리
 // ================================================================
 
@@ -13,17 +13,20 @@
 
     // Storage 키
     KEYS: {
-      storage: 'eth_wallet',
-      session: 'eth_wallet_cache'
+      storage: 'btc_wallet',
+      session: 'btc_wallet_cache'
     },
 
     /**
      * 지갑 데이터 가져오기
      * 우선순위: 메모리 > sessionStorage > localStorage
+     * Bitcoin의 경우 자동으로 현재 네트워크에 맞게 동기화
      */
     get: function() {
       // 1. 메모리 캐시 확인
       if (this.wallet) {
+        // Bitcoin 네트워크 자동 동기화
+        this.syncBitcoinNetwork();
         return this.wallet;
       }
 
@@ -32,26 +35,67 @@
         const cached = sessionStorage.getItem(this.KEYS.session);
         if (cached) {
           this.wallet = JSON.parse(cached);
+          // Bitcoin 네트워크 자동 동기화
+          this.syncBitcoinNetwork();
+          // 동기화 후 sessionStorage도 업데이트
+          sessionStorage.setItem(this.KEYS.session, JSON.stringify(this.wallet));
           return this.wallet;
         }
       } catch (error) {
-        console.error('SessionStorage read error:', error);
+        console.error('[WalletStorage.get] SessionStorage read error:', error);
       }
 
       // 3. LocalStorage에서 로드
       try {
         const stored = localStorage.getItem(this.KEYS.storage);
         if (stored) {
-          this.wallet = JSON.parse(stored);
-          // SessionStorage에 캐싱
-          sessionStorage.setItem(this.KEYS.session, stored);
+          const walletData = JSON.parse(stored);
+          
+          // Keystore가 있는 경우 - 공개 정보만 반환 (복호화 필요)
+          if (walletData.hasKeystore) {
+            // 복호화는 getSecure()나 init()에서 처리
+            // 여기서는 공개 정보만 반환
+            this.wallet = walletData;
+            return walletData;
+          }
+          
+          // 평문 데이터인 경우 (개발 환경)
+          this.wallet = walletData;
+          // Bitcoin 네트워크 자동 동기화
+          this.syncBitcoinNetwork();
+          // 동기화된 데이터를 SessionStorage에 캐싱
+          sessionStorage.setItem(this.KEYS.session, JSON.stringify(this.wallet));
           return this.wallet;
         }
       } catch (error) {
-        console.error('LocalStorage read error:', error);
+        console.error('[WalletStorage.get] LocalStorage read error:', error);
       }
 
       return null;
+    },
+    
+    /**
+     * Bitcoin 네트워크 자동 동기화
+     * 현재 네트워크에 맞는 주소와 privateKey로 자동 전환
+     */
+    syncBitcoinNetwork: function() {
+      // Bitcoin만 해당 (networks 속성이 있는 경우)
+      if (!this.wallet || !this.wallet.networks) {
+        return;
+      }
+      
+      // 현재 네트워크 확인
+      if (window.BitcoinConfig && window.BitcoinConfig.getCurrentNetwork) {
+        const currentNetwork = window.BitcoinConfig.getCurrentNetwork();
+        const networkName = currentNetwork ? currentNetwork.name : 'mainnet';
+        
+        // 해당 네트워크 데이터가 있으면 자동 적용
+        if (this.wallet.networks[networkName]) {
+          this.wallet.address = this.wallet.networks[networkName].address;
+          this.wallet.privateKey = this.wallet.networks[networkName].privateKey;
+          this.wallet.activeNetwork = networkName;
+        }
+      }
     },
 
     /**
@@ -159,19 +203,24 @@
 
     /**
      * 안전하게 지갑 저장 (Keystore API 사용)
-     * @param {string} mnemonic - 니모닉 문구
-     * @param {string} address - 지갑 주소
-     * @param {string} privateKey - 개인키 (사용 안 함, mnemonic에서 유도)
+     * @param {Object} walletData - 전체 wallet 객체 (networks 포함)
      */
-    saveSecure: async function(mnemonic, address, privateKey) {
-      // 1. 공개 정보만 localStorage에 저장
+    saveSecure: async function(walletData) {
+      // walletData는 전체 wallet 객체 (networks 포함)
+      
+      // 1. 공개 정보만 추출하여 localStorage에 저장
       const publicData = {
-        address: address,
+        address: walletData.address,
         hasKeystore: true,
+        networks: {
+          mainnet: { address: walletData.networks?.mainnet?.address },
+          testnet4: { address: walletData.networks?.testnet4?.address }
+        },
+        activeNetwork: walletData.activeNetwork,
         createdAt: new Date().toISOString()
       };
       
-      // localStorage에 공개 정보 저장
+      // localStorage에 공개 정보만 저장 (privateKey, mnemonic 제외)
       localStorage.setItem(this.KEYS.storage, JSON.stringify(publicData));
       
       // 2. Keystore API 사용 가능 확인
@@ -183,13 +232,12 @@
             
             if (event.detail && event.detail.keystore) {
               // 암호화된 keystore 저장
-              localStorage.setItem(`keystore_${address}`, event.detail.keystore);
+              localStorage.setItem(`keystore_${walletData.address}`, event.detail.keystore);
               
-              // sessionStorage에 평문 캐시
+              // sessionStorage에 전체 데이터 캐시 (임시)
               const fullData = {
                 ...publicData,
-                mnemonic: mnemonic,
-                privateKey: privateKey
+                ...walletData  // mnemonic, privateKey, networks 포함
               };
               sessionStorage.setItem(this.KEYS.session, JSON.stringify(fullData));
               this.wallet = fullData;
@@ -203,23 +251,27 @@
           
           window.addEventListener('keystoreCreated', handler);
           
-          // mnemonic을 16진수로 변환 (API 요구사항)
-          // 브라우저 호환: TextEncoder 사용
+          // 전체 wallet 데이터를 JSON으로 변환하여 암호화
+          const walletJson = JSON.stringify({
+            mnemonic: walletData.mnemonic,
+            networks: walletData.networks  // 양쪽 네트워크의 privateKey 포함
+          });
+          
+          // JSON을 16진수로 변환 (API 요구사항)
           const encoder = new TextEncoder();
-          const data = encoder.encode(mnemonic);
+          const data = encoder.encode(walletJson);
           const hexArray = Array.from(data, byte => byte.toString(16).padStart(2, '0'));
           const secretHex = '0x' + hexArray.join('');
           
-          // Keystore 생성 요청 (secret 파라미터로 전달)
-          window.anamUI.createKeystore(secretHex, address);
+          // Keystore 생성 요청 (전체 wallet 정보 암호화)
+          window.anamUI.createKeystore(secretHex, walletData.address);
         });
       } else {
-        // API 없으면 평문 저장 (개발 환경)
+        // API 없으면 평문 저장 (개발 환경) - 이더리움과 동일한 방식
         console.warn('[WalletStorage] Keystore API not available, saving in plain text');
         const fullData = {
           ...publicData,
-          mnemonic: mnemonic,
-          // privateKey 저장 안 함 - mnemonic에서 유도
+          ...walletData,  // mnemonic, networks 등 모든 정보 포함
           hasKeystore: false  // 평문 표시
         };
         this.save(fullData);
@@ -279,32 +331,29 @@
           if (event.detail) {
             const wallet = this.get() || {};
             
-            // 16진수로 반환된 secret을 원본(mnemonic)으로 복원
+            // 16진수로 반환된 secret을 JSON으로 복원
             const secretHex = event.detail.secret;
-            // 브라우저 호환: 16진수를 Uint8Array로 변환 후 TextDecoder 사용
             const hex = secretHex.slice(2);
             const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
             const decoder = new TextDecoder();
-            const mnemonic = decoder.decode(bytes);
-            let privateKey = null;
+            const walletJson = decoder.decode(bytes);
             
-            // privateKey 즉시 유도하여 캐싱
-            if (mnemonic && window.ethers) {
-              try {
-                const hdWallet = ethers.Wallet.fromMnemonic(mnemonic);
-                privateKey = hdWallet.privateKey;
-              } catch (e) {
-                console.error('[WalletStorage] Failed to derive privateKey:', e);
-              }
-            }
-            
+            // JSON 파싱하여 wallet 데이터 복원
+            const decryptedData = JSON.parse(walletJson);
             const decrypted = {
               ...wallet,
-              mnemonic: mnemonic,
-              privateKey: privateKey,  // privateKey도 캐싱!
+              ...decryptedData,  // mnemonic과 networks 포함
               address: event.detail.address,
               decryptedAt: Date.now()
             };
+            
+            // 현재 네트워크에 맞는 privateKey 설정
+            if (decrypted.networks && wallet.activeNetwork) {
+              const networkData = decrypted.networks[wallet.activeNetwork];
+              if (networkData) {
+                decrypted.privateKey = networkData.privateKey;
+              }
+            }
             
             // 캐시 업데이트
             this.wallet = decrypted;
@@ -354,7 +403,7 @@
 
     getPrivateKeySecure: async function() {
       const wallet = await this.getSecure();
-      // 이미 캐싱된 privateKey 바로 반환 - 초고속!
+      // 이미 캐싱된 privateKey(WIF) 바로 반환
       return wallet ? wallet.privateKey : null;
     }
   };
@@ -368,5 +417,5 @@
     WalletStorage.init();
   }
 
-  console.log('[WalletStorage] Module loaded with Keystore API support');
+  console.log('[WalletStorage] Module loaded with Keystore API support for Bitcoin');
 })();

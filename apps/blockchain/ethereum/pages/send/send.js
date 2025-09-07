@@ -110,12 +110,19 @@ async function confirmSend() {
     const gasPrice = await adapter.getGasPrice();
     const fee = gasPrice[feeLevel];
 
+    // privateKey 가져오기 - 캐싱되어 있어서 즉시 반환!
+    const privateKey = await WalletStorage.getPrivateKeySecure();
+    if (!privateKey) {
+      showToast("Failed to access wallet keys");
+      return;
+    }
+
     // 트랜잭션 전송
     const txParams = {
       from: currentWallet.address,
       to: recipient,
       amount: amount,
-      privateKey: currentWallet.privateKey,
+      privateKey: privateKey,
     };
 
     // Ethereum 특화 파라미터 추가

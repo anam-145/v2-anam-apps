@@ -39,6 +39,17 @@ document.addEventListener("DOMContentLoaded", function () {
     showToast("Failed to initialize Ethereum adapter");
   }
 
+  // walletReady 이벤트 리스너 등록 (Keystore 복호화 완료 시)
+  window.addEventListener("walletReady", function() {
+    console.log("[Index] Wallet decryption completed");
+    // 복호화된 지갑 데이터로 재초기화
+    currentWallet = WalletStorage.get();
+    if (currentWallet) {
+      updateBalance();
+      loadTransactionHistory();
+    }
+  });
+
   // 네트워크 변경 이벤트 리스너
   window.addEventListener("providerUpdated", handleNetworkChange);
 
@@ -271,18 +282,21 @@ async function importFromMnemonic() {
 
     const wallet = await adapter.importFromMnemonic(mnemonicInput);
 
-    // localStorage에 저장
-    const walletData = {
+    // Keystore API로 안전하게 저장
+    await WalletStorage.saveSecure(
+      mnemonicInput,
+      wallet.address,
+      wallet.privateKey
+    );
+    
+    // 메모리에 캐시
+    currentWallet = {
       address: wallet.address,
       privateKey: wallet.privateKey,
       mnemonic: mnemonicInput,
       createdAt: new Date().toISOString(),
     };
-
-    const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
-    localStorage.setItem(walletKey, JSON.stringify(walletData));
-    currentWallet = walletData;
-    updateWalletInfo(walletData);
+    updateWalletInfo(currentWallet);
 
     showToast("Wallet imported successfully!");
 

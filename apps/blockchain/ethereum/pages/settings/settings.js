@@ -38,9 +38,11 @@ function navigateBack() {
 
 
 // Show recovery phrase
-function showRecoveryPhrase() {
-  if (!currentWallet || !currentWallet.mnemonic) {
-    // This should not happen anymore as all wallets have mnemonic
+async function showRecoveryPhrase() {
+  // 민감한 데이터 접근을 위해 getSecure 사용
+  const secureWallet = await WalletStorage.getSecure();
+  
+  if (!secureWallet || !secureWallet.mnemonic) {
     showToast("No recovery phrase available");
     return;
   }
@@ -48,13 +50,16 @@ function showRecoveryPhrase() {
   showModal(
     "Recovery Phrase",
     "Keep these 12 words safe. You can recover your wallet with this phrase.",
-    currentWallet.mnemonic
+    secureWallet.mnemonic
   );
 }
 
 // Export private key
-function exportPrivateKey() {
-  if (!currentWallet || !currentWallet.privateKey) {
+async function exportPrivateKey() {
+  // 단순화: helper 함수 사용
+  const privateKey = await WalletStorage.getPrivateKeySecure();
+  
+  if (!privateKey) {
     showToast("No private key available");
     return;
   }
@@ -62,18 +67,30 @@ function exportPrivateKey() {
   showModal(
     "Private Key",
     "Never share this private key with anyone. Anyone with this key can access all assets in your wallet.",
-    currentWallet.privateKey
+    privateKey
   );
 }
 
 // Delete wallet
 function deleteWallet() {
   try {
+    // Get wallet address before clearing
+    const wallet = WalletStorage.get();
+    
     // Clear wallet data
     WalletStorage.clear();
     
+    // Clear keystore if it exists
+    if (wallet && wallet.address) {
+      localStorage.removeItem(`keystore_${wallet.address}`);
+    }
+    
     // Clear transaction cache
     localStorage.removeItem("eth_tx_cache");
+    
+    // Clear wallet status
+    localStorage.removeItem(`${CoinConfig.symbol.toLowerCase()}_wallet_status`);
+    localStorage.removeItem(`${CoinConfig.symbol.toLowerCase()}_mnemonic_skip_count`);
     
     showToast("Wallet deleted successfully");
     

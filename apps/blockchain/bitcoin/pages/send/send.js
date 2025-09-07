@@ -40,22 +40,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 // 지갑 정보 로드
 function loadWalletInfo() {
-  const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
-  const walletData = localStorage.getItem(walletKey);
+  const walletData = WalletStorage.get();
 
   if (walletData) {
-    currentWallet = JSON.parse(walletData);
-    
-    // 새 구조 지갑인 경우 현재 네트워크 주소 사용
-    if (currentWallet.networks && currentWallet.activeNetwork) {
-      const activeNetwork = currentWallet.activeNetwork;
-      const networkData = currentWallet.networks[activeNetwork];
-      if (networkData) {
-        // 하위 호환성을 위해 최상위 레벨에도 현재 네트워크 정보 저장
-        currentWallet.address = networkData.address;
-        currentWallet.privateKey = networkData.privateKey;
-      }
-    }
+    // WalletStorage.get()이 자동으로 네트워크 동기화함
+    currentWallet = walletData;
     
     console.log("Wallet loaded:", currentWallet.address);
   } else {
@@ -235,11 +224,18 @@ async function confirmSend() {
     showToast && showToast("Sending transaction...", "info");
 
     // 트랜잭션 전송
+    // 민감한 데이터 접근을 위해 getPrivateKeySecure 사용
+    const privateKey = await WalletStorage.getPrivateKeySecure();
+    
+    if (!privateKey) {
+      throw new Error("Failed to access wallet private key");
+    }
+    
     const txParams = {
       from: currentWallet.address,
       to: recipient,
       amount: amount,
-      privateKey: currentWallet.privateKey,
+      privateKey: privateKey,
     };
 
     // Bitcoin은 feeRate를 사용 (sat/vByte)

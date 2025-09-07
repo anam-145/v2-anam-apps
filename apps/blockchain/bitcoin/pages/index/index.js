@@ -58,6 +58,13 @@ document.addEventListener("DOMContentLoaded", function () {
   
   // Bridge Handler 초기화 (지갑이 없어도 Handler는 초기화)
   initBridgeHandler();
+  
+  // Keystore 복호화 완료 이벤트 리스너
+  window.addEventListener('walletReady', function() {
+    console.log('[Bitcoin] Wallet decrypted and ready');
+    // 지갑 상태 다시 확인
+    checkWalletStatus();
+  });
 });
 
 // 테마 적용
@@ -119,33 +126,35 @@ async function checkNetworkStatus() {
 
 // 지갑 상태 확인
 async function checkWalletStatus() {
-  const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
-  const walletData = localStorage.getItem(walletKey);
+  
+  const walletData = WalletStorage.get();
 
   if (walletData) {
     // 지갑이 있으면 메인 화면 표시
     try {
-      currentWallet = JSON.parse(walletData);
-      
-      // 새 구조 지갑인 경우 현재 네트워크 주소 사용
-      if (currentWallet.networks && currentWallet.activeNetwork) {
-        const activeNetwork = currentWallet.activeNetwork;
-        const networkData = currentWallet.networks[activeNetwork];
-        if (networkData) {
-          // 하위 호환성을 위해 최상위 레벨에도 현재 네트워크 정보 저장
-          currentWallet.address = networkData.address;
-          currentWallet.privateKey = networkData.privateKey;
+      // Keystore가 있는 경우 복호화 필요 확인
+      if (walletData.hasKeystore && !walletData.mnemonic) {
+        console.log('[checkWalletStatus] Wallet needs decryption, getting secure...');
+        // 복호화 시도
+        const decryptedWallet = await WalletStorage.getSecure();
+        if (decryptedWallet) {
+          currentWallet = decryptedWallet;
+        } else {
+          console.log('[checkWalletStatus] Failed to decrypt wallet');
+          // 복호화 실패 시 공개 정보만 사용
+          currentWallet = walletData;
         }
+      } else {
+        // 이미 복호화됨 또는 평문
+        currentWallet = walletData;
       }
       
-      console.log('[checkWalletStatus] Wallet loaded:', currentWallet.address);
       
       // Bridge Handler 초기화
       initBridgeHandler();
 
       document.getElementById("wallet-creation").style.display = "none";
       document.getElementById("wallet-main").style.display = "block";
-      console.log('[checkWalletStatus] Switched to main screen');
 
       displayWalletInfo();
 
@@ -173,7 +182,6 @@ async function checkWalletStatus() {
     }
   } else {
     // 지갑이 없으면 생성 화면 표시
-    console.log('[checkWalletStatus] No wallet found, showing creation screen');
     document.getElementById("wallet-creation").style.display = "block";
     document.getElementById("wallet-main").style.display = "none";
   }
@@ -221,18 +229,11 @@ async function importFromMnemonic() {
 
     const wallet = await adapter.importFromMnemonic(mnemonicInput);
 
-    // localStorage에 저장
-    const walletData = {
-      address: wallet.address,
-      privateKey: wallet.privateKey,
-      mnemonic: mnemonicInput,
-      createdAt: new Date().toISOString(),
-    };
-
-    const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
-    localStorage.setItem(walletKey, JSON.stringify(walletData));
-    currentWallet = walletData;
-    updateWalletInfo(walletData);
+    // Keystore API로 안전하게 저장 (networks 정보 포함)
+    await WalletStorage.saveSecure(wallet);
+    
+    currentWallet = wallet;
+    updateWalletInfo(wallet);
 
     showToast("Wallet imported successfully!");
 
@@ -292,14 +293,7 @@ async function updateBalance() {
   try {
     const balance = await adapter.getBalance(currentWallet.address);
 
-    // 디버깅 로그 추가
-    console.log("Wallet address:", currentWallet.address);
-    console.log("Raw balance from adapter:", balance);
-    console.log("Type of balance:", typeof balance);
-
     const formattedBalance = window.BitcoinUtils?.formatBalance(balance) || balance;
-
-    console.log("Formatted balance:", formattedBalance);
 
     document.getElementById("balance-display").textContent = formattedBalance;
   } catch (error) {

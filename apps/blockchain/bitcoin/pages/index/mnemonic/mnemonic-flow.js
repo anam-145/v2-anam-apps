@@ -118,8 +118,7 @@ class MnemonicFlowManager {
       // 지갑 생성 (백업 없이)
       await this.generateWallet();
       
-      // 지갑 데이터 저장 (백업 미완료 상태로 표시하지만 니모닉은 저장)
-      const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
+      // 지갑 데이터 저장 (Keystore API 사용)
       const walletData = {
         address: this.wallet.address,
         privateKey: this.wallet.privateKey,
@@ -129,7 +128,8 @@ class MnemonicFlowManager {
         createdAt: new Date().toISOString()
       };
       
-      localStorage.setItem(walletKey, JSON.stringify(walletData));
+      // Keystore API로 안전하게 저장 (전체 wallet 객체 전달)
+      await WalletStorage.saveSecure(this.wallet);
       localStorage.setItem(`${CoinConfig.symbol.toLowerCase()}_wallet_status`, 'pending_backup');
       
       // 플로우 종료하고 메인 화면으로
@@ -152,8 +152,7 @@ class MnemonicFlowManager {
     try {
       console.log('[MnemonicFlow] Completing flow...');
       
-      // 지갑 데이터 저장
-      const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
+      // 지갑 데이터 저장 (Keystore API 사용)
       const walletData = {
         address: this.wallet.address,
         privateKey: this.wallet.privateKey,
@@ -163,7 +162,8 @@ class MnemonicFlowManager {
         createdAt: new Date().toISOString()
       };
       
-      localStorage.setItem(walletKey, JSON.stringify(walletData));
+      // Keystore API로 안전하게 저장 (전체 wallet 객체 전달)
+      await WalletStorage.saveSecure(this.wallet);
       localStorage.setItem(`${CoinConfig.symbol.toLowerCase()}_wallet_status`, 'active');
       
       // 스킵 카운트 초기화
@@ -193,8 +193,7 @@ class MnemonicFlowManager {
     this.container.style.display = 'none';
     
     // 지갑이 있으면 메인 화면, 없으면 생성 화면으로
-    const walletKey = `btc_wallet`;
-    const walletData = localStorage.getItem(walletKey);
+    const walletData = WalletStorage.get();
     
     if (walletData) {
       // 지갑이 있으면 메인 화면 표시

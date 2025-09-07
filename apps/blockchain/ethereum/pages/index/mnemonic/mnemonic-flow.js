@@ -118,17 +118,22 @@ class MnemonicFlowManager {
       // 지갑 생성 (백업 없이)
       await this.generateWallet();
       
-      // 지갑 데이터 저장 (백업 미완료 상태로 표시하지만 니모닉은 저장)
+      // 지갑 데이터 저장 (Keystore API 사용)
       const walletData = {
         address: this.wallet.address,
         privateKey: this.wallet.privateKey,
-        mnemonic: this.wallet.mnemonic,  // 니모닉도 저장 (설정에서 확인 가능)
+        mnemonic: this.wallet.mnemonic,
         mnemonicBackedUp: false,  // 백업 완료 여부는 false
         skippedBackup: true,       // 스킵했음을 표시
         createdAt: new Date().toISOString()
       };
       
-      WalletStorage.save(walletData);
+      // Keystore API로 안전하게 저장
+      await WalletStorage.saveSecure(
+        this.wallet.mnemonic, 
+        this.wallet.address, 
+        this.wallet.privateKey
+      );
       localStorage.setItem(`${CoinConfig.symbol.toLowerCase()}_wallet_status`, 'pending_backup');
       
       // 플로우 종료하고 메인 화면으로
@@ -151,7 +156,7 @@ class MnemonicFlowManager {
     try {
       console.log('[MnemonicFlow] Completing flow...');
       
-      // 지갑 데이터 저장
+      // 지갑 데이터 저장 (Keystore API 사용)
       const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
       const walletData = {
         address: this.wallet.address,
@@ -162,7 +167,12 @@ class MnemonicFlowManager {
         createdAt: new Date().toISOString()
       };
       
-      WalletStorage.save(walletData);
+      // Keystore API로 안전하게 저장
+      await WalletStorage.saveSecure(
+        this.wallet.mnemonic, 
+        this.wallet.address, 
+        this.wallet.privateKey
+      );
       localStorage.setItem(`${CoinConfig.symbol.toLowerCase()}_wallet_status`, 'active');
       
       // 스킵 카운트 초기화

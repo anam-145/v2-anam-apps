@@ -31,22 +31,11 @@ function updateNetworkDisplay() {
 
 // Load wallet data
 function loadWalletData() {
-  const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
-  const walletData = localStorage.getItem(walletKey);
+  const walletData = WalletStorage.get();
   
   if (walletData) {
-    currentWallet = JSON.parse(walletData);
-    
-    // 새 구조 지갑인 경우 현재 네트워크 주소 사용
-    if (currentWallet.networks && currentWallet.activeNetwork) {
-      const activeNetwork = currentWallet.activeNetwork;
-      const networkData = currentWallet.networks[activeNetwork];
-      if (networkData) {
-        // 하위 호환성을 위해 최상위 레벨에도 현재 네트워크 정보 저장
-        currentWallet.address = networkData.address;
-        currentWallet.privateKey = networkData.privateKey;
-      }
-    }
+    // WalletStorage.get()이 자동으로 네트워크 동기화함
+    currentWallet = walletData;
   } else {
     showToast && showToast("No wallet found");
     navigateBack();
@@ -60,9 +49,11 @@ function navigateBack() {
 
 
 // Show recovery phrase
-function showRecoveryPhrase() {
-  if (!currentWallet || !currentWallet.mnemonic) {
-    // This should not happen anymore as all wallets have mnemonic
+async function showRecoveryPhrase() {
+  // 민감한 데이터 접근을 위해 getSecure 사용
+  const secureWallet = await WalletStorage.getSecure();
+  
+  if (!secureWallet || !secureWallet.mnemonic) {
     showToast && showToast("No recovery phrase available", "warning");
     return;
   }
@@ -70,37 +61,48 @@ function showRecoveryPhrase() {
   showModal(
     "Recovery Phrase",
     "Keep these 12 words safe. You can recover your wallet with this phrase.",
-    currentWallet.mnemonic
+    secureWallet.mnemonic
   );
 }
 
 // Export private key
-function exportPrivateKey() {
-  if (!currentWallet || !currentWallet.privateKey) {
+async function exportPrivateKey() {
+  // 민감한 데이터 접근을 위해 getPrivateKeySecure 사용
+  const privateKey = await WalletStorage.getPrivateKeySecure();
+  
+  if (!privateKey) {
     showToast && showToast("No private key available", "warning");
     return;
   }
   
   showModal(
-    "Private Key",
+    "Private Key (WIF)",
     "Never share this private key with anyone. Anyone with this key can access all assets in your wallet.",
-    currentWallet.privateKey
+    privateKey
   );
 }
 
 // Delete wallet
 function deleteWallet() {
   try {
+    // Get wallet address before clearing
+    const wallet = WalletStorage.get();
+    
     // Clear wallet data
-    const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
-    localStorage.removeItem(walletKey);
+    WalletStorage.clear();
+    
+    // Clear keystore if it exists
+    if (wallet && wallet.address) {
+      localStorage.removeItem(`keystore_${wallet.address}`);
+    }
     
     // Clear transaction cache (Bitcoin specific)
     const txCacheKey = `${CoinConfig.symbol.toLowerCase()}_tx_cache`;
     localStorage.removeItem(txCacheKey);
     
-    // Clear any other related data
-    localStorage.removeItem("walletData");
+    // Clear wallet status
+    localStorage.removeItem(`${CoinConfig.symbol.toLowerCase()}_wallet_status`);
+    localStorage.removeItem(`${CoinConfig.symbol.toLowerCase()}_mnemonic_skip_count`);
     
     showToast && showToast("Wallet deleted successfully", "success");
     
@@ -206,25 +208,35 @@ function closeNetworkModal() {
 }
 
 async function selectNetwork(networkId) {
-  console.log("Selecting network:", networkId);
+  console.log("[selectNetwork] Starting network switch to:", networkId);
   
   try {
     // 현재 지갑 데이터 확인
     const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
     const currentWalletData = { ...currentWallet };
+    console.log("[selectNetwork] Current wallet data:", {
+      address: currentWalletData.address,
+      hasNetworks: !!currentWalletData.networks,
+      activeNetwork: currentWalletData.activeNetwork
+    });
     
     // 네트워크 변경
+    console.log("[selectNetwork] Calling setActiveNetwork...");
     const success = window.BitcoinConfig.setActiveNetwork(networkId);
     
     if (!success) {
+      console.error("[selectNetwork] Failed to set active network");
       showToast && showToast('Invalid network', 'error');
       return;
     }
     
+    console.log("[selectNetwork] Network changed successfully");
+    
     // UI 체크마크 업데이트
     updateNetworkCheckmarks(networkId);
     
-    // 캐시 초기화
+    // 네트워크 캐시만 초기화 (API 캐시)
+    console.log("[selectNetwork] Clearing network cache...");
     window.BitcoinConfig.clearNetworkCache();
     
     // 성공 메시지
@@ -238,21 +250,31 @@ async function selectNetwork(networkId) {
     
     // 새로운 구조의 지갑인지 확인
     if (currentWalletData?.networks) {
+      console.log("[selectNetwork] Wallet has networks, switching immediately");
+      console.log("[selectNetwork] Available networks:", Object.keys(currentWalletData.networks));
+      
       // 이미 양쪽 네트워크 주소가 있는 경우 - 즉시 전환
       currentWalletData.activeNetwork = networkId;
       
       // 현재 네트워크 주소를 하위 호환성 필드에 복사
       const networkData = currentWalletData.networks[networkId];
+      console.log("[selectNetwork] Network data for", networkId, ":", networkData);
+      
       if (networkData) {
         currentWalletData.address = networkData.address;
         currentWalletData.privateKey = networkData.privateKey;
+        console.log("[selectNetwork] Updated wallet address to:", currentWalletData.address);
+      } else {
+        console.error("[selectNetwork] No network data found for:", networkId);
       }
       
+      console.log("[selectNetwork] Saving to localStorage...");
       localStorage.setItem(walletKey, JSON.stringify(currentWalletData));
       
       showToast && showToast(`Switched to ${networkName}`, 'success');
       
       // 페이지 새로고침 (빠르게)
+      console.log("[selectNetwork] Reloading page in 500ms...");
       setTimeout(() => {
         window.location.reload();
       }, 500);
