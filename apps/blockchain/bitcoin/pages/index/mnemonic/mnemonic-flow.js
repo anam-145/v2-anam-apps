@@ -193,7 +193,7 @@ class MnemonicFlowManager {
     this.container.style.display = 'none';
     
     // 지갑이 있으면 메인 화면, 없으면 생성 화면으로
-    const walletKey = `eth_wallet`;
+    const walletKey = `btc_wallet`;
     const walletData = localStorage.getItem(walletKey);
     
     if (walletData) {

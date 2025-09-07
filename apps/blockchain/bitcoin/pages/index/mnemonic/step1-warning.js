@@ -93,9 +93,9 @@ class SecurityWarningStep {
 
   handleSkip() {
     // Increment skip count
-    const skipCount = parseInt(localStorage.getItem('eth_mnemonic_skip_count') || '0') + 1;
-    localStorage.setItem('eth_mnemonic_skip_count', skipCount.toString());
-    localStorage.setItem('eth_mnemonic_skipped', 'true');
+    const skipCount = parseInt(localStorage.getItem('btc_mnemonic_skip_count') || '0') + 1;
+    localStorage.setItem('btc_mnemonic_skip_count', skipCount.toString());
+    localStorage.setItem('btc_mnemonic_skipped', 'true');
     
     // Toast message
     if (window.showToast) {

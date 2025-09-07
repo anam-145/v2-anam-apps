@@ -82,6 +82,10 @@ class MnemonicVerifyStep {
   }
 
   attachEvents() {
+    // Step 3로 진입할 때마다 상태 초기화
+    this.selectedWords = {};
+    this.currentBlankIndex = 0;
+    
     // 뒤로가기 버튼
     document.getElementById('back-btn').addEventListener('click', () => {
       this.handleBack();
