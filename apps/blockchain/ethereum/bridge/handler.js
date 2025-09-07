@@ -74,17 +74,9 @@
 
     // 지갑 정보 확인 (BlockchainService 환경에서 실행될 때를 위해)
     if (!currentWallet) {
-      const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
-      const walletData = localStorage.getItem(walletKey);
-      if (walletData) {
-        try {
-          currentWallet = JSON.parse(walletData);
-          console.log("Wallet info reloaded for DApp request");
-        } catch (e) {
-          console.log("Failed to load wallet:", e);
-          sendDAppError(requestId, -32000, "No wallet found");
-          return;
-        }
+      currentWallet = WalletStorage.get();
+      if (currentWallet) {
+        console.log("Wallet info reloaded for DApp request");
       } else {
         sendDAppError(requestId, -32000, "No wallet found");
         return;

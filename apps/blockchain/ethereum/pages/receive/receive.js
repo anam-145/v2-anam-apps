@@ -24,11 +24,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // 지갑 정보 로드
 function loadWalletInfo() {
-  const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
-  const walletData = localStorage.getItem(walletKey);
+  currentWallet = WalletStorage.get();
 
-  if (walletData) {
-    currentWallet = JSON.parse(walletData);
+  if (currentWallet) {
     console.log("Wallet loaded:", currentWallet.address);
   } else {
     showToast("No wallet found");

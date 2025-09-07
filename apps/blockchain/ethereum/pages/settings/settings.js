@@ -22,11 +22,9 @@ function applyTheme() {
 
 // Load wallet data
 function loadWalletData() {
-  const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
-  const walletData = localStorage.getItem(walletKey);
+  currentWallet = WalletStorage.get();
   
-  if (walletData) {
-    currentWallet = JSON.parse(walletData);
+  if (currentWallet) {
   } else {
     showToast("No wallet found");
     navigateBack();
@@ -72,14 +70,10 @@ function exportPrivateKey() {
 function deleteWallet() {
   try {
     // Clear wallet data
-    const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
-    localStorage.removeItem(walletKey);
+    WalletStorage.clear();
     
     // Clear transaction cache
     localStorage.removeItem("eth_tx_cache");
-    
-    // Clear any other related data
-    localStorage.removeItem("walletData");
     
     showToast("Wallet deleted successfully");
     

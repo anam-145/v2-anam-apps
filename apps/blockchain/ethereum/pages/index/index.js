@@ -181,13 +181,13 @@ async function checkNetworkStatus() {
 
 // 지갑 상태 확인
 async function checkWalletStatus() {
-  const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
-  const walletData = localStorage.getItem(walletKey);
+  // WalletStorage 초기화
+  WalletStorage.init();
+  currentWallet = WalletStorage.get();
 
-  if (walletData) {
+  if (currentWallet) {
     // 지갑이 있으면 메인 화면 표시
     try {
-      currentWallet = JSON.parse(walletData);
       console.log("[checkWalletStatus] Wallet loaded:", currentWallet.address);
 
       // Bridge Handler 초기화
@@ -707,11 +707,9 @@ async function handleTransactionRequest(event) {
 
   // 지갑 정보 다시 로드 (BlockchainService 환경에서 실행될 때를 위해)
   if (!currentWallet) {
-    const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
-    const walletData = localStorage.getItem(walletKey);
-    if (walletData) {
+    currentWallet = WalletStorage.get();
+    if (currentWallet) {
       try {
-        currentWallet = JSON.parse(walletData);
         console.log("Wallet info reloaded");
       } catch (e) {
         console.log("Failed to load wallet:", e);
@@ -807,11 +805,9 @@ async function handleTransactionRequest(event) {
 
   // 지갑 정보 다시 로드 (BlockchainService 환경에서 실행될 때를 위해)
   if (!currentWallet) {
-    const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
-    const walletData = localStorage.getItem(walletKey);
-    if (walletData) {
+    currentWallet = WalletStorage.get();
+    if (currentWallet) {
       try {
-        currentWallet = JSON.parse(walletData);
         console.log("Wallet info reloaded");
       } catch (e) {
         console.log("Failed to load wallet:", e);
