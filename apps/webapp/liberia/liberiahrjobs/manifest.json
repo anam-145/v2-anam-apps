@@ -1,0 +1,8 @@
+{
+  "app_id": "com.liberia.liberiahrjobs",
+  "type": "app",
+  "version": "1.0.0",
+  "name": "HR Jobs",
+  "icon": "assets/icons/app_icon.png",
+  "pages": ["pages/index/index"]
+}

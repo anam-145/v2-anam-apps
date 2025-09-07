@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Liberia DSA Wallet</title>
+    <link rel="stylesheet" href="../../app.css" />
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Wallet Creation Screen (Hidden - Skip to main) -->
+      <div id="wallet-creation" class="wallet-screen" style="display: none">
+        <div class="creation-content-metamask">
+          <!-- Bitcoin Logo -->
+          <div class="btc-logo-container">
+            <img
+              src="../../assets/icons/app_icon.png"
+              alt="Bitcoin Logo"
+              class="btc-logo"
+            />
+          </div>
+
+          <h1 class="creation-title-metamask">Get Started</h1>
+
+          <button class="create-wallet-btn-metamask" onclick="createWallet()">
+            Create New Wallet
+          </button>
+
+          <button class="import-wallet-btn-text" onclick="showImportOptions()">
+            I already have a wallet
+          </button>
+        </div>
+
+        <!-- Import Options (Initially Hidden) -->
+        <div
+          id="import-options"
+          class="import-options-container"
+          style="display: none"
+        >
+          <div class="import-header">
+            <button class="back-to-start" onclick="hideImportOptions()">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M15 18L9 12L15 6"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <h2>Import Wallet</h2>
+          </div>
+
+          <div class="import-content">
+            <!-- Mnemonic Import Only -->
+            <div id="mnemonic-import-content" class="import-tab-content">
+              <p class="import-description">
+                Enter your 12 or 24 word recovery phrase
+              </p>
+              <textarea
+                id="mnemonic-input"
+                class="import-input-metamask"
+                placeholder="Enter each word separated by spaces"
+                rows="4"
+              ></textarea>
+              <button
+                class="import-btn-metamask"
+                onclick="importFromMnemonic()"
+              >
+                Import Wallet
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Wallet Screen -->
+      <div id="wallet-main" class="wallet-screen" style="display: block">
+        <!-- Header -->
+        <header class="header">
+          <div class="header-content">
+            <div class="logo-section">
+              <div class="logo">
+                <img
+                  src="../../assets/icons/app_icon.png"
+                  alt="Liberia DSA Logo"
+                  class="coin-logo"
+                />
+                <span class="logo-text">Liberia DSA</span>
+              </div>
+            </div>
+            <button
+              class="icon-btn settings-btn"
+              onclick="navigateToSettings()"
+              title="Settings"
+            >
+              <img
+                src="../../assets/images/settings.svg"
+                alt="Settings"
+                width="20"
+                height="20"
+              />
+            </button>
+          </div>
+        </header>
+
+        <!-- Balance Card -->
+        <div class="card balance-card">
+          <div class="balance-header">
+            <span class="balance-label" id="network-label">Mainnet</span>
+            <span class="network-status" id="network-status">●</span>
+          </div>
+          <div class="balance-amount">
+            <div class="coin-balance">
+              <span id="balance-display">29.00</span>
+              <span class="coin-unit">USDT</span>
+            </div>
+          </div>
+
+          <!-- Address Display -->
+          <div class="address-container">
+            <div class="address-label">Address</div>
+            <div class="address-display" id="address-display">
+              0x7f9b8c3d2e4a3d4e
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="action-buttons">
+            <button class="action-btn" onclick="navigateToSend()">
+              <span>Send</span>
+            </button>
+            <button class="action-btn" onclick="navigateToReceive()">
+              <span>Receive</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Transaction History Section -->
+        <section class="transactions-section">
+          <h3 class="section-title">Recent Transactions</h3>
+          <div id="tx-list" class="tx-list">
+            <!-- Hardcoded Transactions - Latest first -->
+            <div class="tx-item">
+              <div class="tx-icon receive">↓</div>
+              <div class="tx-details">
+                <div class="tx-type">Received</div>
+                <div class="tx-address">0x2a4b...8f12</div>
+              </div>
+              <div class="tx-amount">
+                <div class="tx-eth receive">+15.00 USDT</div>
+                <div class="tx-time">2 minutes ago</div>
+              </div>
+            </div>
+            <div class="tx-item">
+              <div class="tx-icon send">↑</div>
+              <div class="tx-details">
+                <div class="tx-type">Sent</div>
+                <div class="tx-address">0x5c1a...9f3d</div>
+              </div>
+              <div class="tx-amount">
+                <div class="tx-eth send">-9.00 USDT</div>
+                <div class="tx-time">2 hours ago</div>
+              </div>
+            </div>
+            <div class="tx-item">
+              <div class="tx-icon receive">↓</div>
+              <div class="tx-details">
+                <div class="tx-type">Received</div>
+                <div class="tx-address">0x2a4b...8f12</div>
+              </div>
+              <div class="tx-amount">
+                <div class="tx-eth receive">+15.00 USDT</div>
+                <div class="tx-time">Yesterday</div>
+              </div>
+            </div>
+            <div class="tx-item">
+              <div class="tx-icon send">↑</div>
+              <div class="tx-details">
+                <div class="tx-type">Sent</div>
+                <div class="tx-address">0x7e8c...2a1b</div>
+              </div>
+              <div class="tx-amount">
+                <div class="tx-eth send">-10.00 USDT</div>
+                <div class="tx-time">2 days ago</div>
+              </div>
+            </div>
+            <div class="tx-item">
+              <div class="tx-icon receive">↓</div>
+              <div class="tx-details">
+                <div class="tx-type">Received</div>
+                <div class="tx-address">0x2a4b...8f12</div>
+              </div>
+              <div class="tx-amount">
+                <div class="tx-eth receive">+15.00 USDT</div>
+                <div class="tx-time">3 days ago</div>
+              </div>
+            </div>
+            <div class="tx-item">
+              <div class="tx-icon send">↑</div>
+              <div class="tx-details">
+                <div class="tx-type">Sent</div>
+                <div class="tx-address">0x9f2c...5e7a</div>
+              </div>
+              <div class="tx-amount">
+                <div class="tx-eth send">-12.00 USDT</div>
+                <div class="tx-time">4 days ago</div>
+              </div>
+            </div>
+            <div class="tx-item">
+              <div class="tx-icon receive">↓</div>
+              <div class="tx-details">
+                <div class="tx-type">Received</div>
+                <div class="tx-address">0x2a4b...8f12</div>
+              </div>
+              <div class="tx-amount">
+                <div class="tx-eth receive">+15.00 USDT</div>
+                <div class="tx-time">4 days ago</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Mnemonic Flow Container -->
+      <div id="mnemonic-flow-container" style="display: none"></div>
+    </div>
+
+    <!-- Simple Scripts Only -->
+    <script>
+      // Mock functions for navigation
+      function navigateToSend() {
+        window.location.href = "../send/send.html";
+      }
+      function navigateToReceive() {
+        window.location.href = "../receive/receive.html";
+      }
+      function navigateToSettings() {
+        console.log("Settings clicked");
+      }
+    </script>
+  </body>
+</html>

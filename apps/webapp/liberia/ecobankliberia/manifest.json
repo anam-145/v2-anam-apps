@@ -1,0 +1,8 @@
+{
+  "app_id": "com.liberia.ecobankliberia",
+  "type": "app",
+  "version": "1.0.0",
+  "name": "Ecobank",
+  "icon": "assets/icons/app_icon.png",
+  "pages": ["pages/index/index"]
+}

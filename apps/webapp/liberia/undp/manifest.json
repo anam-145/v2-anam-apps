@@ -1,0 +1,8 @@
+{
+  "app_id": "com.liberia.undp",
+  "type": "app",
+  "version": "1.0.0",
+  "name": "UNDP",
+  "icon": "assets/icons/app_icon.png",
+  "pages": ["pages/index/index"]
+}

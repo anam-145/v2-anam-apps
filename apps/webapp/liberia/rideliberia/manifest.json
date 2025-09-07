@@ -1,0 +1,8 @@
+{
+  "app_id": "com.liberia.rideliberia",
+  "type": "app",
+  "version": "1.0.0",
+  "name": "Ride Liberia",
+  "icon": "assets/icons/app_icon.png",
+  "pages": ["pages/index/index"]
+}
