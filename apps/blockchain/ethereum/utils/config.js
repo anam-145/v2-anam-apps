@@ -57,7 +57,7 @@
   // 활성 네트워크 가져오기 (동적)
   function getActiveNetwork() {
     const saved = localStorage.getItem('eth_active_network');
-    return saved || 'mainnet'; // 기본값을 mainnet으로 설정
+    return saved || 'mainnet'; // 기본값: mainnet (DApp 호환성)
   }
 
   // 활성 네트워크 설정

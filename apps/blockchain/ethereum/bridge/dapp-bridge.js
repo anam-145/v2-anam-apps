@@ -103,8 +103,8 @@
         // 상태 관리
         _accounts: [],
         selectedAddress: null,
-        chainId: '0xaa36a7', // Sepolia testnet
-        networkVersion: '11155111',
+        chainId: '0x1', // Ethereum Mainnet
+        networkVersion: '1',
         _permissions: [],
         
         // 이벤트 관리

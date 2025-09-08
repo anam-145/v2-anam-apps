@@ -267,35 +267,68 @@
         return null;
       }
       
-      if (!window.anamUI || !window.anamUI.decryptKeystore) {
-        console.error('[WalletStorage] Keystore API not available');
+      // Keystore API 감지 - anamUI 우선, anam 폴백
+      const keystoreAPI = (window.anamUI && window.anamUI.decryptKeystore) ? window.anamUI : 
+                          (window.anam && window.anam.decryptKeystore) ? window.anam : null;
+      
+      if (!keystoreAPI) {
+        console.error('[WalletStorage] Keystore API not available in both anamUI and anam');
         return null;
       }
       
+      console.log('[WalletStorage] Using Keystore API from:', keystoreAPI === window.anamUI ? 'anamUI' : 'anam');
+      
       return new Promise((resolve) => {
         const handler = (event) => {
+          console.log('========== [WalletStorage] keystoreDecrypted Event START ==========');
+          console.log('[WalletStorage] Event detail:', event.detail);
+          console.log('[WalletStorage] Has success field:', event.detail?.success);
+          console.log('[WalletStorage] Has secret field:', event.detail?.secret !== undefined);
+          console.log('[WalletStorage] Has privateKey field:', event.detail?.privateKey !== undefined);
+          
           window.removeEventListener('keystoreDecrypted', handler);
           
-          if (event.detail) {
+          if (event.detail && event.detail.success) {
             const wallet = this.get() || {};
             
             // 16진수로 반환된 secret을 원본(mnemonic)으로 복원
             const secretHex = event.detail.secret;
+            console.log('[WalletStorage] Secret hex:', secretHex);
+            console.log('[WalletStorage] Secret length:', secretHex?.length);
+            console.log('[WalletStorage] First 40 chars:', secretHex?.substring(0, 40));
+            console.log('[WalletStorage] Has 0x prefix:', secretHex?.startsWith('0x'));
+            
             // 브라우저 호환: 16진수를 Uint8Array로 변환 후 TextDecoder 사용
-            const hex = secretHex.slice(2);
-            const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-            const decoder = new TextDecoder();
-            const mnemonic = decoder.decode(bytes);
+            // Native는 0x prefix 없이 전달함
+            let mnemonic = null;
             let privateKey = null;
             
-            // privateKey 즉시 유도하여 캐싱
-            if (mnemonic && window.ethers) {
-              try {
-                const hdWallet = ethers.Wallet.fromMnemonic(mnemonic);
-                privateKey = hdWallet.privateKey;
-              } catch (e) {
-                console.error('[WalletStorage] Failed to derive privateKey:', e);
+            try {
+              const bytes = new Uint8Array(secretHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+              console.log('[WalletStorage] Bytes length:', bytes.length);
+              console.log('[WalletStorage] First 10 bytes:', Array.from(bytes.slice(0, 10)));
+              
+              const decoder = new TextDecoder();
+              mnemonic = decoder.decode(bytes);
+              console.log('[WalletStorage] Decoded mnemonic:', mnemonic);
+              console.log('[WalletStorage] Mnemonic word count:', mnemonic.split(' ').length);
+              
+              // privateKey 즉시 유도하여 캐싱
+              if (mnemonic && window.ethers) {
+                try {
+                  console.log('[WalletStorage] Attempting to derive privateKey from mnemonic...');
+                  const hdWallet = ethers.Wallet.fromMnemonic(mnemonic);
+                  privateKey = hdWallet.privateKey;
+                  console.log('[WalletStorage] ✅ PrivateKey derived successfully');
+                  console.log('[WalletStorage] PrivateKey length:', privateKey?.length);
+                } catch (e) {
+                  console.error('[WalletStorage] ❌ Failed to derive privateKey:', e.message);
+                  console.error('[WalletStorage] Error details:', e);
+                }
               }
+            } catch (decodeError) {
+              console.error('[WalletStorage] ❌ Failed to decode hex:', decodeError.message);
+              console.error('[WalletStorage] Hex that failed:', secretHex);
             }
             
             const decrypted = {
@@ -310,21 +343,30 @@
             this.wallet = decrypted;
             sessionStorage.setItem(this.KEYS.session, JSON.stringify(decrypted));
             
-            console.log('[WalletStorage] Keystore decrypted successfully');
+            console.log('[WalletStorage] ✅ Keystore decrypted successfully');
+            console.log('[WalletStorage] Final wallet data:', {
+              hasAddress: !!decrypted.address,
+              hasMnemonic: !!decrypted.mnemonic,
+              hasPrivateKey: !!decrypted.privateKey,
+              mnemonicWords: decrypted.mnemonic?.split(' ').length
+            });
             
             // walletReady 이벤트 발생
             window.dispatchEvent(new Event('walletReady'));
             
+            console.log('========== [WalletStorage] keystoreDecrypted Event END ==========');
             resolve(decrypted);
           } else {
+            console.error('[WalletStorage] ❌ Decryption failed or no success flag');
+            console.log('========== [WalletStorage] keystoreDecrypted Event END ==========');
             resolve(null);
           }
         };
         
         window.addEventListener('keystoreDecrypted', handler);
         
-        // 복호화 요청
-        window.anamUI.decryptKeystore(keystore);
+        // 복호화 요청 (감지된 API 사용)
+        keystoreAPI.decryptKeystore(keystore);
       });
     },
 
@@ -334,8 +376,12 @@
     autoDecrypt: function(address) {
       const keystore = localStorage.getItem(`keystore_${address}`);
       
-      if (keystore && window.anamUI && window.anamUI.decryptKeystore) {
-        console.log('[WalletStorage] Auto-decrypting wallet...');
+      // Keystore API 감지 - anamUI 우선, anam 폴백
+      const keystoreAPI = (window.anamUI && window.anamUI.decryptKeystore) ? window.anamUI : 
+                          (window.anam && window.anam.decryptKeystore) ? window.anam : null;
+      
+      if (keystore && keystoreAPI) {
+        console.log('[WalletStorage] Auto-decrypting wallet using:', keystoreAPI === window.anamUI ? 'anamUI' : 'anam');
         
         // 비동기로 복호화 진행
         setTimeout(() => {

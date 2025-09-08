@@ -319,35 +319,44 @@
         return null;
       }
       
-      if (!window.anamUI || !window.anamUI.decryptKeystore) {
-        console.error('[WalletStorage] Keystore API not available');
+      // Keystore API 감지 - anamUI 우선, anam 폴백
+      const keystoreAPI = (window.anamUI && window.anamUI.decryptKeystore) ? window.anamUI : 
+                          (window.anam && window.anam.decryptKeystore) ? window.anam : null;
+      
+      if (!keystoreAPI) {
+        console.error('[WalletStorage] Keystore API not available in both anamUI and anam');
         return null;
       }
+      
+      console.log('[WalletStorage] Using Keystore API from:', keystoreAPI === window.anamUI ? 'anamUI' : 'anam');
       
       return new Promise((resolve) => {
         const handler = (event) => {
           window.removeEventListener('keystoreDecrypted', handler);
           
-          if (event.detail) {
+          if (event.detail && event.detail.success) {
             const wallet = this.get() || {};
+            let decryptedData = {};
             
-            // 16진수로 반환된 secret을 JSON으로 복원
-            const secretHex = event.detail.secret;
-            const hex = secretHex.slice(2);
-            const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-            const decoder = new TextDecoder();
-            const walletJson = decoder.decode(bytes);
+            // 브릿지는 항상 secret 필드로 전달 (anamUI, anam 둘 다 동일)
+            // Native는 0x prefix 없이 hex 전달
+            if (event.detail.secret) {
+              const secretHex = event.detail.secret;
+              // Native는 0x prefix 없이 전달하므로 바로 디코딩
+              const bytes = new Uint8Array(secretHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+              const decoder = new TextDecoder();
+              const walletJson = decoder.decode(bytes);
+              decryptedData = JSON.parse(walletJson);
+            }
             
-            // JSON 파싱하여 wallet 데이터 복원
-            const decryptedData = JSON.parse(walletJson);
             const decrypted = {
               ...wallet,
-              ...decryptedData,  // mnemonic과 networks 포함
+              ...decryptedData,
               address: event.detail.address,
               decryptedAt: Date.now()
             };
             
-            // 현재 네트워크에 맞는 privateKey 설정
+            // 현재 네트워크에 맞는 privateKey 설정 (networks가 있는 경우)
             if (decrypted.networks && wallet.activeNetwork) {
               const networkData = decrypted.networks[wallet.activeNetwork];
               if (networkData) {
@@ -372,8 +381,8 @@
         
         window.addEventListener('keystoreDecrypted', handler);
         
-        // 복호화 요청
-        window.anamUI.decryptKeystore(keystore);
+        // 복호화 요청 (감지된 API 사용)
+        keystoreAPI.decryptKeystore(keystore);
       });
     },
 
@@ -383,8 +392,12 @@
     autoDecrypt: function(address) {
       const keystore = localStorage.getItem(`keystore_${address}`);
       
-      if (keystore && window.anamUI && window.anamUI.decryptKeystore) {
-        console.log('[WalletStorage] Auto-decrypting wallet...');
+      // Keystore API 감지 - anamUI 우선, anam 폴백
+      const keystoreAPI = (window.anamUI && window.anamUI.decryptKeystore) ? window.anamUI : 
+                          (window.anam && window.anam.decryptKeystore) ? window.anam : null;
+      
+      if (keystore && keystoreAPI) {
+        console.log('[WalletStorage] Auto-decrypting wallet using:', keystoreAPI === window.anamUI ? 'anamUI' : 'anam');
         
         // 비동기로 복호화 진행
         setTimeout(() => {

@@ -151,18 +151,48 @@ class EthereumAdapter {
     
     const wallet = new ethers.Wallet(params.privateKey, this.provider);
     
+    // 기본 트랜잭션 객체
     const tx = {
       to: params.to,
       value: ethers.utils.parseEther(params.amount),
-      gasLimit: params.gasLimit || this.config.transaction.defaultGasLimit,
-      gasPrice: ethers.utils.parseUnits(params.gasPrice || this.config.transaction.defaultGasPrice, 'gwei')
+      gasLimit: params.gasLimit || this.config.transaction.defaultGasLimit
     };
     
+    // 데이터 추가 (컨트랙트 호출)
     if (params.data) {
       tx.data = params.data;
     }
     
+    // EIP-1559 트랜잭션 (maxFeePerGas, maxPriorityFeePerGas)
+    if (params.maxFeePerGas) {
+      tx.maxFeePerGas = params.maxFeePerGas;
+      tx.maxPriorityFeePerGas = params.maxPriorityFeePerGas || params.maxFeePerGas;
+      console.log('[EthereumAdapter] Using EIP-1559 gas:', {
+        maxFeePerGas: params.maxFeePerGas,
+        maxPriorityFeePerGas: params.maxPriorityFeePerGas
+      });
+    } 
+    // Legacy 트랜잭션 (gasPrice)
+    else if (params.gasPrice) {
+      tx.gasPrice = ethers.utils.parseUnits(params.gasPrice, 'gwei');
+      console.log('[EthereumAdapter] Using legacy gas price:', params.gasPrice);
+    }
+    // 가스 설정이 없으면 기본값 사용
+    else {
+      tx.gasPrice = ethers.utils.parseUnits(this.config.transaction.defaultGasPrice, 'gwei');
+      console.log('[EthereumAdapter] Using default gas price:', this.config.transaction.defaultGasPrice);
+    }
+    
+    console.log('[EthereumAdapter] Sending transaction:', {
+      to: tx.to,
+      value: ethers.utils.formatEther(tx.value),
+      gasLimit: tx.gasLimit,
+      dataLength: tx.data ? tx.data.length : 0
+    });
+    
     const transaction = await wallet.sendTransaction(tx);
+    
+    console.log('[EthereumAdapter] Transaction sent:', transaction.hash);
     
     return {
       hash: transaction.hash
