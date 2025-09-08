@@ -6,25 +6,11 @@
 (function() {
   'use strict';
 
-  // ================================================================
-  // API 키 및 엔드포인트
-  // ================================================================
-
   const API_KEYS = {
-    // Etherscan API Key
     ETHERSCAN: "GD4K6FTTVNF23VIICEYJ3AY3TP7RWT6PIY",
-    
-    // QuickNode RPC 엔드포인트
-    QUICKNODE: "ed1e699042dab42a0b3d7d6c7f059eaaef2cc930",
-    
-    // 기타 API 키 (필요시 추가)
-    // INFURA: "your-infura-key",
-    // ALCHEMY: "your-alchemy-key",
+    QUICKNODE: "ed1e699042dab42a0b3d7d6c7f059eaaef2cc930"
   };
 
-  // ================================================================
-  // 네트워크 설정
-  // ================================================================
 
   const NETWORKS = {
     mainnet: {

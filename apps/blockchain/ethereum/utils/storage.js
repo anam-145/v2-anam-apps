@@ -203,24 +203,19 @@
           
           window.addEventListener('keystoreCreated', handler);
           
-          // mnemonic을 16진수로 변환 (API 요구사항)
-          // 브라우저 호환: TextEncoder 사용
           const encoder = new TextEncoder();
           const data = encoder.encode(mnemonic);
           const hexArray = Array.from(data, byte => byte.toString(16).padStart(2, '0'));
           const secretHex = '0x' + hexArray.join('');
           
-          // Keystore 생성 요청 (secret 파라미터로 전달)
           window.anamUI.createKeystore(secretHex, address);
         });
       } else {
-        // API 없으면 평문 저장 (개발 환경)
         console.warn('[WalletStorage] Keystore API not available, saving in plain text');
         const fullData = {
           ...publicData,
           mnemonic: mnemonic,
-          // privateKey 저장 안 함 - mnemonic에서 유도
-          hasKeystore: false  // 평문 표시
+          hasKeystore: false
         };
         this.save(fullData);
         return Promise.resolve(null);
@@ -276,65 +271,40 @@
         return null;
       }
       
-      console.log('[WalletStorage] Using Keystore API from:', keystoreAPI === window.anamUI ? 'anamUI' : 'anam');
       
       return new Promise((resolve) => {
         const handler = (event) => {
-          console.log('========== [WalletStorage] keystoreDecrypted Event START ==========');
-          console.log('[WalletStorage] Event detail:', event.detail);
-          console.log('[WalletStorage] Has success field:', event.detail?.success);
-          console.log('[WalletStorage] Has secret field:', event.detail?.secret !== undefined);
-          console.log('[WalletStorage] Has privateKey field:', event.detail?.privateKey !== undefined);
           
           window.removeEventListener('keystoreDecrypted', handler);
           
           if (event.detail && event.detail.success) {
             const wallet = this.get() || {};
             
-            // 16진수로 반환된 secret을 원본(mnemonic)으로 복원
             const secretHex = event.detail.secret;
-            console.log('[WalletStorage] Secret hex:', secretHex);
-            console.log('[WalletStorage] Secret length:', secretHex?.length);
-            console.log('[WalletStorage] First 40 chars:', secretHex?.substring(0, 40));
-            console.log('[WalletStorage] Has 0x prefix:', secretHex?.startsWith('0x'));
-            
-            // 브라우저 호환: 16진수를 Uint8Array로 변환 후 TextDecoder 사용
-            // Native는 0x prefix 없이 전달함
             let mnemonic = null;
             let privateKey = null;
             
             try {
               const bytes = new Uint8Array(secretHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-              console.log('[WalletStorage] Bytes length:', bytes.length);
-              console.log('[WalletStorage] First 10 bytes:', Array.from(bytes.slice(0, 10)));
-              
               const decoder = new TextDecoder();
               mnemonic = decoder.decode(bytes);
-              console.log('[WalletStorage] Decoded mnemonic:', mnemonic);
-              console.log('[WalletStorage] Mnemonic word count:', mnemonic.split(' ').length);
               
-              // privateKey 즉시 유도하여 캐싱
               if (mnemonic && window.ethers) {
                 try {
-                  console.log('[WalletStorage] Attempting to derive privateKey from mnemonic...');
                   const hdWallet = ethers.Wallet.fromMnemonic(mnemonic);
                   privateKey = hdWallet.privateKey;
-                  console.log('[WalletStorage] ✅ PrivateKey derived successfully');
-                  console.log('[WalletStorage] PrivateKey length:', privateKey?.length);
                 } catch (e) {
-                  console.error('[WalletStorage] ❌ Failed to derive privateKey:', e.message);
-                  console.error('[WalletStorage] Error details:', e);
+                  console.error('[WalletStorage] Failed to derive privateKey:', e.message);
                 }
               }
             } catch (decodeError) {
-              console.error('[WalletStorage] ❌ Failed to decode hex:', decodeError.message);
-              console.error('[WalletStorage] Hex that failed:', secretHex);
+              console.error('[WalletStorage] Failed to decode hex:', decodeError.message);
             }
             
             const decrypted = {
               ...wallet,
               mnemonic: mnemonic,
-              privateKey: privateKey,  // privateKey도 캐싱!
+              privateKey: privateKey,
               address: event.detail.address,
               decryptedAt: Date.now()
             };
@@ -343,22 +313,10 @@
             this.wallet = decrypted;
             sessionStorage.setItem(this.KEYS.session, JSON.stringify(decrypted));
             
-            console.log('[WalletStorage] ✅ Keystore decrypted successfully');
-            console.log('[WalletStorage] Final wallet data:', {
-              hasAddress: !!decrypted.address,
-              hasMnemonic: !!decrypted.mnemonic,
-              hasPrivateKey: !!decrypted.privateKey,
-              mnemonicWords: decrypted.mnemonic?.split(' ').length
-            });
-            
-            // walletReady 이벤트 발생
             window.dispatchEvent(new Event('walletReady'));
-            
-            console.log('========== [WalletStorage] keystoreDecrypted Event END ==========');
             resolve(decrypted);
           } else {
-            console.error('[WalletStorage] ❌ Decryption failed or no success flag');
-            console.log('========== [WalletStorage] keystoreDecrypted Event END ==========');
+            console.error('[WalletStorage] Decryption failed');
             resolve(null);
           }
         };

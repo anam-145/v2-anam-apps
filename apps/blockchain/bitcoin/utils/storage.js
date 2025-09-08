@@ -242,7 +242,6 @@
               sessionStorage.setItem(this.KEYS.session, JSON.stringify(fullData));
               this.wallet = fullData;
               
-              console.log('[WalletStorage] Wallet saved securely with Keystore API');
               resolve(event.detail.keystore);
             } else {
               reject(new Error('Failed to create keystore'));
@@ -254,25 +253,20 @@
           // 전체 wallet 데이터를 JSON으로 변환하여 암호화
           const walletJson = JSON.stringify({
             mnemonic: walletData.mnemonic,
-            networks: walletData.networks  // 양쪽 네트워크의 privateKey 포함
+            networks: walletData.networks
           });
-          
-          // JSON을 16진수로 변환 (API 요구사항)
           const encoder = new TextEncoder();
           const data = encoder.encode(walletJson);
           const hexArray = Array.from(data, byte => byte.toString(16).padStart(2, '0'));
           const secretHex = '0x' + hexArray.join('');
-          
-          // Keystore 생성 요청 (전체 wallet 정보 암호화)
           window.anamUI.createKeystore(secretHex, walletData.address);
         });
       } else {
-        // API 없으면 평문 저장 (개발 환경) - 이더리움과 동일한 방식
         console.warn('[WalletStorage] Keystore API not available, saving in plain text');
         const fullData = {
           ...publicData,
-          ...walletData,  // mnemonic, networks 등 모든 정보 포함
-          hasKeystore: false  // 평문 표시
+          ...walletData,
+          hasKeystore: false
         };
         this.save(fullData);
         return Promise.resolve(null);
@@ -328,7 +322,6 @@
         return null;
       }
       
-      console.log('[WalletStorage] Using Keystore API from:', keystoreAPI === window.anamUI ? 'anamUI' : 'anam');
       
       return new Promise((resolve) => {
         const handler = (event) => {
@@ -338,11 +331,8 @@
             const wallet = this.get() || {};
             let decryptedData = {};
             
-            // 브릿지는 항상 secret 필드로 전달 (anamUI, anam 둘 다 동일)
-            // Native는 0x prefix 없이 hex 전달
             if (event.detail.secret) {
               const secretHex = event.detail.secret;
-              // Native는 0x prefix 없이 전달하므로 바로 디코딩
               const bytes = new Uint8Array(secretHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
               const decoder = new TextDecoder();
               const walletJson = decoder.decode(bytes);
@@ -355,8 +345,6 @@
               address: event.detail.address,
               decryptedAt: Date.now()
             };
-            
-            // 현재 네트워크에 맞는 privateKey 설정 (networks가 있는 경우)
             if (decrypted.networks && wallet.activeNetwork) {
               const networkData = decrypted.networks[wallet.activeNetwork];
               if (networkData) {
@@ -368,9 +356,6 @@
             this.wallet = decrypted;
             sessionStorage.setItem(this.KEYS.session, JSON.stringify(decrypted));
             
-            console.log('[WalletStorage] Keystore decrypted successfully');
-            
-            // walletReady 이벤트 발생
             window.dispatchEvent(new Event('walletReady'));
             
             resolve(decrypted);
@@ -397,9 +382,6 @@
                           (window.anam && window.anam.decryptKeystore) ? window.anam : null;
       
       if (keystore && keystoreAPI) {
-        console.log('[WalletStorage] Auto-decrypting wallet using:', keystoreAPI === window.anamUI ? 'anamUI' : 'anam');
-        
-        // 비동기로 복호화 진행
         setTimeout(() => {
           this.decryptKeystore(address);
         }, 100);

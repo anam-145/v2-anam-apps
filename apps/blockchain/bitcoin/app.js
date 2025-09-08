@@ -178,8 +178,6 @@ class BitcoinAdapter {
       // 현재 활성 네트워크 확인
       const currentNetwork = window.BitcoinConfig?.getActiveNetwork() || 'testnet4';
 
-      // 보안: 민감한 정보는 콘솔에 출력하지 않음
-      console.log("Wallet imported from mnemonic for both networks");
 
       return {
         mnemonic: mnemonic,
