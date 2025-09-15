@@ -1,0 +1,8 @@
+{
+  "app_id": "com.rwanda.undprwanda",
+  "type": "app",
+  "version": "1.0.0",
+  "name": "UNDP Rwanda",
+  "icon": "assets/icons/app_icon.png",
+  "pages": ["pages/index/index"]
+}

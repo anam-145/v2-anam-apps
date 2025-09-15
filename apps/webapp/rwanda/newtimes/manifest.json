@@ -1,0 +1,8 @@
+{
+  "app_id": "com.rwanda.newtimes",
+  "type": "app",
+  "version": "1.0.0",
+  "name": "The New Times",
+  "icon": "assets/icons/app_icon.png",
+  "pages": ["pages/index/index"]
+}
