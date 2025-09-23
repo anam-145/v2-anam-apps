@@ -1,0 +1,265 @@
+/* Add Wallet Page Styles */
+
+.content {
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.section {
+  margin-bottom: 30px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+/* Current Wallet Card */
+.current-wallet-card {
+  background: var(--coin-gradient);
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.wallet-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wallet-name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.wallet-type {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.account-count {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Divider */
+.divider {
+  position: relative;
+  text-align: center;
+  margin: 40px 0;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e0e0e0;
+}
+
+.divider span {
+  background: #f5f5f5;
+  padding: 0 20px;
+  position: relative;
+  color: #999;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Option Cards */
+.option-card {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 20px;
+  background: white;
+  border: 2px solid #eee;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: left;
+}
+
+.option-card:hover {
+  border-color: var(--coin-primary);
+  background: var(--coin-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.option-card:active {
+  transform: translateY(0);
+}
+
+.option-icon {
+  font-size: 32px;
+  margin-right: 20px;
+  width: 50px;
+  text-align: center;
+}
+
+.option-content {
+  flex: 1;
+}
+
+.option-content h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.option-content p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* Import Forms */
+.import-form {
+  background: white;
+  border: 2px solid var(--coin-primary);
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 20px;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.import-form h3 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.import-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 12px;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+}
+
+.import-input:focus {
+  border-color: var(--coin-primary);
+  outline: none;
+}
+
+textarea.import-input {
+  resize: vertical;
+  font-family: 'Courier New', monospace;
+  min-height: 80px;
+}
+
+/* Form Buttons */
+.form-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.btn {
+  flex: 1;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-primary {
+  background: var(--coin-gradient);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(67, 56, 202, 0.3);
+}
+
+.btn-secondary {
+  background: white;
+  color: #666;
+  border: 2px solid #e0e0e0;
+}
+
+.btn-secondary:hover {
+  background: #f5f5f5;
+  border-color: #ccc;
+}
+
+/* Loading state */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Success animation */
+@keyframes successPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.success {
+  animation: successPulse 0.5s ease;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .content {
+    padding: 16px;
+  }
+  
+  .option-icon {
+    font-size: 24px;
+    margin-right: 16px;
+    width: 40px;
+  }
+  
+  .option-content h3 {
+    font-size: 15px;
+  }
+  
+  .option-content p {
+    font-size: 13px;
+  }
+}

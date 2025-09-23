@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Wallet or Account</title>
+    <link rel="stylesheet" href="../../app.css" />
+    <link rel="stylesheet" href="add-wallet.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-content">
+          <button class="back-btn" onclick="navigateBack()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <h1 class="header-title">Add Wallet or Account</h1>
+          <div style="width: 24px;"></div> <!-- Spacer for alignment -->
+        </div>
+      </header>
+
+      <!-- Content -->
+      <div class="content">
+        <!-- Current Wallet Section -->
+        <div class="section" id="current-wallet-section">
+          <h2 class="section-title">Current Wallet</h2>
+          <div class="current-wallet-card">
+            <div class="wallet-info">
+              <div class="wallet-name" id="current-wallet-name">Loading...</div>
+              <div class="wallet-type" id="current-wallet-type">HD</div>
+            </div>
+            <div class="account-count" id="current-account-count">0 accounts</div>
+          </div>
+          
+          <!-- Add Account Button (only for HD wallets) -->
+          <button class="option-card" id="add-account-btn" onclick="addAccountToCurrent()" style="display: none;">
+            <div class="option-icon">➕</div>
+            <div class="option-content">
+              <h3>Add Account</h3>
+              <p>Add a new account to the current HD wallet</p>
+            </div>
+          </button>
+        </div>
+
+        <!-- Divider -->
+        <div class="divider">
+          <span>or add a new wallet</span>
+        </div>
+
+        <!-- Wallet Options Section -->
+        <div class="section">
+          <h2 class="section-title">Create or Import Wallet</h2>
+          
+          <button class="option-card" onclick="createNewWallet()">
+            <div class="option-icon">🔐</div>
+            <div class="option-content">
+              <h3>Create New Wallet</h3>
+              <p>Generate a new HD wallet with mnemonic backup</p>
+            </div>
+          </button>
+
+          <button class="option-card" onclick="showMnemonicImport()">
+            <div class="option-icon">📝</div>
+            <div class="option-content">
+              <h3>Import with Mnemonic</h3>
+              <p>Restore wallet using 12/24 word phrase</p>
+            </div>
+          </button>
+
+          <button class="option-card" onclick="showPrivateKeyImport()">
+            <div class="option-icon">🔑</div>
+            <div class="option-content">
+              <h3>Import with Private Key</h3>
+              <p>Add single account using private key</p>
+            </div>
+          </button>
+        </div>
+
+        <!-- Import Forms (initially hidden) -->
+        <div class="import-form" id="mnemonic-form" style="display: none;">
+          <h3>Import with Mnemonic</h3>
+          <textarea 
+            id="mnemonic-input" 
+            class="import-input" 
+            placeholder="Enter 12 or 24 words separated by spaces"
+            rows="4"
+          ></textarea>
+          <input 
+            type="text" 
+            id="wallet-name-input" 
+            class="import-input" 
+            placeholder="Wallet name (optional)"
+          />
+          <div class="form-buttons">
+            <button class="btn btn-secondary" onclick="cancelImport()">Cancel</button>
+            <button class="btn btn-primary" onclick="importFromMnemonic()">Import</button>
+          </div>
+        </div>
+
+        <div class="import-form" id="privatekey-form" style="display: none;">
+          <h3>Import with Private Key</h3>
+          <input 
+            type="password"
+            id="privatekey-input" 
+            class="import-input" 
+            placeholder="Enter your private key"
+          />
+          <input 
+            type="text" 
+            id="account-name-input" 
+            class="import-input" 
+            placeholder="Account name (optional)"
+          />
+          <div class="form-buttons">
+            <button class="btn btn-secondary" onclick="cancelImport()">Cancel</button>
+            <button class="btn btn-primary" onclick="importFromPrivateKey()">Import</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Required Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    
+    <!-- App Common Code -->
+    <script src="../../app.js"></script>
+    
+    <!-- Page Logic -->
+    <script src="add-wallet.js"></script>
+  </body>
+</html>
