@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Send Bitcoin</title>
+    <link rel="stylesheet" href="../../app.css" />
+    <link rel="stylesheet" href="send.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="send-screen">
+        <!-- 헤더 -->
+        <header class="header">
+          <button class="back-btn" onclick="goBack()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <h1 class="header-title">Send <span class="coin-symbol">BTC</span></h1>
+          <div style="width: 24px;"></div>
+        </header>
+
+        <!-- 폼 내용 -->
+        <div class="send-content">
+          <div class="form-group">
+            <label for="recipient-address">Recipient Address</label>
+            <div class="input-with-icon">
+              <input 
+                type="text" 
+                id="recipient-address" 
+                class="form-input" 
+                placeholder="Enter recipient's address"
+              />
+              <button class="input-icon-btn" onclick="scanQRCode()" title="Scan QR Code">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 3h5v5H3V3zm9 0h5v5h-5V3zM3 12h5v5H3v-5zm9 0h2v2h-2v-2zm2 2h2v2h-2v-2zm-2 2h2v2h-2v-2zm4-4h2v2h-2v-2z" fill="currentColor"/>
+                  <path d="M5 5h1v1H5V5zm9 0h1v1h-1V5zM5 14h1v1H5v-1z" fill="currentColor"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="send-amount">Amount</label>
+            <input 
+              type="number" 
+              id="send-amount" 
+              class="form-input" 
+              placeholder="0.00000000"
+              step="0.00000001"
+            />
+            <span class="input-hint">Available: <span id="available-balance">0.0000</span> <span class="coin-symbol">BTC</span></span>
+            <span class="input-hint min-amount" id="min-amount-hint">Minimum: calculating...</span>
+          </div>
+          
+          <div class="form-group">
+            <label for="tx-fee">Fee</label>
+            <select id="tx-fee" class="form-input">
+              <option value="low">Slow (Low)</option>
+              <option value="medium" selected>Normal (Medium)</option>
+              <option value="high">Fast (High)</option>
+            </select>
+          </div>
+
+          <div class="button-group">
+            <button class="send-confirm-btn" onclick="confirmSend()">
+              Confirm Send
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 필요한 라이브러리들 -->
+    <!-- 1. 외부 라이브러리 먼저 로드 -->
+    <script src="../../assets/bitcoin-bundle.iife.js"></script>
+    <script src="../../utils/storage.js"></script>
+    
+    <!-- 2. 설정 모듈 -->
+    <script src="../../utils/config.js"></script>
+    
+    <!-- 3. 설정 및 어댑터 (app.js) -->
+    <script src="../../app.js"></script>
+    
+    <!-- 4. 유틸리티 함수 -->
+    <script src="../../utils/helpers.js"></script>
+    
+    <!-- 4. 페이지별 로직 -->
+    <script src="send.js"></script>
+  </body>
+</html>

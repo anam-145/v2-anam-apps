@@ -1,0 +1,31 @@
+{
+    "name": "cosmos-bundler",
+    "version": "1.0.0",
+    "description": "Cosmos SDK bundler for Anam Wallet",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "@cosmjs/stargate": "^0.32.2",
+        "@cosmjs/cosmwasm-stargate": "^0.32.2",
+        "@cosmjs/crypto": "^0.32.2",
+        "@cosmjs/encoding": "^0.32.2",
+        "@cosmjs/math": "^0.32.2",
+        "@cosmjs/faucet": "^0.32.2",
+        "bip39": "^3.1.0",
+        "bip32": "^4.0.0",
+        "@cosmjs/proto-signing": "^0.32.2",
+        "@cosmjs/amino": "^0.32.2",
+        "@bitcoinerlab/secp256k1": "^1.0.5",
+        "ecpair": "^2.1.0",
+        "qrcode": "^1.5.3"
+    },
+    "devDependencies": {
+        "vite": "^5.0.0",
+        "vite-plugin-node-polyfills": "^0.21.0",
+        "terser": "^5.24.0"
+    }
+}

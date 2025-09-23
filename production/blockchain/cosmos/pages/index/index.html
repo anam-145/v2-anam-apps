@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cosmos Wallet</title>
+    <link rel="stylesheet" href="../../app.css" />
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Wallet Creation Screen -->
+      <div id="wallet-creation" class="wallet-screen" style="display: none;">
+        <div class="creation-content-metamask">
+          <!-- Cosmos 로고 -->
+          <div class="cosmos-logo-container">
+            <img src="../../assets/icons/app_icon.png" alt="Logo" class="cosmos-logo" />
+          </div>
+          
+          <h1 class="creation-title-metamask">Get Started</h1>
+          
+          <button class="create-wallet-btn-metamask" onclick="createWallet()">
+            Create New Wallet
+          </button>
+          
+          <button class="import-wallet-btn-text" onclick="showImportOptions()">
+            I already have a wallet
+          </button>
+        </div>
+        
+        <!-- Import Options (Initially Hidden) -->
+        <div id="import-options" class="import-options-container" style="display: none;">
+          <div class="import-header">
+            <button class="back-to-start" onclick="hideImportOptions()">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <h2>Import Wallet</h2>
+          </div>
+          
+          <div class="import-content">
+            <!-- Mnemonic Import Only -->
+            <div id="mnemonic-import-content" class="import-tab-content">
+              <p class="import-description">Enter your 12 or 24 word recovery phrase</p>
+              <textarea 
+                id="mnemonic-input" 
+                class="import-input-metamask" 
+                placeholder="Enter each word separated by spaces"
+                rows="4"
+              ></textarea>
+              <button class="import-btn-metamask" onclick="importFromMnemonic()">
+                Import Wallet
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Wallet Screen -->
+      <div id="wallet-main" class="wallet-screen" style="display: none;">
+        <!-- Header -->
+        <header class="header">
+          <div class="header-content">
+            <div class="logo-section">
+              <div class="logo">
+                <!-- [BLOCKCHAIN] TODO: alt 텍스트 변경 -->
+                <img src="../../assets/icons/app_icon.png" alt="Logo" class="coin-logo" />
+                <span class="logo-text">Cosmos</span>
+              </div>
+            </div>
+            <button class="icon-btn settings-btn" onclick="navigateToSettings()" title="Settings">
+              <img src="../../assets/images/settings.svg" alt="Settings" width="20" height="20" />
+            </button>
+          </div>
+        </header>
+
+        <!-- Balance Card -->
+        <div class="card balance-card">
+          <div class="balance-header">
+            <span class="balance-label" id="network-label">Loading...</span>
+            <span class="network-status" id="network-status">●</span>
+          </div>
+          <div class="balance-amount">
+            <div class="coin-balance">
+              <span id="balance-display">-</span>
+              <!-- [BLOCKCHAIN] TODO: 코인 단위 기본값 변경 -->
+              <span class="coin-unit">ATOM</span>
+            </div>
+          </div>
+          
+          <!-- Address Display -->
+          <div class="address-container">
+            <div class="address-label">Address</div>
+            <div class="address-display" id="address-display">
+              Loading...
+            </div>
+          </div>
+          
+          <!-- Action Buttons -->
+          <div class="action-buttons">
+            <button class="action-btn" onclick="navigateToSend()">
+              <span>Send</span>
+            </button>
+            <button class="action-btn" onclick="navigateToReceive()">
+              <span>Receive</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Transaction History Section -->
+        <section class="transactions-section">
+          <h3 class="section-title">Recent Transactions</h3>
+          <div id="tx-list" class="tx-list">
+            <!-- 트랜잭션이 여기에 동적으로 추가됩니다 -->
+          </div>
+        </section>
+      </div>
+
+      <!-- Mnemonic Flow Container -->
+      <div id="mnemonic-flow-container" style="display: none;"></div>
+    </div>
+
+    <!-- Required Libraries -->
+    
+    <!-- [BLOCKCHAIN] TODO: 번들 파일 변경 -->
+    <!-- 번들러에서 생성한 라이브러리 파일 -->
+    <!-- 예시:
+         - Ethereum: CDN 사용 (<script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>)
+         - Solana: <script src="../../assets/solana-bundle.iife.js"></script>
+         - Cosmos: <script src="../../assets/cosmos-bundle.iife.js"></script>
+         - Sui: <script src="../../assets/sui-bundle.iife.js"></script>
+    -->
+    <script src="../../assets/cosmos-bundle.iife.js"></script>
+    
+    <!-- Storage Manager -->
+    <script src="../../utils/storage.js"></script>
+    
+    <!-- [BLOCKCHAIN] TODO: Config 파일 주석 변경 -->
+    <!-- Config (Must be loaded before app.js) -->
+    <script src="../../utils/config.js"></script>
+    
+    <!-- [BLOCKCHAIN] TODO: Adapter 파일 주석 변경 -->
+    <!-- Adapter -->
+    <script src="../../app.js"></script>
+    
+    <!-- [BLOCKCHAIN] TODO: Utils 파일 주석 변경 -->
+    <!-- Utils -->
+    <script src="../../utils/helpers.js"></script>
+    
+    <!-- Main Logic -->
+    <script src="index.js"></script>
+
+    <!-- Mnemonic Flow Scripts -->
+    <link rel="stylesheet" href="mnemonic/mnemonic-flow.css" />
+    <script src="mnemonic/step1-warning.js"></script>
+    <script src="mnemonic/step2-display.js"></script>
+    <script src="mnemonic/step3-verify.js"></script>
+    <script src="mnemonic/mnemonic-flow.js"></script>
+  </body>
+</html>

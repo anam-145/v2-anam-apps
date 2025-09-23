@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+        />
+        <title>Cosmos SDK 번들러 테스트</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva,
+                    Verdana, sans-serif;
+                background: linear-gradient(
+                    135deg,
+                    #667eea 0%,
+                    #764ba2 100%
+                );
+                min-height: 100vh;
+                padding: 20px;
+            }
+
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                background: white;
+                border-radius: 15px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+            }
+
+            .header {
+                background: linear-gradient(
+                    135deg,
+                    #667eea 0%,
+                    #764ba2 100%
+                );
+                color: white;
+                padding: 30px;
+                text-align: center;
+            }
+
+            .header h1 {
+                font-size: 2.5rem;
+                margin-bottom: 10px;
+            }
+
+            .header p {
+                font-size: 1.1rem;
+                opacity: 0.9;
+            }
+
+            .content {
+                padding: 30px;
+            }
+
+            .section {
+                margin-bottom: 40px;
+                padding: 25px;
+                border: 1px solid #e1e5e9;
+                border-radius: 10px;
+                background: #f8f9fa;
+            }
+
+            .section h2 {
+                color: #333;
+                margin-bottom: 20px;
+                font-size: 1.5rem;
+                border-bottom: 2px solid #667eea;
+                padding-bottom: 10px;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 600;
+                color: #555;
+            }
+
+            input,
+            textarea,
+            select {
+                width: 100%;
+                padding: 12px;
+                border: 2px solid #ddd;
+                border-radius: 8px;
+                font-size: 14px;
+                transition: border-color 0.3s;
+            }
+
+            input:focus,
+            textarea:focus,
+            select:focus {
+                outline: none;
+                border-color: #667eea;
+            }
+
+            button {
+                background: linear-gradient(
+                    135deg,
+                    #667eea 0%,
+                    #764ba2 100%
+                );
+                color: white;
+                border: none;
+                padding: 12px 25px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 600;
+                transition: transform 0.2s;
+                margin-right: 10px;
+                margin-bottom: 10px;
+            }
+
+            button:hover {
+                transform: translateY(-2px);
+            }
+
+            button:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+            .result {
+                background: #f8f9fa;
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
+                padding: 15px;
+                margin-top: 15px;
+                font-family: 'Courier New', monospace;
+                font-size: 12px;
+                white-space: pre-wrap;
+                max-height: 300px;
+                overflow-y: auto;
+            }
+
+            .status {
+                padding: 10px;
+                border-radius: 5px;
+                margin: 10px 0;
+                font-weight: 600;
+            }
+
+            .status.success {
+                background: #d4edda;
+                color: #155724;
+                border: 1px solid #c3e6cb;
+            }
+
+            .status.error {
+                background: #f8d7da;
+                color: #721c24;
+                border: 1px solid #f5c6cb;
+            }
+
+            .status.info {
+                background: #d1ecf1;
+                color: #0c5460;
+                border: 1px solid #bee5eb;
+            }
+
+            .grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+            }
+
+            @media (max-width: 768px) {
+                .grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            .wallet-info {
+                background: #e3f2fd;
+                border: 1px solid #bbdefb;
+                border-radius: 8px;
+                padding: 15px;
+                margin: 15px 0;
+            }
+
+            .balance-display {
+                background: #f3e5f5;
+                border: 1px solid #e1bee7;
+                border-radius: 8px;
+                padding: 15px;
+                margin: 15px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🌌 Cosmos SDK 번들러 테스트</h1>
+                <p>
+                    지갑 생성, 잔액 조회, 전송, 트랜잭션
+                    조회 기능을 테스트해보세요
+                </p>
+            </div>
+
+            <div class="content">
+                <!-- 설정 초기화 -->
+                <div class="section">
+                    <h2>⚙️ 설정 초기화</h2>
+                    <button onclick="initializeConfig()">
+                        설정 초기화
+                    </button>
+                    <div id="configStatus"></div>
+                </div>
+
+                <!-- 지갑 생성 -->
+                <div class="section">
+                    <h2>👛 지갑 생성</h2>
+                    <div class="grid">
+                        <div>
+                            <h3>새 지갑 생성</h3>
+                            <div class="form-group">
+                                <label>니모닉 길이:</label>
+                                <select id="mnemonicLength">
+                                    <option value="12">
+                                        12단어 (128비트)
+                                    </option>
+                                    <option value="24">
+                                        24단어 (256비트)
+                                    </option>
+                                </select>
+                            </div>
+                            <button
+                                onclick="generateNewWallet()"
+                            >
+                                새 지갑 생성
+                            </button>
+                        </div>
+                        <div>
+                            <h3>기존 지갑 복구</h3>
+                            <div class="form-group">
+                                <label>니모닉:</label>
+                                <textarea
+                                    id="existingMnemonic"
+                                    rows="4"
+                                    placeholder="12개 또는 24개의 단어를 입력하세요"
+                                ></textarea>
+                            </div>
+                            <button
+                                onclick="restoreWallet()"
+                            >
+                                지갑 복구
+                            </button>
+                            <button
+                                onclick="extractPrivateKey()"
+                                style="
+                                    background: linear-gradient(
+                                        135deg,
+                                        #ff6b6b 0%,
+                                        #ee5a24 100%
+                                    );
+                                "
+                            >
+                                🔑 개인키 추출
+                            </button>
+                            <button
+                                onclick="showPrivateKeyInfo()"
+                                style="
+                                    background: linear-gradient(
+                                        135deg,
+                                        #00b894 0%,
+                                        #00a085 100%
+                                    );
+                                "
+                            >
+                                ℹ️ 개인키 정보
+                            </button>
+                        </div>
+                    </div>
+                    <div id="walletResult"></div>
+                </div>
+
+                <!-- 잔액 조회 -->
+                <div class="section">
+                    <h2>💰 잔액 조회</h2>
+                    <div class="form-group">
+                        <label>주소:</label>
+                        <input
+                            type="text"
+                            id="balanceAddress"
+                            placeholder="cosmos1..."
+                        />
+                    </div>
+                    <button onclick="checkBalance()">
+                        잔액 조회
+                    </button>
+                    <div id="balanceResult"></div>
+                </div>
+
+                <!-- 토큰 전송 -->
+                <div class="section">
+                    <h2>📤 토큰 전송</h2>
+                    <div class="form-group">
+                        <label>보내는 주소 (개인키):</label>
+                        <input
+                            type="text"
+                            id="fromPrivateKey"
+                            placeholder="개인키를 입력하세요"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>받는 주소:</label>
+                        <input
+                            type="text"
+                            id="toAddress"
+                            placeholder="cosmos1..."
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>전송량 (ATOM):</label>
+                        <input
+                            type="number"
+                            id="sendAmount"
+                            placeholder="0.001"
+                            step="0.001"
+                            min="0"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>메모 (선택사항):</label>
+                        <input
+                            type="text"
+                            id="sendMemo"
+                            placeholder="전송 메모"
+                        />
+                    </div>
+                    <button onclick="sendTokens()">
+                        토큰 전송
+                    </button>
+                    <div id="sendResult"></div>
+                </div>
+
+                <!-- 트랜잭션 조회 -->
+                <div class="section">
+                    <h2>📋 트랜잭션 조회</h2>
+                    <div class="form-group">
+                        <label>주소:</label>
+                        <input
+                            type="text"
+                            id="txAddress"
+                            placeholder="cosmos1..."
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>조회 개수:</label>
+                        <select id="txLimit">
+                            <option value="10">10개</option>
+                            <option value="20">20개</option>
+                            <option value="50">50개</option>
+                        </select>
+                    </div>
+                    <button onclick="getTransactions()">
+                        트랜잭션 조회
+                    </button>
+                    <div id="txResult"></div>
+                </div>
+
+                <!-- 체인 정보 -->
+                <div class="section">
+                    <h2>ℹ️ 체인 정보</h2>
+                    <button onclick="showChainInfo()">
+                        체인 정보 보기
+                    </button>
+                    <button onclick="showApiEndpoints()">
+                        API 엔드포인트 보기
+                    </button>
+                    <button onclick="showExplorers()">
+                        익스플로러 보기
+                    </button>
+                    <div id="infoResult"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cosmos 번들러 스크립트 로드 -->
+        <script src="./dist/cosmos-bundle.iife.js"></script>
+        <script>
+            let currentWallet = null;
+            let currentAddress = null;
+
+            function jsonStringifyWithBigInt(
+                obj,
+                space = 2
+            ) {
+                return JSON.stringify(
+                    obj,
+                    (key, value) =>
+                        typeof value === 'bigint'
+                            ? value.toString()
+                            : value,
+                    space
+                );
+            }
+
+            // 설정 초기화
+            async function initializeConfig() {
+                const statusDiv =
+                    document.getElementById('configStatus');
+                statusDiv.innerHTML =
+                    '<div class="status info">설정을 초기화하는 중...</div>';
+
+                try {
+                    await CosmosJS.initializeConfig();
+                    const chainInfo =
+                        CosmosJS.getChainInfo();
+                    statusDiv.innerHTML = `
+                                            <div class="status success">설정 초기화 완료!</div>
+                                            <div class="result">
+                        체인 정보:
+                        - 이름: ${chainInfo.name}
+                        - 체인 ID: ${chainInfo.chainId}
+                        - 네트워크: ${chainInfo.networkType}
+                        - 상태: ${chainInfo.status}
+                        - Bech32 접두사: ${chainInfo.bech32Prefix}
+                                            </div>
+                                        `;
+                } catch (error) {
+                    statusDiv.innerHTML = `<div class="status error">설정 초기화 실패: ${error.message}</div>`;
+                }
+            }
+
+            // 새 지갑 생성
+            async function generateNewWallet() {
+                const resultDiv =
+                    document.getElementById('walletResult');
+                const length = parseInt(
+                    document.getElementById(
+                        'mnemonicLength'
+                    ).value
+                );
+
+                try {
+                    // 니모닉 생성
+                    const mnemonic =
+                        CosmosJS.generateMnemonic(
+                            length === 12 ? 128 : 256
+                        );
+
+                    // 지갑 생성
+                    const wallet =
+                        await CosmosJS.createHdWalletFromMnemonic(
+                            mnemonic
+                        );
+                    const address =
+                        await CosmosJS.getWalletAddress(
+                            wallet
+                        );
+
+                    currentWallet = wallet;
+                    currentAddress = address;
+
+                    resultDiv.innerHTML = `
+                                            <div class="status success">지갑 생성 완료!</div>
+                                            <div class="wallet-info">
+                                                <strong>생성된 지갑 정보:</strong><br>
+                                                주소: ${address}<br>
+                                                니모닉: ${mnemonic}<br>
+                                                니모닉 길이: ${length}단어
+                                            </div>
+                                            <div class="result">
+                        지갑 정보:
+                        {
+                          "address": "${address}",
+                          "mnemonic": "${mnemonic}",
+                          "length": ${length}
+                        }
+                                            </div>
+                                        `;
+                } catch (error) {
+                    resultDiv.innerHTML = `<div class="status error">지갑 생성 실패: ${error.message}</div>`;
+                }
+            }
+
+            // 지갑 복구
+            async function restoreWallet() {
+                const resultDiv =
+                    document.getElementById('walletResult');
+                const mnemonic = document
+                    .getElementById('existingMnemonic')
+                    .value.trim();
+
+                if (!mnemonic) {
+                    resultDiv.innerHTML =
+                        '<div class="status error">니모닉을 입력해주세요.</div>';
+                    return;
+                }
+
+                try {
+                    // 니모닉 검증
+                    if (
+                        !CosmosJS.validateMnemonic(mnemonic)
+                    ) {
+                        resultDiv.innerHTML =
+                            '<div class="status error">유효하지 않은 니모닉입니다.</div>';
+                        return;
+                    }
+
+                    // 지갑 복구
+                    const wallet =
+                        await CosmosJS.createHdWalletFromMnemonic(
+                            mnemonic
+                        );
+                    const address =
+                        await CosmosJS.getWalletAddress(
+                            wallet
+                        );
+
+                    currentWallet = wallet;
+                    currentAddress = address;
+
+                    const wordCount =
+                        mnemonic.split(' ').length;
+
+                    resultDiv.innerHTML = `
+                                                 <div class="status success">지갑 복구 완료!</div>
+                                                 <div class="wallet-info">
+                                                     <strong>복구된 지갑 정보:</strong><br>
+                                                     주소: ${address}<br>
+                                                     니모닉 길이: ${wordCount}단어
+                                                 </div>
+                                                 <div class="result">
+                         지갑 정보:
+                         {
+                           "address": "${address}",
+                           "mnemonic_length": ${wordCount}
+                         }
+                                                 </div>
+                                             `;
+                } catch (error) {
+                    resultDiv.innerHTML = `<div class="status error">지갑 복구 실패: ${error.message}</div>`;
+                }
+            }
+
+            // 개인키 추출
+            async function extractPrivateKey() {
+                const resultDiv =
+                    document.getElementById('walletResult');
+                const mnemonic = document
+                    .getElementById('existingMnemonic')
+                    .value.trim();
+
+                if (!mnemonic) {
+                    resultDiv.innerHTML =
+                        '<div class="status error">니모닉을 입력해주세요.</div>';
+                    return;
+                }
+
+                try {
+                    // 개인키 추출 (개선된 함수 사용)
+                    const result =
+                        await CosmosJS.extractPrivateKey(
+                            mnemonic
+                        );
+
+                    if (!result.success) {
+                        resultDiv.innerHTML = `<div class="status error">${result.message}: ${result.error}</div>`;
+                        return;
+                    }
+
+                    const keyInfo = result.data;
+
+                    resultDiv.innerHTML = `
+                                                 <div class="status success">${result.message}!</div>
+                                                 <div class="wallet-info" style="background: #fff3cd; border-color: #ffeaa7;">
+                                                     <strong>⚠️ 보안 주의사항:</strong><br>
+                                                     개인키는 절대 타인에게 공유하지 마세요!<br>
+                                                     안전한 곳에 백업하시기 바랍니다.
+                                                 </div>
+                                                 <div class="wallet-info">
+                                                     <strong>🔑 추출된 키 정보:</strong><br>
+                                                     📍 주소: ${keyInfo.address}<br>
+                                                     🔐 개인키: ${keyInfo.privateKey}<br>
+                                                     🔓 공개키: ${keyInfo.publicKey}<br>
+                                                     🛤️ 경로: ${keyInfo.path}
+                                                 </div>
+                                                 <div class="result">
+                         개인키 정보:
+                         {
+                           "address": "${keyInfo.address}",
+                           "privateKey": "${keyInfo.privateKey}",
+                           "publicKey": "${keyInfo.publicKey}",
+                           "path": "${keyInfo.path}"
+                         }
+                                                 </div>
+                                             `;
+                } catch (error) {
+                    resultDiv.innerHTML = `<div class="status error">개인키 추출 실패: ${error.message}</div>`;
+                }
+            }
+
+            // 개인키 정보 표시
+            function showPrivateKeyInfo() {
+                const resultDiv =
+                    document.getElementById('walletResult');
+
+                resultDiv.innerHTML = `
+                                            <div class="status info">ℹ️ 개인키 정보</div>
+                                            <div class="wallet-info">
+                                                <strong>개인키란?</strong><br>
+                                                • 개인키는 지갑의 소유권을 증명하는 암호화된 키입니다<br>
+                                                • 64자리 16진수 문자열로 구성됩니다<br>
+                                                • 니모닉에서 파생되어 생성됩니다<br>
+                                                • 절대 타인에게 공유하면 안 됩니다
+                                            </div>
+                                            <div class="wallet-info">
+                                                <strong>사용 방법:</strong><br>
+                                                1. 니모닉을 입력하세요<br>
+                                                2. "🔑 개인키 추출" 버튼을 클릭하세요<br>
+                                                3. 추출된 개인키를 안전한 곳에 백업하세요
+                                            </div>
+                                            <div class="wallet-info" style="background: #ffeaa7; border-color: #fdcb6e;">
+                                                <strong>⚠️ 보안 경고:</strong><br>
+                                                • 개인키는 지갑의 모든 자산에 대한 접근 권한을 가집니다<br>
+                                                • 개인키가 노출되면 모든 자산이 도난될 수 있습니다<br>
+                                                • 오프라인 환경에서만 개인키를 확인하세요<br>
+                                                • 안전한 하드웨어 지갑 사용을 권장합니다
+                                            </div>
+                                        `;
+            }
+
+            // 잔액 조회
+            async function checkBalance() {
+                const resultDiv =
+                    document.getElementById(
+                        'balanceResult'
+                    );
+                const address = document
+                    .getElementById('balanceAddress')
+                    .value.trim();
+
+                if (!address) {
+                    resultDiv.innerHTML =
+                        '<div class="status error">주소를 입력해주세요.</div>';
+                    return;
+                }
+
+                try {
+                    // 주소 검증
+                    if (
+                        !CosmosJS.validateAddress(address)
+                    ) {
+                        resultDiv.innerHTML =
+                            '<div class="status error">유효하지 않은 주소입니다.</div>';
+                        return;
+                    }
+
+                    // 클라이언트 연결
+                    const client =
+                        await CosmosJS.connectClient(
+                            CosmosJS.getDefaultRpcUrl()
+                        );
+
+                    // 잔액 조회
+                    const balance =
+                        await CosmosJS.getBalance(
+                            client,
+                            address
+                        );
+
+                    resultDiv.innerHTML = `
+                                            <div class="status success">잔액 조회 완료!</div>
+                                            <div class="balance-display">
+                                                <strong>잔액 정보:</strong><br>
+                                                수량: ${balance.formatted} ATOM<br>
+                                                기본 단위: ${balance.amount} uatom<br>
+                                                토큰: ${balance.denom}
+                                            </div>
+                                            <div class="result">
+                        잔액 정보:
+                        {
+                          "amount": "${balance.amount}",
+                          "denom": "${balance.denom}",
+                          "formatted": "${balance.formatted}"
+                        }
+                                            </div>
+                                        `;
+                } catch (error) {
+                    resultDiv.innerHTML = `<div class="status error">잔액 조회 실패: ${error.message}</div>`;
+                }
+            }
+
+            // 토큰 전송
+            async function sendTokens() {
+                const resultDiv =
+                    document.getElementById('sendResult');
+                const privateKey = document
+                    .getElementById('fromPrivateKey')
+                    .value.trim();
+                const toAddress = document
+                    .getElementById('toAddress')
+                    .value.trim();
+                const amount = parseFloat(
+                    document.getElementById('sendAmount')
+                        .value
+                );
+                const memo = document
+                    .getElementById('sendMemo')
+                    .value.trim();
+
+                if (
+                    !privateKey ||
+                    !toAddress ||
+                    !amount ||
+                    amount <= 0
+                ) {
+                    resultDiv.innerHTML =
+                        '<div class="status error">모든 필수 정보를 입력해주세요.</div>';
+                    return;
+                }
+
+                try {
+                    // 개인키로 지갑 생성
+                    const wallet =
+                        await CosmosJS.createWalletFromPrivateKey(
+                            privateKey
+                        );
+                    const fromAddress =
+                        await CosmosJS.getWalletAddress(
+                            wallet
+                        );
+
+                    // 주소 검증
+                    if (
+                        !CosmosJS.validateAddress(
+                            fromAddress
+                        ) ||
+                        !CosmosJS.validateAddress(toAddress)
+                    ) {
+                        resultDiv.innerHTML =
+                            '<div class="status error">유효하지 않은 주소입니다.</div>';
+                        return;
+                    }
+
+                    // 서명 클라이언트 연결
+                    const signingClient =
+                        await CosmosJS.connectSigningClient(
+                            CosmosJS.getDefaultRpcUrl(),
+                            wallet
+                        );
+
+                    // 전송량을 기본 단위로 변환
+                    const baseAmount =
+                        CosmosJS.displayToBase(
+                            amount.toString()
+                        );
+
+                    // 토큰 전송
+                    const result =
+                        await CosmosJS.sendTokens(
+                            signingClient,
+                            fromAddress,
+                            toAddress,
+                            baseAmount,
+                            null, // denom (설정에서 자동 선택)
+                            memo
+                        );
+
+                    resultDiv.innerHTML = `
+                                            <div class="status success">토큰 전송 완료!</div>
+                                            <div class="result">
+                        전송 결과:
+                        {
+                          "height": ${result.height},
+                          "hash": "${result.hash}",
+                          "gasUsed": ${result.gasUsed},
+                          "gasWanted": ${result.gasWanted}
+                        }
+                                            </div>
+                                        `;
+                } catch (error) {
+                    resultDiv.innerHTML = `<div class="status error">토큰 전송 실패: ${error.message}</div>`;
+                }
+            }
+
+            // 트랜잭션 조회
+            async function getTransactions() {
+                const resultDiv =
+                    document.getElementById('txResult');
+                const address = document
+                    .getElementById('txAddress')
+                    .value.trim();
+                const limit = parseInt(
+                    document.getElementById('txLimit').value
+                );
+
+                if (!address) {
+                    resultDiv.innerHTML =
+                        '<div class="status error">주소를 입력해주세요.</div>';
+                    return;
+                }
+
+                try {
+                    // 주소 검증
+                    if (
+                        !CosmosJS.validateAddress(address)
+                    ) {
+                        resultDiv.innerHTML =
+                            '<div class="status error">유효하지 않은 주소입니다.</div>';
+                        return;
+                    }
+
+                    resultDiv.innerHTML =
+                        '<div class="status info">트랜잭션을 조회하는 중...</div>';
+
+                    // 클라이언트 연결
+                    const client =
+                        await CosmosJS.connectClient(
+                            CosmosJS.getDefaultRpcUrl()
+                        );
+
+                    // 트랜잭션 조회
+                    const transactions =
+                        await CosmosJS.getTransactions(
+                            client,
+                            address,
+                            limit
+                        );
+
+                    if (transactions.length === 0) {
+                        resultDiv.innerHTML = `
+                                                    <div class="status info">트랜잭션 조회 완료!</div>
+                                                    <div class="wallet-info">
+                                                        <strong>조회 결과:</strong><br>
+                                                        해당 주소에서 트랜잭션을 찾을 수 없습니다.<br>
+                                                        주소: ${address}
+                                                    </div>
+                                                `;
+                    } else {
+                        resultDiv.innerHTML = `
+    <div class="status success">트랜잭션 조회 완료! (${
+        transactions.length
+    }개)</div>
+    <div class="wallet-info">
+        <strong>조회 결과:</strong><br>
+        주소: ${address}<br>
+        조회된 트랜잭션 수: ${transactions.length}개
+    </div>
+    <div class="result">
+트랜잭션 목록:
+${jsonStringifyWithBigInt(transactions, 2)}
+    </div>
+`;
+                    }
+                } catch (error) {
+                    resultDiv.innerHTML = `
+                                                <div class="status error">트랜잭션 조회 실패</div>
+                                                <div class="wallet-info" style="background: #ffeaa7; border-color: #fdcb6e;">
+                                                    <strong>에러 정보:</strong><br>
+                                                    ${error.message}<br><br>
+                                                    <strong>가능한 원인:</strong><br>
+                                                    • RPC 노드가 트랜잭션 검색을 지원하지 않을 수 있습니다<br>
+                                                    • 네트워크 연결 문제일 수 있습니다<br>
+                                                    • 해당 주소에 트랜잭션이 없을 수 있습니다
+                                                </div>
+                                            `;
+                }
+            }
+
+            // 체인 정보 보기
+            function showChainInfo() {
+                const resultDiv =
+                    document.getElementById('infoResult');
+
+                try {
+                    const chainInfo =
+                        CosmosJS.getChainInfo();
+                    const assetInfo =
+                        CosmosJS.getAssetInfo();
+                    const feeInfo = CosmosJS.getFeeInfo();
+
+                    resultDiv.innerHTML = `
+                                            <div class="status success">체인 정보 조회 완료!</div>
+                                            <div class="result">
+                        체인 정보:
+                        ${JSON.stringify(
+                            chainInfo,
+                            null,
+                            2
+                        )}
+
+                        자산 정보:
+                        ${JSON.stringify(
+                            assetInfo,
+                            null,
+                            2
+                        )}
+
+                        수수료 정보:
+                        ${JSON.stringify(feeInfo, null, 2)}
+                                            </div>
+                                        `;
+                } catch (error) {
+                    resultDiv.innerHTML = `<div class="status error">체인 정보 조회 실패: ${error.message}</div>`;
+                }
+            }
+
+            // API 엔드포인트 보기
+            function showApiEndpoints() {
+                const resultDiv =
+                    document.getElementById('infoResult');
+
+                try {
+                    const rpcEndpoints =
+                        CosmosJS.getRpcEndpoints();
+                    const restEndpoints =
+                        CosmosJS.getRestEndpoints();
+                    const grpcEndpoints =
+                        CosmosJS.getGrpcEndpoints();
+
+                    resultDiv.innerHTML = `
+                                            <div class="status success">API 엔드포인트 조회 완료!</div>
+                                            <div class="result">
+                        RPC 엔드포인트 (${
+                            rpcEndpoints.length
+                        }개):
+                        ${JSON.stringify(
+                            rpcEndpoints.slice(0, 5),
+                            null,
+                            2
+                        )}
+
+                        REST 엔드포인트 (${
+                            restEndpoints.length
+                        }개):
+                        ${JSON.stringify(
+                            restEndpoints.slice(0, 5),
+                            null,
+                            2
+                        )}
+
+                        gRPC 엔드포인트 (${
+                            grpcEndpoints.length
+                        }개):
+                        ${JSON.stringify(
+                            grpcEndpoints.slice(0, 5),
+                            null,
+                            2
+                        )}
+                                            </div>
+                                        `;
+                } catch (error) {
+                    resultDiv.innerHTML = `<div class="status error">API 엔드포인트 조회 실패: ${error.message}</div>`;
+                }
+            }
+
+            // 익스플로러 보기
+            function showExplorers() {
+                const resultDiv =
+                    document.getElementById('infoResult');
+
+                try {
+                    const explorers =
+                        CosmosJS.getExplorers();
+
+                    resultDiv.innerHTML = `
+                                            <div class="status success">익스플로러 조회 완료! (${
+                                                explorers.length
+                                            }개)</div>
+                                            <div class="result">
+                        익스플로러 목록:
+                        ${JSON.stringify(
+                            explorers,
+                            null,
+                            2
+                        )}
+                                            </div>
+                                        `;
+                } catch (error) {
+                    resultDiv.innerHTML = `<div class="status error">익스플로러 조회 실패: ${error.message}</div>`;
+                }
+            }
+
+            // 페이지 로드 시 설정 초기화
+            window.addEventListener('load', async () => {
+                try {
+                    await CosmosJS.initializeConfig();
+                    console.log(
+                        'Cosmos 번들러 초기화 완료'
+                    );
+                } catch (error) {
+                    console.error(
+                        'Cosmos 번들러 초기화 실패:',
+                        error
+                    );
+                }
+            });
+        </script>
+    </body>
+</html>

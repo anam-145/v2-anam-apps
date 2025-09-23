@@ -1,0 +1,11 @@
+[install]
+# Bun의 빠른 설치를 위한 설정
+exact = false
+
+[test]
+# 테스트 설정 (필요시 사용)
+preload = []
+
+[run]
+# Bun 런타임 설정
+bun = true 

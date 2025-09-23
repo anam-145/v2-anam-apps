@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sui SDK Bundle Test</title>
+</head>
+<body>
+    <h1>Sui SDK Bundle Test</h1>
+    <div id="output"></div>
+
+    <script src="./dist/sui-bundle.umd.js"></script>
+    <script>
+        console.log('Testing Sui SDK Bundle...');
+        
+        // 전역 변수 확인
+        console.log('window.suiSDK:', window.suiSDK);
+        console.log('window.suiSDK type:', typeof window.suiSDK);
+        
+        if (window.suiSDK) {
+            console.log('Available methods:', Object.keys(window.suiSDK));
+            
+            // Ed25519Keypair 메서드 확인
+            if (window.suiSDK.Ed25519Keypair) {
+                console.log('Ed25519Keypair methods:', Object.getOwnPropertyNames(window.suiSDK.Ed25519Keypair));
+                console.log('Ed25519Keypair prototype methods:', Object.getOwnPropertyNames(window.suiSDK.Ed25519Keypair.prototype));
+                
+                // 정적 메서드 확인
+                const staticMethods = ['fromSeed', 'fromSecretKey', 'deriveKeypair'];
+                staticMethods.forEach(method => {
+                    console.log(`${method} available:`, typeof window.suiSDK.Ed25519Keypair[method] === 'function');
+                });
+            }
+            
+            // 기본 기능 테스트
+            try {
+                // 니모닉 생성 테스트
+                const mnemonic = window.suiSDK.generateMnemonic();
+                console.log('Generated mnemonic:', mnemonic);
+                
+                // 키페어 생성 테스트
+                const keypair = window.suiSDK.Ed25519Keypair.deriveKeypair(mnemonic);
+                console.log('Generated keypair:', keypair);
+                console.log('Address:', keypair.getPublicKey().toSuiAddress());
+                
+                // 개인키 내보내기 테스트
+                const privateKey = window.suiSDK.exportPrivateKey(keypair);
+                console.log('Exported private key:', privateKey);
+                console.log('Private key length:', privateKey.split(',').length);
+                
+                // 키페어 복원 테스트
+                const bytes = privateKey.split(',').map(Number);
+                console.log('Testing keypair restoration...');
+                
+                const hasFromSeed = typeof window.suiSDK.Ed25519Keypair.fromSeed === 'function';
+                const hasFromSecretKey = typeof window.suiSDK.Ed25519Keypair.fromSecretKey === 'function';
+                
+                console.log('Available restoration methods:', { hasFromSeed, hasFromSecretKey });
+                
+                let restoredKeypair;
+                if (bytes.length === 32) {
+                    if (hasFromSeed) {
+                        restoredKeypair = window.suiSDK.Ed25519Keypair.fromSeed(Uint8Array.from(bytes));
+                        console.log('✅ Restored using fromSeed');
+                    } else if (hasFromSecretKey) {
+                        // 32바이트를 그대로 전달 (확장하지 않음)
+                        restoredKeypair = window.suiSDK.Ed25519Keypair.fromSecretKey(Uint8Array.from(bytes));
+                        console.log('✅ Restored using fromSecretKey (32 bytes)');
+                    }
+                } else if (bytes.length === 64 && hasFromSecretKey) {
+                    restoredKeypair = window.suiSDK.Ed25519Keypair.fromSecretKey(Uint8Array.from(bytes));
+                    console.log('✅ Restored using fromSecretKey (64)');
+                }
+                
+                if (restoredKeypair) {
+                    console.log('Restored address:', restoredKeypair.getPublicKey().toSuiAddress());
+                    console.log('Original address:', keypair.getPublicKey().toSuiAddress());
+                    console.log('Addresses match:', restoredKeypair.getPublicKey().toSuiAddress() === keypair.getPublicKey().toSuiAddress());
+                }
+                
+                document.getElementById('output').innerHTML = `
+                    <h2>✅ Bundle Test Successful!</h2>
+                    <p><strong>Mnemonic:</strong> ${mnemonic}</p>
+                    <p><strong>Address:</strong> ${keypair.getPublicKey().toSuiAddress()}</p>
+                    <p><strong>Private Key:</strong> ${privateKey}</p>
+                    <p><strong>Key Length:</strong> ${bytes.length} bytes</p>
+                    <p><strong>Available Methods:</strong> fromSeed=${hasFromSeed}, fromSecretKey=${hasFromSecretKey}</p>
+                    ${restoredKeypair ? `<p><strong>Restoration:</strong> ✅ Success (${restoredKeypair.getPublicKey().toSuiAddress()})</p>` : '<p><strong>Restoration:</strong> ❌ Failed</p>'}
+                    
+                    <h3>📋 Available History Functions:</h3>
+                    <ul>
+                        <li><strong>getTransactionHistory:</strong> ${typeof window.suiSDK.getTransactionHistory === 'function' ? '✅ Available' : '❌ Not Available'}</li>
+                        <li><strong>getTransactionDetails:</strong> ${typeof window.suiSDK.getTransactionDetails === 'function' ? '✅ Available' : '❌ Not Available'}</li>
+                        <li><strong>getAllTransactions:</strong> ${typeof window.suiSDK.getAllTransactions === 'function' ? '✅ Available' : '❌ Not Available'}</li>
+                        <li><strong>filterTransactionsByType:</strong> ${typeof window.suiSDK.filterTransactionsByType === 'function' ? '✅ Available' : '❌ Not Available'}</li>
+                        <li><strong>getTransactionStatus:</strong> ${typeof window.suiSDK.getTransactionStatus === 'function' ? '✅ Available' : '❌ Not Available'}</li>
+                        <li><strong>extractTransactionAmount:</strong> ${typeof window.suiSDK.extractTransactionAmount === 'function' ? '✅ Available' : '❌ Not Available'}</li>
+                    </ul>
+                `;
+                
+            } catch (error) {
+                console.error('Test failed:', error);
+                document.getElementById('output').innerHTML = `
+                    <h2>❌ Bundle Test Failed</h2>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `;
+            }
+        } else {
+            console.error('suiSDK not found in window object');
+            document.getElementById('output').innerHTML = `
+                <h2>❌ Bundle Not Loaded</h2>
+                <p>suiSDK not found in window object</p>
+            `;
+        }
+    </script>
+</body>
+</html> 

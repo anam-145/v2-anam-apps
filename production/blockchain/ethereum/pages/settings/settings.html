@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wallet Settings</title>
+    <link rel="stylesheet" href="../../app.css" />
+    <link rel="stylesheet" href="settings.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <button class="back-btn" onclick="navigateBack()">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12.5 5L7.5 10L12.5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <h1 class="header-title">Settings</h1>
+        <div class="header-spacer"></div>
+      </header>
+
+      <!-- Settings Content -->
+      <div class="settings-content">
+        <!-- Network Section -->
+        <section class="settings-section">
+          <h2 class="section-title">Network Settings</h2>
+          <div class="settings-list">
+            <button class="settings-item" onclick="showNetworkSelector()">
+              <div class="settings-item-content">
+                <svg class="settings-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="10" cy="10" r="2" fill="currentColor"/>
+                  <circle cx="10" cy="10" r="5" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                  <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5" fill="none" stroke-dasharray="2 2"/>
+                </svg>
+                <div class="network-display">
+                  <div class="network-info">
+                    <span id="current-network-name" class="network-selected">Loading...</span>
+                    <span class="network-status"></span>
+                  </div>
+                </div>
+              </div>
+              <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </section>
+
+        <!-- Wallet Management Section -->
+        <section class="settings-section">
+          <h2 class="section-title">Wallet Management</h2>
+          <div class="settings-list">
+            <button class="settings-item" id="recovery-phrase-btn" onclick="showRecoveryPhrase()">
+              <div class="settings-item-content">
+                <svg class="settings-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 2L3 7V11C3 14.55 5.84 17.74 10 18.5C14.16 17.74 17 14.55 17 11V7L10 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M10 10L10 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <circle cx="10" cy="7" r="1" fill="currentColor"/>
+                </svg>
+                <span id="recovery-phrase-text">Show Recovery Phrase</span>
+              </div>
+              <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            
+            <button class="settings-item" onclick="exportPrivateKey()">
+              <div class="settings-item-content">
+                <svg class="settings-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M11 11C11 11.55 10.55 12 10 12C9.45 12 9 11.55 9 11C9 10.45 9.45 10 10 10C10.55 10 11 10.45 11 11Z" fill="currentColor"/>
+                  <path d="M10 7V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M5 11H3C2.44772 11 2 10.5523 2 10V4C2 3.44772 2.44772 3 3 3H17C17.5523 3 18 3.44772 18 4V10C18 10.5523 17.5523 11 17 11H15" stroke="currentColor" stroke-width="1.5"/>
+                  <rect x="5" y="10" width="10" height="7" rx="1" stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+                <span>Export Private Key</span>
+              </div>
+              <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </section>
+
+        <!-- Dangerous Actions Section -->
+        <section class="settings-section danger-section">
+          <h2 class="section-title danger-title">Dangerous Actions</h2>
+          <div class="settings-list">
+            <button class="settings-item danger-item" onclick="deleteWallet()">
+              <div class="settings-item-content">
+                <svg class="settings-icon danger-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 6H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M8 6V4C8 3.44772 8.44772 3 9 3H11C11.5523 3 12 3.44772 12 4V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M5 6V16C5 16.5523 5.44772 17 6 17H14C14.5523 17 15 16.5523 15 16V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M8 10V13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M12 10V13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <span>Delete Wallet</span>
+              </div>
+              <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <!-- Modal for showing sensitive info -->
+      <div id="modal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 id="modal-title">Title</h3>
+            <button class="modal-close" onclick="closeModal()">×</button>
+          </div>
+          <div class="modal-body">
+            <p id="modal-message" class="modal-message"></p>
+            <div id="modal-value" class="modal-value"></div>
+            <button id="copy-btn" class="copy-btn" onclick="copyToClipboard()">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Network Selector Modal -->
+      <div id="network-modal" class="modal" style="display: none;">
+        <div class="modal-content network-modal-content">
+          <div class="modal-header">
+            <h3>Select Network</h3>
+            <button class="modal-close" onclick="closeNetworkModal()">×</button>
+          </div>
+          <div class="modal-body">
+            <!-- Predefined Networks -->
+            <div class="network-list">
+              <div class="network-item" onclick="selectNetwork('mainnet')">
+                <div class="network-item-content">
+                  <div class="network-details">
+                    <span class="network-name">Ethereum Mainnet</span>
+                    <span class="network-chain">Chain ID: 1</span>
+                  </div>
+                </div>
+                <span id="mainnet-check" class="network-check" style="display: none;">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7 10L9 12L13 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </div>
+              
+              <div class="network-item" onclick="selectNetwork('sepolia')">
+                <div class="network-item-content">
+                  <div class="network-details">
+                    <span class="network-name">Sepolia Testnet</span>
+                    <span class="network-chain">Chain ID: 11155111</span>
+                  </div>
+                </div>
+                <span id="sepolia-check" class="network-check">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7 10L9 12L13 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </div>
+              
+              <div class="network-divider"></div>
+              
+              <!-- Custom Networks Section -->
+              <div id="custom-networks-container">
+                <!-- Custom networks will be added here dynamically -->
+              </div>
+              
+              <button class="add-network-btn" onclick="showCustomRPCForm()">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 5V15M5 10H15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span>Add Custom RPC</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom RPC Form Modal -->
+      <div id="custom-rpc-modal" class="modal" style="display: none;">
+        <div class="modal-content custom-rpc-modal-content">
+          <div class="modal-header">
+            <h3>Add Custom RPC</h3>
+            <button class="modal-close" onclick="closeCustomRPCModal()">×</button>
+          </div>
+          <div class="modal-body">
+            <form id="custom-rpc-form" onsubmit="addCustomRPC(event)">
+              <div class="form-group">
+                <label for="network-name">Network Name *</label>
+                <input type="text" id="network-name" required placeholder="My Custom Network">
+              </div>
+              
+              <div class="form-group">
+                <label for="rpc-url">RPC URL *</label>
+                <input type="url" id="rpc-url" required placeholder="https://my-rpc-url.com">
+              </div>
+              
+              <div class="form-group">
+                <label for="chain-id">Chain ID *</label>
+                <input type="number" id="chain-id" required placeholder="1">
+              </div>
+              
+              <div class="form-group">
+                <label for="currency-symbol">Currency Symbol (Optional)</label>
+                <input type="text" id="currency-symbol" placeholder="ETH">
+              </div>
+              
+              <div class="form-group">
+                <label for="explorer-url">Block Explorer URL (Optional)</label>
+                <input type="url" id="explorer-url" placeholder="https://etherscan.io">
+              </div>
+              
+              <div class="form-actions">
+                <button type="button" class="cancel-btn" onclick="closeCustomRPCModal()">Cancel</button>
+                <button type="submit" class="save-btn">Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="../../utils/config.js"></script>
+    <script src="../../app.js"></script>
+    <script src="../../utils/helpers.js"></script>
+    <script src="../../utils/storage.js"></script>
+    <script src="settings.js"></script>
+  </body>
+</html>

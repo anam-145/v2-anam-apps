@@ -1,0 +1,8 @@
+{
+  "app_id": "com.anam.rehrxj11f38gn09k",
+  "type": "blockchain",
+  "name": "Bitcoin",  // TODO: 블록체인 이름으로 변경 (예: "Ethereum", "Solana", "Cosmos", "Sui")
+  "version": "1.0.0",
+  "icon": "assets/icons/app_icon.png",  // TODO: 아이콘 파일 경로 확인
+  "pages": ["pages/index/index", "pages/send/send", "pages/receive/receive", "pages/settings/settings"]
+}

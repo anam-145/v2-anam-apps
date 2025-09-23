@@ -1,0 +1,198 @@
+{
+    "chain_name": "cosmoshub",
+    "chain_type": "cosmos",
+    "chain_id": "cosmoshub-4",
+    "website": "https://cosmos.network/",
+    "pretty_name": "Cosmos Hub",
+    "status": "live",
+    "network_type": "mainnet",
+    "bech32_prefix": "cosmos",
+    "daemon_name": "gaiad",
+    "node_home": "$HOME/.gaia",
+    "key_algos": [
+        "secp256k1"
+    ],
+    "slip44": 118,
+    "fees": {
+        "fee_tokens": [
+            {
+                "denom": "uatom",
+                "fixed_min_gas_price": 0.005,
+                "low_gas_price": 0.01,
+                "average_gas_price": 0.025,
+                "high_gas_price": 0.03
+            }
+        ]
+    },
+    "staking": {
+        "staking_tokens": [
+            {
+                "denom": "uatom"
+            }
+        ]
+    },
+    "assets": [
+        {
+            "description": "ATOM is the native cryptocurrency of the Cosmos network, designed to facilitate interoperability between multiple blockchains through its innovative hub-and-spoke model.",
+            "extended_description": "ATOM, the native cryptocurrency of the Cosmos network, is essential for achieving the project's goal of creating an 'Internet of Blockchains.' Launched in 2019, Cosmos aims to solve the scalability, usability, and interoperability issues prevalent in existing blockchain ecosystems. The Cosmos Hub, the central blockchain of the network, uses ATOM for transaction fees, staking, and governance. By staking ATOM, users can earn rewards and participate in governance, influencing decisions on network upgrades and changes.\n\nCosmos leverages the Tendermint consensus algorithm to achieve high transaction throughput and fast finality. Its Inter-Blockchain Communication (IBC) protocol enables seamless data and value transfer between different blockchains, fostering a highly interconnected and collaborative ecosystem. The flexibility and scalability offered by Cosmos have attracted numerous projects, enhancing its utility and adoption. ATOM's role in securing the network and facilitating governance underscores its importance in the broader blockchain landscape.",
+            "denom_units": [
+                {
+                    "denom": "uatom",
+                    "exponent": 0
+                },
+                {
+                    "denom": "atom",
+                    "exponent": 6
+                }
+            ],
+            "base": "uatom",
+            "name": "Cosmos Hub Atom",
+            "display": "atom",
+            "symbol": "ATOM",
+            "logo_URIs": {
+                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/cosmoshub/images/atom.png",
+                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/cosmoshub/images/atom.svg"
+            },
+            "coingecko_id": "cosmos",
+            "images": [
+                {
+                    "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/cosmoshub/images/atom.png",
+                    "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/cosmoshub/images/atom.svg",
+                    "theme": {
+                        "primary_color_hex": "#272d45"
+                    }
+                }
+            ]
+        }
+    ],
+    "apis": {
+        "rpc": [
+            {
+                "address": "https://rpc-cosmos-hub-01.stakeflow.io",
+                "provider": "dRPC"
+            }
+        ],
+        "rest": [
+            {
+                "address": "https://api-cosmos-hub-01.stakeflow.io",
+                "provider": "Stakeflow"
+            }
+        ]
+    },
+    "explorers": [
+        {
+            "kind": "Chainroot",
+            "url": "https://explorer.chainroot.io/cosmos",
+            "tx_page": "https://explorer.chainroot.io/cosmos/transactions/${txHash}",
+            "account_page": "https://explorer.chainroot.io/cosmos/accounts/${accountAddress}"
+        },
+        {
+            "kind": "mintscan",
+            "url": "https://www.mintscan.io/cosmos",
+            "tx_page": "https://www.mintscan.io/cosmos/transactions/${txHash}",
+            "account_page": "https://www.mintscan.io/cosmos/accounts/${accountAddress}",
+            "validator_page": "https://www.mintscan.io/cosmos/validators/${validatorAddress}",
+            "proposal_page": "https://www.mintscan.io/cosmos/proposals/${proposalId}",
+            "block_page": "https://www.mintscan.io/cosmos/blocks/${blockHeight}"
+        },
+        {
+            "kind": "ezstaking",
+            "url": "https://ezstaking.app/cosmoshub",
+            "tx_page": "https://ezstaking.app/cosmoshub/txs/${txHash}",
+            "account_page": "https://ezstaking.app/cosmoshub/account/${accountAddress}",
+            "validator_page": "https://ezstaking.app/cosmoshub/validators/${validatorAddress}",
+            "proposal_page": "https://ezstaking.app/cosmoshub/proposals/${proposalId}",
+            "block_page": "https://ezstaking.app/cosmoshub/blocks/${blockHeight}"
+        },
+        {
+            "kind": "ping.pub",
+            "url": "https://ping.pub/cosmos",
+            "tx_page": "https://ping.pub/cosmos/tx/${txHash}",
+            "account_page": "https://ping.pub/cosmos/account/${accountAddress}",
+            "validator_page": "https://ping.pub/cosmos/staking/${validatorAddress}",
+            "proposal_page": "https://ping.pub/cosmos/gov/${proposalId}",
+            "block_page": "https://ping.pub/cosmos/block/${blockHeight}"
+        },
+        {
+            "kind": "staking-explorer.com",
+            "url": "https://staking-explorer.com/explorer/cosmoshub",
+            "tx_page": "https://staking-explorer.com/transaction.php?chain=cosmoshub&tx=${txHash}",
+            "account_page": "https://staking-explorer.com/account.php?chain=cosmoshub&addr=${accountAddress}"
+        },
+        {
+            "kind": "atomscan",
+            "url": "https://atomscan.com",
+            "tx_page": "https://atomscan.com/transactions/${txHash}",
+            "account_page": "https://atomscan.com/accounts/${accountAddress}",
+            "validator_page": "https://atomscan.com/validators/${validatorAddress}",
+            "proposal_page": "https://atomscan.com/votes/${proposalId}",
+            "block_page": "https://atomscan.com/blocks/${blockHeight}"
+        },
+        {
+            "kind": "unichain",
+            "url": "https://unicha.in/cosmos",
+            "tx_page": "https://unicha.in/cosmos/transaction/${txHash}"
+        },
+        {
+            "kind": "TC Network",
+            "url": "https://explorer.tcnetwork.io/cosmoshub",
+            "tx_page": "https://explorer.tcnetwork.io/cosmoshub/transaction/${txHash}",
+            "account_page": "https://explorer.tcnetwork.io/cosmoshub/account/${accountAddress}",
+            "validator_page": "https://explorer.tcnetwork.io/cosmoshub/validator/${validatorAddress}",
+            "proposal_page": "https://explorer.tcnetwork.io/cosmoshub/proposal/${proposalId}",
+            "block_page": "https://explorer.tcnetwork.io/cosmoshub/block/${blockHeight}"
+        },
+        {
+            "kind": "Stakeflow",
+            "url": "https://stakeflow.io/cosmos",
+            "account_page": "https://stakeflow.io/cosmos/accounts/${accountAddress}",
+            "validator_page": "https://stakeflow.io/cosmos/validators/${validatorAddress}"
+        },
+        {
+            "kind": "Nodeist Explorer",
+            "url": "https://exp.nodeist.net/cosmos"
+        },
+        {
+            "kind": "Inbloc",
+            "url": "https://inbloc.org",
+            "tx_page": "https://inbloc.org/transactions/${txHash}",
+            "account_page": "https://inbloc.org/account/${accountAddress}",
+            "validator_page": "https://inbloc.org/cosmos/validator/${validatorAddress}",
+            "proposal_page": "https://inbloc.org/cosmos/proposal/${proposalId}",
+            "block_page": "https://inbloc.org/cosmos/blocks/${blockHeight}"
+        },
+        {
+            "kind": "WhisperNode 🤐",
+            "url": "https://mainnet.whispernode.com/cosmos",
+            "tx_page": "https://mainnet.whispernode.com/cosmos/tx/${txHash}",
+            "account_page": "https://mainnet.whispernode.com/cosmos/account/${accountAddress}",
+            "validator_page": "https://mainnet.whispernode.com/cosmos/staking/${validatorAddress}",
+            "proposal_page": "https://mainnet.whispernode.com/cosmos/gov/${proposalId}",
+            "block_page": "https://mainnet.whispernode.com/cosmos/block/${blockHeight}"
+        },
+        {
+            "kind": "ITRocket",
+            "url": "https://mainnet.itrocket.net/cosmoshub",
+            "tx_page": "https://mainnet.itrocket.net/cosmoshub/tx/${txHash}",
+            "account_page": "https://mainnet.itrocket.net/cosmoshub/account/${accountAddress}",
+            "validator_page": "https://mainnet.itrocket.net/cosmoshub/staking/${validatorAddress}",
+            "proposal_page": "https://mainnet.itrocket.net/cosmoshub/gov/${proposalId}",
+            "block_page": "https://mainnet.itrocket.net/cosmoshub/block/${blockHeight}"
+        },
+        {
+            "kind": "NodeStake",
+            "url": "https://explorer.nodestake.org/cosmos",
+            "tx_page": "https://explorer.nodestake.org/cosmos/tx/${txHash}",
+            "account_page": "https://explorer.nodestake.org/cosmos/account/${accountAddress}",
+            "validator_page": "https://explorer.nodestake.org/cosmos/staking/${validatorAddress}",
+            "proposal_page": "https://explorer.nodestake.org/cosmos/gov/${proposalId}",
+            "block_page": "https://explorer.nodestake.org/cosmos/block/${blockHeight}"
+        },
+        {
+            "kind": "Valopers",
+            "url": "https://cosmos.valopers.com/",
+            "tx_page": "https://cosmos.valopers.com/transactions/${txHash}",
+            "account_page": "https://cosmos.valopers.com/account/${accountAddress}"
+        }
+    ]
+}
