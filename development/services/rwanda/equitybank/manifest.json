@@ -1,0 +1,8 @@
+{
+  "app_id": "com.rwanda.equitybank",
+  "type": "app",
+  "version": "1.0.0",
+  "name": "Equity Bank Rwanda",
+  "icon": "assets/icons/app_icon.png",
+  "pages": ["pages/index/index"]
+}

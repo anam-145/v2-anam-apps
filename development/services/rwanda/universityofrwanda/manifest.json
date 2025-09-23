@@ -1,0 +1,8 @@
+{
+  "app_id": "com.rwanda.universityofrwanda",
+  "type": "app",
+  "version": "1.0.0",
+  "name": "Univ. of Rwanda",
+  "icon": "assets/icons/app_icon.png",
+  "pages": ["pages/index/index"]
+}
