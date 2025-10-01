@@ -7,6 +7,14 @@
   "use strict";
 
   // ================================================================
+  // API 키 설정
+  // ================================================================
+
+  const API_KEYS = {
+    ALCHEMY: "S-ZJiPfGIZZH9Wo2B3lky"
+  };
+
+  // ================================================================
   // 네트워크 설정
   // ================================================================
 
@@ -15,8 +23,7 @@
     mainnet: {
       name: "mainnet",
       displayName: "Solana Mainnet",
-      rpcUrl:
-        "https://newest-virulent-river.solana-mainnet.quiknode.pro/6087fe67210abeccbf8ecf38eef42ebc652ac243/",
+      rpcUrl: `https://solana-mainnet.g.alchemy.com/v2/${API_KEYS.ALCHEMY}`,
       explorerUrl: "https://explorer.solana.com",
       cluster: "mainnet-beta",
       networkType: "mainnet",
@@ -24,8 +31,7 @@
     testnet: {
       name: "testnet",
       displayName: "Solana Testnet",
-      rpcUrl:
-        "https://methodical-few-slug.solana-testnet.quiknode.pro/ced6f6658c56f53433e198c2124918a0e6dd6b0d",
+      rpcUrl: "https://api.testnet.solana.com",
       explorerUrl: "https://explorer.solana.com/?cluster=testnet",
       cluster: "testnet",
       networkType: "testnet",
@@ -164,7 +170,8 @@
     // Solana Explorer는 mainnet일 때는 cluster 파라미터 불필요
     // testnet/devnet일 때만 ?cluster= 파라미터 추가
     const baseUrl = "https://explorer.solana.com";
-    const clusterParam = networkName === "mainnet" ? "" : `?cluster=${networkName}`;
+    const clusterParam =
+      networkName === "mainnet" ? "" : `?cluster=${networkName}`;
 
     switch (type) {
       case "tx":
