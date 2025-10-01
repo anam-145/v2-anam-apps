@@ -3,8 +3,8 @@
 // QuickNode RPC 엔드포인트 사용
 // ================================================================
 
-(function() {
-  'use strict';
+(function () {
+  "use strict";
 
   // ================================================================
   // 체인 설정 (Cosmos Hub)
@@ -23,97 +23,107 @@
     key_algos: ["secp256k1"],
     slip44: 118,
     fees: {
-      fee_tokens: [{
-        denom: "uatom",
-        fixed_min_gas_price: 0.005,
-        low_gas_price: 0.01,
-        average_gas_price: 0.025,
-        high_gas_price: 0.03
-      }]
+      fee_tokens: [
+        {
+          denom: "uatom",
+          fixed_min_gas_price: 0.005,
+          low_gas_price: 0.01,
+          average_gas_price: 0.025,
+          high_gas_price: 0.03,
+        },
+      ],
     },
     staking: {
-      staking_tokens: [{
-        denom: "uatom"
-      }]
-    },
-    assets: [{
-      description: "ATOM is the native cryptocurrency of the Cosmos network",
-      denom_units: [
-        { denom: "uatom", exponent: 0 },
-        { denom: "atom", exponent: 6 }
+      staking_tokens: [
+        {
+          denom: "uatom",
+        },
       ],
-      base: "uatom",
-      name: "Cosmos Hub Atom",
-      display: "atom",
-      symbol: "ATOM",
-      coingecko_id: "cosmos",
-      type_asset: "staking"
-    }]
+    },
+    assets: [
+      {
+        description: "ATOM is the native cryptocurrency of the Cosmos network",
+        denom_units: [
+          { denom: "uatom", exponent: 0 },
+          { denom: "atom", exponent: 6 },
+        ],
+        base: "uatom",
+        name: "Cosmos Hub Atom",
+        display: "atom",
+        symbol: "ATOM",
+        coingecko_id: "cosmos",
+        type_asset: "staking",
+      },
+    ],
   };
 
   // ================================================================
-  // 네트워크 설정 (QuickNode 우선 사용)
+  // 네트워크 설정 (BlockPI 공용 엔드포인트)
   // ================================================================
   const NETWORKS = {
     mainnet: {
       name: "mainnet",
       displayName: "Cosmos Mainnet",
       chainId: "cosmoshub-4",
-      // QuickNode RPC 엔드포인트 (우선 사용)
-      rpcUrl: "https://multi-cosmological-vineyard.cosmos-mainnet.quiknode.pro/ae18c4d73ca53a3675fc5046bffff8af8ca3da2c/",
-      restUrl: "https://multi-cosmological-vineyard.cosmos-mainnet.quiknode.pro/ae18c4d73ca53a3675fc5046bffff8af8ca3da2c/",
-      // 폴백 RPC (QuickNode 실패 시)
+      // BlockPI 공용 엔드포인트 사용
+      rpcUrl: "https://cosmos.blockpi.network/rpc/v1/public",
+      restUrl: "https://cosmos.blockpi.network/lcd/v1/public",
+      // 폴백 RPC (BlockPI 실패 시)
       fallbackRpc: [
         "https://cosmos-rpc.publicnode.com:443",
-        "https://rpc.cosmos.network:443"
+        "https://rpc.cosmos.network:443",
       ],
       explorerUrl: "https://www.mintscan.io/cosmos",
-      ...CHAIN_CONFIG
+      ...CHAIN_CONFIG,
     },
     testnet: {
       name: "testnet",
       displayName: "Cosmos Testnet",
-      chainId: "provider",  // ICS Provider 테스트넷
+      chainId: "provider", // ICS Provider 테스트넷
       // 테스트넷 RPC (Polkachu 공개 RPC 사용)
       rpcUrl: "https://cosmos-testnet-rpc.polkachu.com",
       restUrl: "https://cosmos-testnet-api.polkachu.com",
       fallbackRpc: [
         "https://rpc.sentry-01.theta-testnet.polypore.xyz",
-        "https://rpc.sentry-02.theta-testnet.polypore.xyz"
+        "https://rpc.sentry-02.theta-testnet.polypore.xyz",
       ],
       // Mintscan Testnet Explorer
       explorerUrl: "https://www.mintscan.io/ics-testnet-provider",
       bech32_prefix: "cosmos",
       fees: {
-        fee_tokens: [{
-          denom: "uatom",
-          fixed_min_gas_price: 0.005,
-          low_gas_price: 0.01,
-          average_gas_price: 0.025,
-          high_gas_price: 0.03
-        }]
-      },
-      assets: [{
-        denom_units: [
-          { denom: "uatom", exponent: 0 },
-          { denom: "atom", exponent: 6 }
+        fee_tokens: [
+          {
+            denom: "uatom",
+            fixed_min_gas_price: 0.005,
+            low_gas_price: 0.01,
+            average_gas_price: 0.025,
+            high_gas_price: 0.03,
+          },
         ],
-        base: "uatom",
-        name: "Cosmos Test Token",
-        display: "atom",
-        symbol: "ATOM"
-      }]
-    }
+      },
+      assets: [
+        {
+          denom_units: [
+            { denom: "uatom", exponent: 0 },
+            { denom: "atom", exponent: 6 },
+          ],
+          base: "uatom",
+          name: "Cosmos Test Token",
+          display: "atom",
+          symbol: "ATOM",
+        },
+      ],
+    },
   };
 
   // ================================================================
   // 활성 네트워크 관리
   // ================================================================
-  let activeNetwork = 'mainnet';
+  let activeNetwork = "mainnet";
 
   // localStorage에서 네트워크 설정 로드
-  if (typeof window !== 'undefined' && window.localStorage) {
-    const savedNetwork = localStorage.getItem('cosmos_active_network');
+  if (typeof window !== "undefined" && window.localStorage) {
+    const savedNetwork = localStorage.getItem("cosmos_active_network");
     if (savedNetwork && NETWORKS[savedNetwork]) {
       activeNetwork = savedNetwork;
     }
@@ -129,16 +139,18 @@
     setActiveNetwork: (network) => {
       if (NETWORKS[network]) {
         activeNetwork = network;
-        if (typeof window !== 'undefined' && window.localStorage) {
-          localStorage.setItem('cosmos_active_network', network);
+        if (typeof window !== "undefined" && window.localStorage) {
+          localStorage.setItem("cosmos_active_network", network);
         }
-        console.log('[CosmosConfig] Network switched to:', network);
+        console.log("[CosmosConfig] Network switched to:", network);
 
         // 네트워크 변경 이벤트 발생 (Solana2/Sui2와 동일한 패턴)
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('cosmosNetworkChanged', {
-            detail: { network: network }
-          }));
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("cosmosNetworkChanged", {
+              detail: { network: network },
+            })
+          );
         }
 
         return true;
@@ -151,9 +163,9 @@
     },
 
     getNetworks: () => {
-      return Object.keys(NETWORKS).map(key => ({
+      return Object.keys(NETWORKS).map((key) => ({
         name: key,
-        displayName: NETWORKS[key].displayName
+        displayName: NETWORKS[key].displayName,
       }));
     },
 
@@ -179,7 +191,7 @@
     getExplorerUrl: (txHash) => {
       const network = NETWORKS[activeNetwork];
       // Mintscan은 /tx/ 사용 (txs가 아님)
-      if (network.explorerUrl.includes('mintscan.io')) {
+      if (network.explorerUrl.includes("mintscan.io")) {
         return `${network.explorerUrl}/tx/${txHash}`;
       }
       // 다른 Explorer는 /txs/ 사용
@@ -196,7 +208,7 @@
         denom: network.assets[0].base,
         displayDenom: network.assets[0].display,
         symbol: network.assets[0].symbol,
-        decimals: 6 // ATOM은 6자리
+        decimals: 6, // ATOM은 6자리
       };
     },
 
@@ -216,29 +228,34 @@
     isValidAddress: (address) => {
       const network = NETWORKS[activeNetwork];
       const prefix = network.bech32_prefix;
-      if (!address || typeof address !== 'string') {
+      if (!address || typeof address !== "string") {
         return false;
       }
       // Cosmos 주소는 bech32 형식
       // 길이는 보통 45자 정도
-      return address.startsWith(prefix) && address.length > 30 && address.length < 80;
+      return (
+        address.startsWith(prefix) && address.length > 30 && address.length < 80
+      );
     },
 
     // 네트워크 캐시 초기화
     clearNetworkCache: () => {
       // 캐시 키들 삭제
-      if (typeof window !== 'undefined' && window.localStorage) {
+      if (typeof window !== "undefined" && window.localStorage) {
         // 트랜잭션 캐시 삭제
         localStorage.removeItem(CosmosConfig.CACHE_CONFIG.TX_CACHE_KEY);
         localStorage.removeItem(CosmosConfig.CACHE_CONFIG.BALANCE_CACHE_KEY);
         localStorage.removeItem(CosmosConfig.CACHE_CONFIG.NETWORK_CACHE_KEY);
         // 네트워크별 캐시도 삭제
-        Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('cosmos_tx_') || key.startsWith('cosmos_balance_')) {
+        Object.keys(localStorage).forEach((key) => {
+          if (
+            key.startsWith("cosmos_tx_") ||
+            key.startsWith("cosmos_balance_")
+          ) {
             localStorage.removeItem(key);
           }
         });
-        console.log('[CosmosConfig] Network cache cleared');
+        console.log("[CosmosConfig] Network cache cleared");
       }
     },
 
@@ -255,37 +272,43 @@
         apis: {
           rpc: [
             { address: network.rpcUrl, provider: "QuickNode" },
-            ...network.fallbackRpc.map(url => ({ address: url, provider: "Public" }))
+            ...network.fallbackRpc.map((url) => ({
+              address: url,
+              provider: "Public",
+            })),
           ],
           rest: [
-            { address: network.restUrl || network.rpcUrl, provider: "QuickNode" }
+            {
+              address: network.restUrl || network.rpcUrl,
+              provider: "QuickNode",
+            },
           ],
-          grpc: []
+          grpc: [],
         },
         explorers: [
           {
             name: "Mintscan",
             url: network.explorerUrl,
-            tx_page: `${network.explorerUrl}/txs/{txHash}`
-          }
-        ]
+            tx_page: `${network.explorerUrl}/txs/{txHash}`,
+          },
+        ],
       };
     },
 
     // 테마 설정 (Cosmos 브랜드 켈러)
     theme: {
-      primaryColor: '#6F4CFF',    // Cosmos 보라색
-      secondaryColor: '#1C1C3A',  // Cosmos 진한 남색
-      darkColor: '#5031E5',       // 진한 보라색
-      lightColor: '#F0EDFF',      // 연한 보라색
-      gradient: 'linear-gradient(135deg, #6F4CFF 0%, #9B51E0 100%)'
+      primaryColor: "#6F4CFF", // Cosmos 보라색
+      secondaryColor: "#1C1C3A", // Cosmos 진한 남색
+      darkColor: "#5031E5", // 진한 보라색
+      lightColor: "#F0EDFF", // 연한 보라색
+      gradient: "linear-gradient(135deg, #6F4CFF 0%, #9B51E0 100%)",
     },
 
     // 상수들
     TRANSACTION: {
       DEFAULT_GAS: 200000,
-      DEFAULT_MEMO: '',
-      CONFIRMATION_TIME: 10000 // 10초
+      DEFAULT_MEMO: "",
+      CONFIRMATION_TIME: 10000, // 10초
     },
 
     UI: {
@@ -299,7 +322,7 @@
       BALANCE_CACHE_KEY: "cosmos_balance_cache",
       DELEGATION_CACHE_KEY: "cosmos_delegation_cache",
       PRICE_CACHE_KEY: "cosmos_price_cache",
-      NETWORK_CACHE_KEY: "cosmos_network_cache"
+      NETWORK_CACHE_KEY: "cosmos_network_cache",
     },
 
     CACHE: {
@@ -307,27 +330,26 @@
       TX_TTL: 60000, // 1분
       PRICE_TTL: 300000, // 5분
       TX_CACHE_KEY: "cosmos_tx_cache", // 하위 호환성
-    }
+    },
   };
 
   // ================================================================
   // 전역 노출
   // ================================================================
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     window.CosmosConfig = CosmosConfig;
 
     // CosmosJS에 설정 자동 등록
     if (window.CosmosJS) {
       try {
         window.CosmosJS.registerConfig(CosmosConfig.getCosmosJSConfig());
-        console.log('[CosmosConfig] Auto-registered with CosmosJS');
+        console.log("[CosmosConfig] Auto-registered with CosmosJS");
       } catch (e) {
-        console.log('[CosmosConfig] CosmosJS not ready yet');
+        console.log("[CosmosConfig] CosmosJS not ready yet");
       }
     }
 
-    console.log('[CosmosConfig] Module loaded');
-    console.log('[CosmosConfig] Active network:', activeNetwork);
+    console.log("[CosmosConfig] Module loaded");
+    console.log("[CosmosConfig] Active network:", activeNetwork);
   }
-
 })();
