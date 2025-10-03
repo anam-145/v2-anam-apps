@@ -154,14 +154,103 @@ function displayTokenList() {
   });
 }
 
+// Add this improved function with debugging
+function getTokenIconUrl(token) {
+  console.log("Getting icon for token:", token.symbol, token.address);
+  
+  // Special case for ETH
+  if (token.address === 'native' || token.symbol === 'ETH') {
+    return 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png';
+  }
+  
+  try {
+    // Get checksummed address (required for Trust Wallet)
+    const checksumAddress = ethers.utils.getAddress(token.address);
+    console.log("Checksum address:", checksumAddress);
+    
+    // For Sepolia, there won't be icons in Trust Wallet
+    // So let's use mainnet paths for known tokens
+    const tokenMainnetAddresses = {
+      // Sepolia USDC -> Mainnet USDC
+      '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238': '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+      // Add other known Sepolia -> Mainnet mappings
+    };
+    
+    // Use mainnet address for icon if available
+    const iconAddress = tokenMainnetAddresses[checksumAddress] || checksumAddress;
+    
+    // Trust Wallet URL (use ethereum chain for icons)
+    const trustWalletUrl = `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${ethers.utils.getAddress(iconAddress)}/logo.png`;
+    
+    console.log("Icon URL:", trustWalletUrl);
+    return trustWalletUrl;
+    
+  } catch (error) {
+    console.error("Error generating icon URL:", error);
+    // Return null to trigger placeholder
+    return null;
+  }
+}
+
+// Better implementation with actual fallback
+async function loadTokenIcon(token, imgElement) {
+  const urls = [
+    getTokenIconUrl(token),
+    // Try symbol-based icon services
+    `https://cryptologos.cc/logos/${token.symbol.toLowerCase()}/${token.symbol.toLowerCase()}-logo.png`,
+    `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/32/color/${token.symbol.toLowerCase()}.png`,
+  ].filter(url => url !== null);
+  
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, { method: 'HEAD' });
+      if (response.ok) {
+        imgElement.src = url;
+        imgElement.style.display = 'block';
+        return;
+      }
+    } catch (error) {
+      console.log(`Icon URL failed: ${url}`);
+    }
+  }
+  
+  // All failed, show placeholder
+  imgElement.style.display = 'none';
+  if (imgElement.nextElementSibling) {
+    imgElement.nextElementSibling.style.display = 'flex';
+  }
+}
+
+// Updated createTokenElement with better error handling
 function createTokenElement(token) {
   const div = document.createElement('div');
   div.className = 'token-item';
   div.onclick = () => viewTokenDetails(token.address);
   
+  // Create unique ID for this token's icon
+  const iconId = `icon-${token.address}`;
+  
   div.innerHTML = `
     <div class="token-icon">
-      <div class="token-icon-placeholder">${token.symbol.charAt(0)}</div>
+      <img 
+        id="${iconId}"
+        alt="${token.symbol}"
+        style="width: 40px; height: 40px; border-radius: 50%; display: none;"
+      />
+      <div class="token-icon-placeholder" style="
+        width: 40px; 
+        height: 40px; 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-weight: 600;
+        font-size: 16px;
+      ">
+        ${token.symbol.substring(0, 2).toUpperCase()}
+      </div>
     </div>
     <div class="token-info">
       <div class="token-symbol">${token.symbol}</div>
@@ -174,6 +263,14 @@ function createTokenElement(token) {
       <div class="balance-usd">≈ $0.00</div>
     </div>
   `;
+  
+  // Try to load icon after element is added to DOM
+  setTimeout(() => {
+    const imgEl = document.getElementById(iconId);
+    if (imgEl) {
+      loadTokenIcon(token, imgEl);
+    }
+  }, 0);
   
   return div;
 }

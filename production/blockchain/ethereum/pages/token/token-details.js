@@ -90,12 +90,91 @@ function loadTokenDetails() {
   }
 }
 
+function getTokenIconUrl(token) {
+  console.log("Getting icon for token:", token.symbol, token.address);
+  
+  // Special case for ETH
+  if (token.address === 'native' || token.symbol === 'ETH') {
+    return 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png';
+  }
+  
+  try {
+    // Get checksummed address (required for Trust Wallet)
+    const checksumAddress = ethers.utils.getAddress(token.address);
+    console.log("Checksum address:", checksumAddress);
+    
+    // For Sepolia, there won't be icons in Trust Wallet
+    // So let's use mainnet paths for known tokens
+    const tokenMainnetAddresses = {
+      // Sepolia USDC -> Mainnet USDC
+      '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238': '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+      // Add other known Sepolia -> Mainnet mappings
+    };
+    
+    // Use mainnet address for icon if available
+    const iconAddress = tokenMainnetAddresses[checksumAddress] || checksumAddress;
+    
+    // Trust Wallet URL (use ethereum chain for icons)
+    const trustWalletUrl = `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${ethers.utils.getAddress(iconAddress)}/logo.png`;
+    
+    console.log("Icon URL:", trustWalletUrl);
+    return trustWalletUrl;
+    
+  } catch (error) {
+    console.error("Error generating icon URL:", error);
+    // Return null to trigger placeholder
+    return null;
+  }
+}
+
+// Better implementation with actual fallback
+async function loadTokenIcon(token, imgElement) {
+  const urls = [
+    getTokenIconUrl(token),
+    // Try symbol-based icon services
+    `https://cryptologos.cc/logos/${token.symbol.toLowerCase()}/${token.symbol.toLowerCase()}-logo.png`,
+    `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/32/color/${token.symbol.toLowerCase()}.png`,
+  ].filter(url => url !== null);
+  
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, { method: 'HEAD' });
+      if (response.ok) {
+        imgElement.src = url;
+        imgElement.style.display = 'block';
+        return;
+      }
+    } catch (error) {
+      console.log(`Icon URL failed: ${url}`);
+    }
+  }
+  
+  // All failed, show placeholder
+  imgElement.style.display = 'none';
+  if (imgElement.nextElementSibling) {
+    imgElement.nextElementSibling.style.display = 'flex';
+  }
+}
+
 function displayTokenInfo() {
   // 기본 정보 표시
   document.getElementById('token-symbol').textContent = currentToken.symbol;
   document.getElementById('token-name').textContent = currentToken.name;
   document.getElementById('token-icon-display').textContent = currentToken.symbol.substring(0, 3);
   
+  // Update icon display
+  const iconContainer = document.getElementById('token-icon-display');
+  const iconUrl = getTokenIconUrl(currentToken);
+  
+  iconContainer.innerHTML = `
+    <img 
+      src="${iconUrl}" 
+      alt="${currentToken.symbol}"
+      style="width: 60px; height: 60px; border-radius: 50%;"
+      onerror="this.style.display='none'; this.parentElement.innerHTML='${currentToken.symbol.substring(0, 3)}';"
+    />
+  `;
+
   if (currentToken.address === 'native') {
     document.getElementById('contract-address').textContent = 'Native Token';
   } else {
