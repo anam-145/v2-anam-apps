@@ -1,0 +1,92 @@
+<!-- token-details.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Token Details</title>
+  <link rel="stylesheet" href="../../app.css">
+  <link rel="stylesheet" href="token-details.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <button class="back-btn" onclick="goBack()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      </button>
+      <h1 class="header-title" id="token-symbol">Token</h1>
+      <div style="width: 24px;"></div>
+    </header>
+
+    <!-- Token Details -->
+    <div class="token-details-container">
+      <!-- Token Overview -->
+      <div class="token-overview card">
+        <div class="token-icon-large">
+          <div id="token-icon-display">ETH</div>
+        </div>
+        <h2 id="token-name">Token Name</h2>
+        <div class="balance-display">
+          <div class="balance-amount" id="token-balance">0.0000</div>
+          <div class="balance-usd">≈ $0.00</div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button class="action-btn" onclick="sendToken()">
+          <span>Send</span>
+        </button>
+        <button class="action-btn" onclick="receiveToken()">
+          <span>Receive</span>
+        </button>
+      </div>
+
+      <!-- Token Information -->
+      <div class="token-info-card card">
+        <h3>Token Information</h3>
+        <div class="info-row">
+          <span class="info-label">Contract Address</span>
+          <span class="info-value" id="contract-address" onclick="copyAddress()">0x...</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Decimals</span>
+          <span class="info-value" id="token-decimals">18</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Total Supply</span>
+          <span class="info-value" id="total-supply">-</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Your Holdings</span>
+          <span class="info-value" id="holdings-percentage">0%</span>
+        </div>
+      </div>
+
+      <!-- Transaction History -->
+      <div class="transaction-history card">
+        <h3>Recent Transactions</h3>
+        <div id="tx-list" class="tx-list">
+          <div class="empty-tx">No recent transactions</div>
+        </div>
+      </div>
+
+      <!-- Remove Token Button (only for ERC-20) -->
+      <div class="danger-zone" id="danger-zone" style="display: none;">
+        <button class="danger-btn" onclick="removeToken()">
+          Remove Token
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <script src="../../utils/config.js"></script>
+  <script src="../../app.js"></script>
+  <script src="token-details.js"></script>
+</body>
+</html>

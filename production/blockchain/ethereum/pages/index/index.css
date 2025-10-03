@@ -416,23 +416,26 @@ textarea.import-input-metamask {
 /* 액션 버튼 */
 .action-buttons {
   display: flex;
-  gap: 12px;
+  gap: 8px;  /* Reduced gap for 3 buttons */
   position: relative;
   z-index: 1;
 }
 
 .action-btn {
   flex: 1;
-  padding: 12px;
+  padding: 10px 8px;  /* Slightly reduced padding for 3 buttons */
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
   color: white;
-  font-size: 16px;
+  font-size: 14px;  /* Slightly smaller font for 3 buttons */
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
   backdrop-filter: blur(10px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .action-btn:hover {
@@ -583,6 +586,15 @@ textarea.import-input-metamask {
   
   .coin-unit {
     font-size: 16px;
+  }
+
+  .action-buttons {     /* 추가 */
+    gap: 6px;
+  }
+  
+  .action-btn {         /* 추가 */
+    padding: 10px 6px;
+    font-size: 13px;
   }
   
   .transactions-section {

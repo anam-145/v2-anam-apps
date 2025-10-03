@@ -692,6 +692,24 @@ function navigateToReceive() {
   }
 }
 
+// Token 페이지로 이동
+function navigateToToken() {
+  if (!currentWallet) {
+    showToast("No wallet found");
+    return;
+  }
+  
+  // blockchain miniapp은 anamUI 네임스페이스 사용
+  if (window.anamUI && window.anamUI.navigateTo) {
+    window.anamUI.navigateTo("pages/token/token");
+  } else if (window.anam && window.anam.navigateTo) {
+    window.anam.navigateTo("pages/token/token");
+  } else {
+    // 개발 환경: 일반 HTML 페이지 이동
+    window.location.href = "../token/token.html";
+  }
+}
+
 // 지갑 초기화
 function resetWallet() {
   const walletKey = `${CoinConfig.symbol.toLowerCase()}_wallet`;
@@ -1057,6 +1075,7 @@ window.createWallet = createWallet;
 window.importFromMnemonic = importFromMnemonic;
 window.navigateToSend = navigateToSend;
 window.navigateToReceive = navigateToReceive;
+window.navigateToToken = navigateToToken;
 
 // Navigate to settings
 function navigateToSettings() {

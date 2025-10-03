@@ -1,0 +1,236 @@
+/* token-details.css */
+/* ================================================================ */
+/* Token Details Page Styles */
+/* ================================================================ */
+
+.container {
+  min-height: 100vh;
+  background: var(--bg-gradient);
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  color: #666;
+  transition: color 0.2s;
+}
+
+.back-btn:hover {
+  color: var(--coin-primary);
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Token Details Container */
+.token-details-container {
+  padding: 16px;
+}
+
+/* Card Base */
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 16px;
+}
+
+/* Token Overview */
+.token-overview {
+  text-align: center;
+  background: linear-gradient(135deg, var(--coin-primary), var(--coin-secondary));
+  color: white;
+}
+
+.token-icon-large {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#token-icon-display {
+  font-size: 32px;
+  font-weight: 600;
+}
+
+.token-overview h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.balance-display {
+  margin-top: 20px;
+}
+
+.balance-display .balance-amount {
+  font-size: 32px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.balance-display .balance-usd {
+  font-size: 16px;
+  opacity: 0.9;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 14px;
+  background: var(--coin-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.action-btn:hover {
+  opacity: 0.9;
+}
+
+/* Token Information Card */
+.token-info-card h3 {
+  font-size: 18px;
+  margin-bottom: 16px;
+  color: #333;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.info-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  text-align: right;
+}
+
+#contract-address {
+  cursor: pointer;
+  color: var(--coin-primary);
+  font-family: monospace;
+  transition: opacity 0.2s;
+}
+
+#contract-address:hover {
+  opacity: 0.7;
+}
+
+/* Transaction History */
+.transaction-history h3 {
+  font-size: 18px;
+  margin-bottom: 16px;
+  color: #333;
+}
+
+.tx-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.tx-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.tx-item:last-child {
+  margin-bottom: 0;
+}
+
+.tx-type {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+}
+
+.tx-amount {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.tx-time,
+.tx-hash {
+  font-size: 12px;
+  color: #999;
+}
+
+.empty-tx {
+  text-align: center;
+  padding: 24px;
+  color: #999;
+  font-size: 14px;
+}
+
+/* Danger Zone */
+.danger-zone {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #f0f0f0;
+  text-align: center;
+}
+
+.danger-btn {
+  padding: 10px 20px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.danger-btn:hover {
+  opacity: 0.9;
+}
