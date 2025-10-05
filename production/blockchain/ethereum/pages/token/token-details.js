@@ -127,8 +127,7 @@ function getTokenIconUrl(token) {
   }
 }
 
-// Better implementation with actual fallback
-async function loadTokenIcon(token, imgElement) {
+async function loadTokenIconForDetails(token, imgElement) {
   const urls = [
     getTokenIconUrl(token),
     // Try symbol-based icon services
@@ -136,12 +135,19 @@ async function loadTokenIcon(token, imgElement) {
     `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/32/color/${token.symbol.toLowerCase()}.png`,
   ].filter(url => url !== null);
   
+  // Get the placeholder element by ID for details page
+  const placeholder = document.getElementById('details-placeholder');
+  
   for (const url of urls) {
     try {
       const response = await fetch(url, { method: 'HEAD' });
       if (response.ok) {
+        // Icon found - show image, hide placeholder
         imgElement.src = url;
         imgElement.style.display = 'block';
+        if (placeholder) {
+          placeholder.style.display = 'none';
+        }
         return;
       }
     } catch (error) {
@@ -149,31 +155,50 @@ async function loadTokenIcon(token, imgElement) {
     }
   }
   
-  // All failed, show placeholder
+  // All failed, hide image and show placeholder
   imgElement.style.display = 'none';
-  if (imgElement.nextElementSibling) {
-    imgElement.nextElementSibling.style.display = 'flex';
+  if (placeholder) {
+    placeholder.style.display = 'flex';
   }
 }
 
 function displayTokenInfo() {
-  // 기본 정보 표시
+  // Basic info display
   document.getElementById('token-symbol').textContent = currentToken.symbol;
   document.getElementById('token-name').textContent = currentToken.name;
-  document.getElementById('token-icon-display').textContent = currentToken.symbol.substring(0, 3);
   
-  // Update icon display
+  // Update icon display with proper loading
   const iconContainer = document.getElementById('token-icon-display');
-  const iconUrl = getTokenIconUrl(currentToken);
-  
   iconContainer.innerHTML = `
     <img 
-      src="${iconUrl}" 
+      id="details-token-icon"
       alt="${currentToken.symbol}"
-      style="width: 60px; height: 60px; border-radius: 50%;"
-      onerror="this.style.display='none'; this.parentElement.innerHTML='${currentToken.symbol.substring(0, 3)}';"
+      style="width: 80px; height: 80px; border-radius: 50%; display: none;"
+      onerror="this.style.display='none'; document.getElementById('details-placeholder').style.display='flex';"
     />
+    <div id="details-placeholder" style="
+      width: 80px; 
+      height: 80px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-weight: 600;
+      font-size: 24px;
+    ">
+      ${currentToken.symbol.substring(0, 2).toUpperCase()}
+    </div>
   `;
+  
+  // Load icon with special handling for details page
+  setTimeout(() => {
+    const imgEl = document.getElementById('details-token-icon');
+    if (imgEl) {
+      loadTokenIconForDetails(currentToken, imgEl);
+    }
+  }, 0);
 
   if (currentToken.address === 'native') {
     document.getElementById('contract-address').textContent = 'Native Token';
@@ -188,7 +213,7 @@ function displayTokenInfo() {
   
   document.getElementById('token-decimals').textContent = currentToken.decimals;
   
-  // 페이지 타이틀 업데이트
+  // Page title update
   document.title = `${currentToken.symbol} Details`;
 }
 

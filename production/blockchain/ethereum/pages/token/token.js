@@ -201,12 +201,19 @@ async function loadTokenIcon(token, imgElement) {
     `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/32/color/${token.symbol.toLowerCase()}.png`,
   ].filter(url => url !== null);
   
+  // Get the placeholder element (next sibling)
+  const placeholder = imgElement.nextElementSibling;
+  
   for (const url of urls) {
     try {
       const response = await fetch(url, { method: 'HEAD' });
       if (response.ok) {
+        // Icon found - show image, hide placeholder
         imgElement.src = url;
         imgElement.style.display = 'block';
+        if (placeholder) {
+          placeholder.style.display = 'none';
+        }
         return;
       }
     } catch (error) {
@@ -214,14 +221,13 @@ async function loadTokenIcon(token, imgElement) {
     }
   }
   
-  // All failed, show placeholder
+  // All failed, hide image and show placeholder
   imgElement.style.display = 'none';
-  if (imgElement.nextElementSibling) {
-    imgElement.nextElementSibling.style.display = 'flex';
+  if (placeholder) {
+    placeholder.style.display = 'flex';
   }
 }
 
-// Updated createTokenElement with better error handling
 function createTokenElement(token) {
   const div = document.createElement('div');
   div.className = 'token-item';
@@ -229,6 +235,7 @@ function createTokenElement(token) {
   
   // Create unique ID for this token's icon
   const iconId = `icon-${token.address}`;
+  const placeholderId = `placeholder-${token.address}`;
   
   div.innerHTML = `
     <div class="token-icon">
@@ -236,8 +243,9 @@ function createTokenElement(token) {
         id="${iconId}"
         alt="${token.symbol}"
         style="width: 40px; height: 40px; border-radius: 50%; display: none;"
+        onerror="this.style.display='none'; document.getElementById('${placeholderId}').style.display='flex';"
       />
-      <div class="token-icon-placeholder" style="
+      <div id="${placeholderId}" class="token-icon-placeholder" style="
         width: 40px; 
         height: 40px; 
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
