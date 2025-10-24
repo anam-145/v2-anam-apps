@@ -1,39 +1,15 @@
 // token-details.js
-// ================================================================
-// Token Details Page Logic - Updated for current wallet system
-// ================================================================
-
 let adapter = null;
 let currentToken = null;
 
 // ================================================================
-// Compatibility layer for wallet system
+// 1. 초기화 & 환경 Setup
+//     - handles initial page load, adapter setup, wallet retrieval, token context loading, and UI preparation.
 // ================================================================
-
-function getCurrentWallet() {
-  // Try multiple methods to get wallet data
-  
-  // Method 1: Check if WalletStorage exists
-  if (typeof WalletStorage !== 'undefined' && WalletStorage.get) {
-    return WalletStorage.get();
-  }
-  
-  // Method 2: Direct localStorage access
-  const walletData = localStorage.getItem('eth_wallet');
-  if (walletData) {
-    try {
-      return JSON.parse(walletData);
-    } catch (e) {
-      console.error("Failed to parse wallet data:", e);
-    }
-  }
-  
-  return null;
-}
 
 // 페이지 초기화
 document.addEventListener("DOMContentLoaded", async function() {
-  console.log("Token details page loaded");
+  console.log("Token page loaded");
   
   // 어댑터 초기화
   adapter = window.getAdapter();
@@ -59,9 +35,40 @@ document.addEventListener("DOMContentLoaded", async function() {
   loadTokenDetails();
 });
 
-// ================================================================
-// 1. 토큰 정보 로드 및 표시
-// ================================================================
+function getCurrentWallet() {
+  // Try multiple methods to get wallet data
+  
+  // Method 1: Check if WalletStorage exists
+  if (typeof WalletStorage !== 'undefined' && WalletStorage.get) {
+    return WalletStorage.get();
+  }
+  
+  // Method 2: Direct localStorage access - WalletStorage 객체가 정의되지 않은 경우 대비
+  const walletData = localStorage.getItem('eth_wallet');
+  if (walletData) {
+    try {
+      return JSON.parse(walletData);
+    } catch (e) {
+      console.error("Failed to parse wallet data:", e);
+    }
+  }
+  
+  return null;
+}
+
+function getPrivateKeyFromWallet(walletData) {
+  if (walletData.privateKey) {
+    return walletData.privateKey;
+  }
+  
+  if (walletData.mnemonic) {
+    // Derive private key from mnemonic
+    const wallet = ethers.Wallet.fromMnemonic(walletData.mnemonic);
+    return wallet.privateKey;
+  }
+  
+  throw new Error("No private key or mnemonic found");
+}
 
 function loadTokenDetails() {
   // sessionStorage에서 선택된 토큰 정보 가져오기
@@ -87,78 +94,6 @@ function loadTokenDetails() {
     loadERC20TokenDetails();
     // ERC-20 토큰은 제거 가능
     document.getElementById('danger-zone').style.display = 'block';
-  }
-}
-
-function getTokenIconUrl(token) {
-  console.log("Getting icon for token:", token.symbol, token.address);
-  
-  // Special case for ETH
-  if (token.address === 'native' || token.symbol === 'ETH') {
-    return 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png';
-  }
-  
-  try {
-    // Get checksummed address (required for Trust Wallet)
-    const checksumAddress = ethers.utils.getAddress(token.address);
-    console.log("Checksum address:", checksumAddress);
-    
-    // For Sepolia, there won't be icons in Trust Wallet
-    // So let's use mainnet paths for known tokens
-    const tokenMainnetAddresses = {
-      // Sepolia USDC -> Mainnet USDC
-      '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238': '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-      // Add other known Sepolia -> Mainnet mappings
-    };
-    
-    // Use mainnet address for icon if available
-    const iconAddress = tokenMainnetAddresses[checksumAddress] || checksumAddress;
-    
-    // Trust Wallet URL (use ethereum chain for icons)
-    const trustWalletUrl = `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${ethers.utils.getAddress(iconAddress)}/logo.png`;
-    
-    console.log("Icon URL:", trustWalletUrl);
-    return trustWalletUrl;
-    
-  } catch (error) {
-    console.error("Error generating icon URL:", error);
-    // Return null to trigger placeholder
-    return null;
-  }
-}
-
-async function loadTokenIconForDetails(token, imgElement) {
-  const urls = [
-    getTokenIconUrl(token),
-    // Try symbol-based icon services
-    `https://cryptologos.cc/logos/${token.symbol.toLowerCase()}/${token.symbol.toLowerCase()}-logo.png`,
-    `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/32/color/${token.symbol.toLowerCase()}.png`,
-  ].filter(url => url !== null);
-  
-  // Get the placeholder element by ID for details page
-  const placeholder = document.getElementById('details-placeholder');
-  
-  for (const url of urls) {
-    try {
-      const response = await fetch(url, { method: 'HEAD' });
-      if (response.ok) {
-        // Icon found - show image, hide placeholder
-        imgElement.src = url;
-        imgElement.style.display = 'block';
-        if (placeholder) {
-          placeholder.style.display = 'none';
-        }
-        return;
-      }
-    } catch (error) {
-      console.log(`Icon URL failed: ${url}`);
-    }
-  }
-  
-  // All failed, hide image and show placeholder
-  imgElement.style.display = 'none';
-  if (placeholder) {
-    placeholder.style.display = 'flex';
   }
 }
 
@@ -218,7 +153,70 @@ function displayTokenInfo() {
 }
 
 // ================================================================
-// 2. Native Token (ETH) 처리
+// 2. 토큰 정보 로드 및 Icon 관리
+//    - generates and fetches token icons from external repositories (TrustWallet / AtomicLabs).
+//    - handles display fallback and image loading.
+// ================================================================
+
+
+function getTokenIconUrl(token) {
+  
+  // Special case for ETH
+  if (token.address === 'native' || token.symbol === 'ETH') {
+    return 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png';
+  }
+  
+  try {
+    const checksumAddress = ethers.utils.getAddress(token.address);
+    console.log("Checksum address:", checksumAddress);
+    
+    // const tokenMainnetAddresses = {
+    //   '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238': '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // Sepolia USDC -> Mainnet USDC
+    // };
+    
+    const iconAddress = tokenMainnetAddresses[checksumAddress] || checksumAddress;
+    
+    const trustWalletUrl = `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${ethers.utils.getAddress(iconAddress)}/logo.png`;
+    
+    console.log("Icon URL:", trustWalletUrl);
+    return trustWalletUrl;
+    
+  } catch (error) {
+    console.error("Error generating icon URL:", error);
+    return null;
+  }
+}
+
+// Only atomiclabs as fallback source
+async function loadTokenIconForDetails(token, imgElement) {
+  const urls = [
+    getTokenIconUrl(token),
+    `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/32/color/${token.symbol.toLowerCase()}.png`,
+  ].filter(url => url !== null);
+  
+  const placeholder = imgElement.nextElementSibling;
+  
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, { method: 'HEAD' });
+      if (response.ok) {
+        imgElement.src = url;
+        imgElement.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+        return;
+      }
+    } catch (error) {
+      console.log(`Icon URL failed: ${url}`);
+    }
+  }
+  
+  imgElement.style.display = 'none';
+  if (placeholder) placeholder.style.display = 'flex';
+}
+
+// ================================================================
+// 3. Native Token (ETH) 처리
+//     - fetches and displays ETH balance, hides irrelevant supply/percentage fields, loads ETH transaction history,
 // ================================================================
 
 async function loadNativeTokenDetails() {
@@ -239,7 +237,7 @@ async function loadNativeTokenDetails() {
     document.getElementById('total-supply').textContent = 'N/A';
     document.getElementById('holdings-percentage').textContent = 'N/A';
     
-    // 트랜잭션 히스토리 (간단한 예시)
+    // 트랜잭션 히스토리
     loadTransactionHistory(currentWallet.address, 'native');
     
   } catch (error) {
@@ -250,7 +248,9 @@ async function loadNativeTokenDetails() {
 }
 
 // ================================================================
-// 3. ERC-20 Token 처리
+// 4. ERC-20 Token 처리
+//     - interacts with ERC-20 smart contracts (balance, totalSupply).
+//     - displays formatted results and initiates transaction history load.
 // ================================================================
 
 async function loadERC20TokenDetails() {
@@ -306,79 +306,473 @@ async function loadERC20TokenDetails() {
 }
 
 // ================================================================
-// 4. 트랜잭션 히스토리 (간단한 구현)
+// 5. 트랜잭션 히스토리
+//     - fetches on-chain and API-based transaction data, proceses both native(ETH) and ERC-20 transfers, and builds DOM elements for the UI.
 // ================================================================
 
 async function loadTransactionHistory(address, tokenAddress) {
   const txListEl = document.getElementById('tx-list');
   
-  // 실제 구현에서는 Etherscan API 또는 이벤트 로그를 사용
-  // 여기서는 간단한 예시만 표시
   if (tokenAddress === 'native') {
-    txListEl.innerHTML = `
-      <div class="tx-item">
-        <div class="tx-type">Received</div>
-        <div class="tx-amount">+0.5 ETH</div>
-        <div class="tx-time">2 hours ago</div>
-      </div>
-      <div class="tx-item">
-        <div class="tx-type">Sent</div>
-        <div class="tx-amount">-0.1 ETH</div>
-        <div class="tx-time">1 day ago</div>
-      </div>
-    `;
+    await loadNativeTransactionHistory(address, txListEl);
   } else {
-    // ERC-20 토큰의 경우 Transfer 이벤트를 조회
-    try {
-      const contract = new ethers.Contract(
-        tokenAddress,
-        ["event Transfer(address indexed from, address indexed to, uint256 value)"],
-        adapter.provider
-      );
-      
-      // 최근 블록에서 Transfer 이벤트 조회 (Quicknode RPC free plan: 5 blocks 조회 가능)
-      const filter = contract.filters.Transfer(null, address);
-      const events = await contract.queryFilter(filter, -4, 'latest');  // 이 부분 -4 -> 5 blocks 조회
-      
-      if (events.length > 0) {
-        txListEl.innerHTML = '';
-        events.slice(0, 5).forEach(event => {
-          const amount = ethers.utils.formatUnits(event.args.value, currentToken.decimals);
-          const txItem = document.createElement('div');
-          txItem.className = 'tx-item';
-          
-          // Use shortenAddress function
-          const shortenFn = window.EthereumUtils?.shortenAddress || window.shortenAddress || 
-            (addr => `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`);
-          
-          txItem.innerHTML = `
-            <div class="tx-type">Received</div>
-            <div class="tx-amount">+${parseFloat(amount).toFixed(4)} ${currentToken.symbol}</div>
-            <div class="tx-hash">${shortenFn(event.transactionHash)}</div>
-          `;
-          txListEl.appendChild(txItem);
-        });
-      }
-    } catch (error) {
-      console.log("Could not load transaction history:", error);
-    }
+    await loadTokenTransactionHistory(address, tokenAddress, txListEl);
   }
 }
 
+async function loadNativeTransactionHistory(address, txListEl) {
+  try {
+    const currentNetwork = window.EthereumConfig?.getCurrentNetwork();
+    const apiUrl = currentNetwork?.blockExplorer?.apiUrl || "https://api-sepolia.etherscan.io/api";
+    const apiKey = window.EthereumConfig?.ETHERSCAN_API_KEY || "";
+    
+    const response = await fetch(
+      `${apiUrl}?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`
+    );
+    
+    const data = await response.json();
+    
+    if (data.status === "1" && data.result.length > 0) {
+      txListEl.innerHTML = '';
+      
+      data.result.slice(0, 10).forEach(tx => {
+        const isReceived = tx.to.toLowerCase() === address.toLowerCase();
+        const txItem = createTransactionElement(tx, isReceived, 'ETH');
+        txListEl.appendChild(txItem);
+      });
+    } else {
+      displayEmptyTransactions(txListEl);
+    }
+  } catch (error) {
+    console.error("Failed to load native transactions:", error);
+    displayEmptyTransactions(txListEl);
+  }
+}
+
+async function loadTokenTransactionHistory(address, tokenAddress, txListEl) {
+  try {
+    const currentNetwork = window.EthereumConfig?.getCurrentNetwork();
+    const apiUrl = currentNetwork?.blockExplorer?.apiUrl || "https://api-sepolia.etherscan.io/api";
+    const apiKey = window.EthereumConfig?.ETHERSCAN_API_KEY || "";
+    
+    const response = await fetch(
+      `${apiUrl}?module=account&action=tokentx&contractaddress=${tokenAddress}&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`
+    );
+    
+    const data = await response.json();
+    
+    if (data.status === "1" && data.result.length > 0) {
+      txListEl.innerHTML = '';
+      
+      data.result.slice(0, 10).forEach(tx => {
+        const isReceived = tx.to.toLowerCase() === address.toLowerCase();
+        const txItem = createTokenTransactionElement(tx, isReceived);
+        txListEl.appendChild(txItem);
+      });
+    } else {
+      await loadTokenEventsFromChain(address, tokenAddress, txListEl);
+    }
+  } catch (error) {
+    console.error("Failed to load token transactions:", error);
+    await loadTokenEventsFromChain(address, tokenAddress, txListEl);
+  }
+}
+
+async function loadTokenEventsFromChain(address, tokenAddress, txListEl) {
+  try {
+    const contract = new ethers.Contract(
+      tokenAddress,
+      ["event Transfer(address indexed from, address indexed to, uint256 value)"],
+      adapter.provider
+    );
+    
+    const currentBlock = await adapter.provider.getBlockNumber();
+    // QuickNode free tier: max 5 blocks
+    const fromBlock = Math.max(0, currentBlock - 4);
+    
+    const [incomingFilter, outgoingFilter] = [
+      contract.filters.Transfer(null, address),
+      contract.filters.Transfer(address, null)
+    ];
+    
+    const [incomingEvents, outgoingEvents] = await Promise.all([
+      contract.queryFilter(incomingFilter, fromBlock, currentBlock),
+      contract.queryFilter(outgoingFilter, fromBlock, currentBlock)
+    ]);
+    
+    const allEvents = [...incomingEvents, ...outgoingEvents]
+      .sort((a, b) => b.blockNumber - a.blockNumber)
+      .slice(0, 10);
+    
+    if (allEvents.length > 0) {
+      txListEl.innerHTML = '';
+      
+      for (const event of allEvents) {
+        const block = await adapter.provider.getBlock(event.blockNumber);
+        const isReceived = event.args.to.toLowerCase() === address.toLowerCase();
+        const txItem = await createEventTransactionElement(event, isReceived, block.timestamp);
+        txListEl.appendChild(txItem);
+      }
+    } else {
+      displayEmptyTransactions(txListEl);
+    }
+  } catch (error) {
+    console.error("Failed to load events from chain:", error);
+    displayEmptyTransactions(txListEl);
+  }
+}
+
+function createTransactionElement(tx, isReceived, symbol) {
+  const div = document.createElement('div');
+  div.className = 'tx-item';
+  
+  const amount = ethers.utils.formatEther(tx.value);
+  const time = new Date(parseInt(tx.timeStamp) * 1000).toLocaleString();
+  const otherAddress = isReceived ? tx.from : tx.to;
+  
+  const shortenFn = window.EthereumUtils?.shortenAddress || 
+    (addr => `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`);
+  
+  div.innerHTML = `
+    <div class="tx-info">
+      <div class="tx-type">${isReceived ? 'Received from' : 'Sent to'}</div>
+      <div class="tx-address">${shortenFn(otherAddress)}</div>
+      <div class="tx-time">${time}</div>
+    </div>
+    <div class="tx-amount ${isReceived ? 'received' : 'sent'}">
+      ${isReceived ? '+' : '-'}${parseFloat(amount).toFixed(6)} ${symbol}
+    </div>
+  `;
+  
+  div.onclick = () => {
+    const explorerUrl = window.EthereumUtils?.getEtherscanUrl('tx', tx.hash) || 
+      `https://sepolia.etherscan.io/tx/${tx.hash}`;
+    window.open(explorerUrl, '_blank');
+  };
+  
+  div.style.cursor = 'pointer';
+  
+  return div;
+}
+
+function createTokenTransactionElement(tx, isReceived) {
+  const div = document.createElement('div');
+  div.className = 'tx-item';
+  
+  const amount = ethers.utils.formatUnits(tx.value, tx.tokenDecimal || currentToken.decimals);
+  const time = new Date(parseInt(tx.timeStamp) * 1000).toLocaleString();
+  const otherAddress = isReceived ? tx.from : tx.to;
+  
+  const shortenFn = window.EthereumUtils?.shortenAddress || 
+    (addr => `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`);
+  
+  div.innerHTML = `
+    <div class="tx-info">
+      <div class="tx-type">${isReceived ? 'Received from' : 'Sent to'}</div>
+      <div class="tx-address">${shortenFn(otherAddress)}</div>
+      <div class="tx-time">${time}</div>
+    </div>
+    <div class="tx-amount ${isReceived ? 'received' : 'sent'}">
+      ${isReceived ? '+' : '-'}${parseFloat(amount).toFixed(6)} ${tx.tokenSymbol || currentToken.symbol}
+    </div>
+  `;
+  
+  div.onclick = () => {
+    const explorerUrl = window.EthereumUtils?.getEtherscanUrl('tx', tx.hash) || 
+      `https://sepolia.etherscan.io/tx/${tx.hash}`;
+    window.open(explorerUrl, '_blank');
+  };
+  
+  div.style.cursor = 'pointer';
+  
+  return div;
+}
+
+async function createEventTransactionElement(event, isReceived, timestamp) {
+  const div = document.createElement('div');
+  div.className = 'tx-item';
+  
+  const amount = ethers.utils.formatUnits(event.args.value, currentToken.decimals);
+  const time = new Date(timestamp * 1000).toLocaleString();
+  const otherAddress = isReceived ? event.args.from : event.args.to;
+  
+  const shortenFn = window.EthereumUtils?.shortenAddress || 
+    (addr => `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`);
+  
+  div.innerHTML = `
+    <div class="tx-info">
+      <div class="tx-type">${isReceived ? 'Received from' : 'Sent to'}</div>
+      <div class="tx-address">${shortenFn(otherAddress)}</div>
+      <div class="tx-time">${time}</div>
+    </div>
+    <div class="tx-amount ${isReceived ? 'received' : 'sent'}">
+      ${isReceived ? '+' : '-'}${parseFloat(amount).toFixed(6)} ${currentToken.symbol}
+    </div>
+  `;
+  
+  div.onclick = () => {
+    const explorerUrl = window.EthereumUtils?.getEtherscanUrl('tx', event.transactionHash) || 
+      `https://sepolia.etherscan.io/tx/${event.transactionHash}`;
+    window.open(explorerUrl, '_blank');
+  };
+  
+  div.style.cursor = 'pointer';
+  
+  return div;
+}
+
+function displayEmptyTransactions(txListEl) {
+  txListEl.innerHTML = '<div class="empty-tx">No recent transactions</div>';
+}
+
 // ================================================================
-// 5. 액션 함수들
+// 6. 액션 함수들 (User Operations)
+//     - implements all user-triggered token actions: send, receive, remove, copy contract address, and navigation.
+//     - includes modal setup, validation, gas estimation, transaction signing, and UI updates.
 // ================================================================
 
+// Initialize send modal when page loads
+function initializeSendModal() {
+  // Create modal HTML if it doesn't exist
+  if (!document.getElementById('token-send-modal')) {
+    const modalHTML = `
+      <div id="token-send-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Send <span id="send-token-symbol">Token</span></h2>
+            <button class="close-btn" onclick="closeSendModal()">×</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Recipient Address</label>
+              <input type="text" id="send-recipient-address" placeholder="0x...">
+            </div>
+            <div class="form-group">
+              <label>Amount</label>
+              <input type="number" id="send-amount" placeholder="0.0" step="any">
+              <div class="input-hint">
+                Available: <span id="available-balance">0.0</span> <span id="available-symbol">TOKEN</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Gas Fee (estimated)</label>
+              <div class="gas-estimate" id="gas-estimate">Calculating...</div>
+            </div>
+            <div id="send-error" class="error-message" style="display: none; color: red; margin: 10px 0;"></div>
+          </div>
+          <div class="modal-footer">
+            <button class="secondary-btn" onclick="closeSendModal()">Cancel</button>
+            <button class="primary-btn" onclick="confirmSend()" id="confirm-send-btn">Send</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+  }
+}
+
+// Open send modal with current token info
 function sendToken() {
-  // 토큰 정보를 sessionStorage에 저장하고 send 페이지로 이동
-  sessionStorage.setItem('sendingToken', JSON.stringify(currentToken));
+  initializeSendModal();
   
-  if (window.anamUI && window.anamUI.navigateTo) {
-    window.anamUI.navigateTo("pages/send/send");
-  } else if (window.anam && window.anam.navigateTo) {
-    window.anam.navigateTo("pages/send/send");
-  } else {
-    window.location.href = "../send/send.html";
+  const modal = document.getElementById('token-send-modal');
+  const currentWallet = getCurrentWallet();
+  
+  if (!currentWallet) {
+    const showToastFn = window.showToast || window.EthereumUtils?.showToast || console.log;
+    showToastFn("No wallet connected", "error");
+    return;
+  }
+  
+  // Update modal with current token info
+  document.getElementById('send-token-symbol').textContent = currentToken.symbol;
+  document.getElementById('available-symbol').textContent = currentToken.symbol;
+  
+  // Get current balance
+  const balanceEl = document.getElementById('token-balance');
+  const currentBalance = balanceEl ? balanceEl.textContent : '0';
+  document.getElementById('available-balance').textContent = currentBalance;
+  
+  // Clear previous inputs
+  document.getElementById('send-recipient-address').value = '';
+  document.getElementById('send-amount').value = '';
+  document.getElementById('send-error').style.display = 'none';
+  document.getElementById('gas-estimate').textContent = 'Calculating...';
+  
+  // Show modal
+  modal.style.display = 'flex';
+  
+  // Estimate gas
+  estimateGas();
+}
+
+// Close send modal
+function closeSendModal() {
+  const modal = document.getElementById('token-send-modal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+// Estimate gas for transaction
+async function estimateGas() {
+  try {
+    if (currentToken.address === 'native') {
+      // ETH transfer gas
+      const gasPrice = await adapter.provider.getGasPrice();
+      const gasLimit = 21000;
+      const gasCost = gasPrice.mul(gasLimit);
+      const gasCostEth = ethers.utils.formatEther(gasCost);
+      document.getElementById('gas-estimate').textContent = `~${parseFloat(gasCostEth).toFixed(6)} ETH`;
+    } else {
+      // ERC-20 transfer gas (usually higher)
+      const gasPrice = await adapter.provider.getGasPrice();
+      const gasLimit = 65000; // Typical ERC-20 transfer
+      const gasCost = gasPrice.mul(gasLimit);
+      const gasCostEth = ethers.utils.formatEther(gasCost);
+      document.getElementById('gas-estimate').textContent = `~${parseFloat(gasCostEth).toFixed(6)} ETH`;
+    }
+  } catch (error) {
+    console.error("Failed to estimate gas:", error);
+    document.getElementById('gas-estimate').textContent = 'Unable to estimate';
+  }
+}
+
+// Validate and confirm send
+async function confirmSend() {
+  const recipient = document.getElementById('send-recipient-address').value.trim();
+  const amount = document.getElementById('send-amount').value.trim();
+  const errorEl = document.getElementById('send-error');
+  
+  // Reset error
+  errorEl.style.display = 'none';
+  errorEl.textContent = '';
+  
+  // Validate recipient address
+  if (!recipient) {
+    errorEl.textContent = 'Please enter recipient address';
+    errorEl.style.display = 'block';
+    return;
+  }
+  
+  if (!ethers.utils.isAddress(recipient)) {
+    errorEl.textContent = 'Invalid recipient address';
+    errorEl.style.display = 'block';
+    return;
+  }
+  
+  // Validate amount
+  if (!amount || parseFloat(amount) <= 0) {
+    errorEl.textContent = 'Please enter a valid amount';
+    errorEl.style.display = 'block';
+    return;
+  }
+  
+  const availableBalance = parseFloat(document.getElementById('available-balance').textContent);
+  if (parseFloat(amount) > availableBalance) {
+    errorEl.textContent = 'Insufficient balance';
+    errorEl.style.display = 'block';
+    return;
+  }
+  
+  // Disable button during transaction
+  const sendBtn = document.getElementById('confirm-send-btn');
+  sendBtn.disabled = true;
+  sendBtn.textContent = 'Sending...';
+  
+  try {
+    if (currentToken.address === 'native') {
+      // Send ETH
+      await sendNativeToken(recipient, amount);
+    } else {
+      // Send ERC-20 token
+      await sendERC20Token(recipient, amount);
+    }
+  } catch (error) {
+    console.error("Send failed:", error);
+    errorEl.textContent = error.message || 'Transaction failed';
+    errorEl.style.display = 'block';
+  } finally {
+    sendBtn.disabled = false;
+    sendBtn.textContent = 'Send';
+  }
+}
+
+// Send native ETH
+async function sendNativeToken(recipient, amount) {
+  const currentWallet = getCurrentWallet();
+  if (!currentWallet) throw new Error("No wallet connected");
+  
+  try {
+    // Get private key from mnemonic if needed
+    const privateKey = getPrivateKeyFromWallet(currentWallet);
+    
+    const wallet = new ethers.Wallet(privateKey, adapter.provider);
+    
+    const tx = {
+      to: recipient,
+      value: ethers.utils.parseEther(amount.toString())
+    };
+    
+    const showToastFn = window.showToast || window.EthereumUtils?.showToast || console.log;
+    showToastFn("Sending transaction...", "info");
+    
+    const transaction = await wallet.sendTransaction(tx);
+    showToastFn("Transaction sent! Waiting for confirmation...", "info");
+    
+    const receipt = await transaction.wait();
+    
+    if (receipt.status === 1) {
+      showToastFn(`Successfully sent ${amount} ETH!`, "success");
+      closeSendModal();
+      loadNativeTokenDetails();
+    } else {
+      throw new Error("Transaction failed");
+    }
+  } catch (error) {
+    console.error("Transaction error:", error);
+    throw error;
+  }
+}
+
+// Send ERC-20 token
+async function sendERC20Token(recipient, amount) {
+  const currentWallet = getCurrentWallet();
+  if (!currentWallet) throw new Error("No wallet connected");
+  
+  try {
+    // Get private key from mnemonic if needed
+    const privateKey = getPrivateKeyFromWallet(currentWallet);
+    
+    const wallet = new ethers.Wallet(privateKey, adapter.provider);
+    
+    const contract = new ethers.Contract(
+      currentToken.address,
+      ["function transfer(address to, uint256 amount) returns (bool)"],
+      wallet
+    );
+    
+    const parsedAmount = ethers.utils.parseUnits(amount.toString(), currentToken.decimals);
+    
+    const showToastFn = window.showToast || window.EthereumUtils?.showToast || console.log;
+    showToastFn("Sending transaction...", "info");
+    
+    const tx = await contract.transfer(recipient, parsedAmount);
+    showToastFn("Transaction sent! Waiting for confirmation...", "info");
+    
+    const receipt = await tx.wait();
+    
+    if (receipt.status === 1) {
+      showToastFn(`Successfully sent ${amount} ${currentToken.symbol}!`, "success");
+      closeSendModal();
+      loadERC20TokenDetails();
+    } else {
+      throw new Error("Transaction failed");
+    }
+  } catch (error) {
+    console.error("Transaction error:", error);
+    throw error;
   }
 }
 
@@ -439,7 +833,7 @@ function goBack() {
 }
 
 // ================================================================
-// 6. 유틸리티 함수
+// 7. 유틸리티 함수
 // ================================================================
 
 function formatLargeNumber(num) {
@@ -450,7 +844,8 @@ function formatLargeNumber(num) {
 }
 
 // ================================================================
-// 7. 전역 함수 등록
+// 8. 전역 함수 등록
+//     - expose selected functions globally for UI bindings and cross-module invocation.
 // ================================================================
 
 window.goBack = goBack;
@@ -458,3 +853,5 @@ window.sendToken = sendToken;
 window.receiveToken = receiveToken;
 window.copyAddress = copyAddress;
 window.removeToken = removeToken;
+window.closeSendModal = closeSendModal;
+window.confirmSend = confirmSend;

@@ -1,14 +1,10 @@
 // token.js
-// ================================================================
-// Token List Page Logic - Updated with provider initialization
-// ================================================================
-
 let adapter = null;
 let currentTokens = [];
 let pendingTokenInfo = null;
 
 // ================================================================
-// Compatibility layer for wallet system
+// 1. 시스템 & 환경 Setup
 // ================================================================
 
 function getCurrentWallet() {
@@ -19,7 +15,7 @@ function getCurrentWallet() {
     return WalletStorage.get();
   }
   
-  // Method 2: Direct localStorage access
+  // Method 2: Direct localStorage access - WalletStorage 객체가 정의되지 않은 경우 대비
   const walletData = localStorage.getItem('eth_wallet');
   if (walletData) {
     try {
@@ -32,7 +28,7 @@ function getCurrentWallet() {
   return null;
 }
 
-// 페이지 초기화 - Added async and provider initialization
+// 페이지 초기화
 document.addEventListener("DOMContentLoaded", async function() {
   console.log("Token page loaded");
   
@@ -45,7 +41,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     return;
   }
   
-  // Initialize the provider - CRITICAL FIX
+  // Initialize the provider
   try {
     await adapter.initProvider();
     console.log("Provider initialized successfully");
@@ -67,7 +63,7 @@ document.addEventListener("DOMContentLoaded", async function() {
 });
 
 // ================================================================
-// 1. 초기화 함수들
+// 2. UI 초기화 & 이벤트 Setup
 // ================================================================
 
 function initializeUI() {
@@ -108,23 +104,35 @@ function setupEventListeners() {
   }
 }
 
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func.apply(this, args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
 // ================================================================
-// 2. 토큰 목록 관리
+// 3. 토큰 목록 관리
 // ================================================================
 
 function loadTokenList() {
   const currentWallet = getCurrentWallet();
   if (!currentWallet) return;
   
-  // Simple token storage key based on address
-  const storageKey = `tokens_${currentWallet.address}`;
+  // 네트워크별 저장 키 사용
+  const currentNetwork = window.EthereumConfig?.getCurrentNetwork();
+  const storageKey = `tokens_${currentWallet.address}_${currentNetwork.chainId}`;
   const savedTokens = localStorage.getItem(storageKey);
   
   if (savedTokens) {
     try {
       currentTokens = JSON.parse(savedTokens);
       displayTokenList();
-      // 각 토큰의 잔액 업데이트
       updateAllTokenBalances();
     } catch (e) {
       console.error("Failed to parse saved tokens:", e);
@@ -154,9 +162,12 @@ function displayTokenList() {
   });
 }
 
-// Add this improved function with debugging
+function showEmptyState() {
+  document.getElementById('token-list').innerHTML = '';
+  document.getElementById('empty-state').style.display = 'block';
+}
+
 function getTokenIconUrl(token) {
-  console.log("Getting icon for token:", token.symbol, token.address);
   
   // Special case for ETH
   if (token.address === 'native' || token.symbol === 'ETH') {
@@ -164,22 +175,15 @@ function getTokenIconUrl(token) {
   }
   
   try {
-    // Get checksummed address (required for Trust Wallet)
     const checksumAddress = ethers.utils.getAddress(token.address);
     console.log("Checksum address:", checksumAddress);
     
-    // For Sepolia, there won't be icons in Trust Wallet
-    // So let's use mainnet paths for known tokens
-    const tokenMainnetAddresses = {
-      // Sepolia USDC -> Mainnet USDC
-      '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238': '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-      // Add other known Sepolia -> Mainnet mappings
-    };
+    // const tokenMainnetAddresses = {
+    //   '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238': '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // Sepolia USDC -> Mainnet USDC
+    // };
     
-    // Use mainnet address for icon if available
     const iconAddress = tokenMainnetAddresses[checksumAddress] || checksumAddress;
     
-    // Trust Wallet URL (use ethereum chain for icons)
     const trustWalletUrl = `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${ethers.utils.getAddress(iconAddress)}/logo.png`;
     
     console.log("Icon URL:", trustWalletUrl);
@@ -187,33 +191,26 @@ function getTokenIconUrl(token) {
     
   } catch (error) {
     console.error("Error generating icon URL:", error);
-    // Return null to trigger placeholder
     return null;
   }
 }
 
-// Better implementation with actual fallback
+// atomiclabs as fallback source
 async function loadTokenIcon(token, imgElement) {
   const urls = [
     getTokenIconUrl(token),
-    // Try symbol-based icon services
-    `https://cryptologos.cc/logos/${token.symbol.toLowerCase()}/${token.symbol.toLowerCase()}-logo.png`,
     `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/32/color/${token.symbol.toLowerCase()}.png`,
   ].filter(url => url !== null);
   
-  // Get the placeholder element (next sibling)
   const placeholder = imgElement.nextElementSibling;
   
   for (const url of urls) {
     try {
       const response = await fetch(url, { method: 'HEAD' });
       if (response.ok) {
-        // Icon found - show image, hide placeholder
         imgElement.src = url;
         imgElement.style.display = 'block';
-        if (placeholder) {
-          placeholder.style.display = 'none';
-        }
+        if (placeholder) placeholder.style.display = 'none';
         return;
       }
     } catch (error) {
@@ -221,11 +218,8 @@ async function loadTokenIcon(token, imgElement) {
     }
   }
   
-  // All failed, hide image and show placeholder
   imgElement.style.display = 'none';
-  if (placeholder) {
-    placeholder.style.display = 'flex';
-  }
+  if (placeholder) placeholder.style.display = 'flex';
 }
 
 function createTokenElement(token) {
@@ -283,13 +277,15 @@ function createTokenElement(token) {
   return div;
 }
 
-function showEmptyState() {
-  document.getElementById('token-list').innerHTML = '';
-  document.getElementById('empty-state').style.display = 'block';
-}
+// 네트워크 변경 이벤트 리스너 추가
+window.addEventListener('networkChanged', () => {
+  console.log('Network changed, reloading token list');
+  currentTokens = [];
+  loadTokenList();
+});
 
 // ================================================================
-// 3. 토큰 추가 기능
+// 4. 토큰 추가
 // ================================================================
 
 async function handleTokenAddressInput(event) {
@@ -385,6 +381,7 @@ async function addToken() {
   if (!pendingTokenInfo) return;
   
   const currentWallet = getCurrentWallet();
+  const currentNetwork = window.EthereumConfig?.getCurrentNetwork();
   if (!currentWallet) {
     const showToastFn = window.showToast || window.EthereumUtils?.showToast || console.log;
     showToastFn("No wallet selected", "error");
@@ -402,8 +399,9 @@ async function addToken() {
   // 토큰 추가
   currentTokens.push(pendingTokenInfo);
   
-  // 저장 - simple key based on address
-  const storageKey = `tokens_${currentWallet.address}`;
+  // 저장 - key based on address & chainId
+  const storageKey = `tokens_${currentWallet.address}_${currentNetwork.chainId}`;
+  
   localStorage.setItem(storageKey, JSON.stringify(currentTokens));
   
   const showToastFn = window.showToast || window.EthereumUtils?.showToast || console.log;
@@ -418,7 +416,7 @@ async function addToken() {
 }
 
 // ================================================================
-// 4. 토큰 잔액 업데이트
+// 5. 토큰 잔액 업데이트
 // ================================================================
 
 async function updateAllTokenBalances() {
@@ -467,7 +465,7 @@ async function updateTokenBalance(tokenAddress) {
 }
 
 // ================================================================
-// 5. 네비게이션 및 모달
+// 6. 네비게이션 및 모달
 // ================================================================
 
 function viewTokenDetails(tokenAddress) {
@@ -517,22 +515,6 @@ function goBack() {
   } else {
     window.location.href = "../index/index.html";
   }
-}
-
-// ================================================================
-// 6. 유틸리티 함수
-// ================================================================
-
-function debounce(func, wait) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func.apply(this, args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
 }
 
 // ================================================================
