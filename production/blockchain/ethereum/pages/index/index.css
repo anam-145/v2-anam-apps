@@ -327,18 +327,9 @@ textarea.import-input-metamask {
   background: var(--coin-gradient);
   color: white;
   position: relative;
-  overflow: hidden;
-}
-
-.balance-card::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-  animation: pulse 4s ease-in-out infinite;
+  overflow: visible;
+  isolation: isolate;
+  z-index: 10;
 }
 
 @keyframes pulse {
@@ -388,17 +379,31 @@ textarea.import-input-metamask {
 }
 
 /* 주소 컨테이너 */
+/* ================================================================
+ * Address Container & Dropdown Styles
+ * ================================================================ */
+
 .address-container {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 20px;
+  position: relative;
+  z-index: 100;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.address-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
 .address-label {
   font-size: 12px;
   opacity: 0.8;
-  margin-bottom: 8px;
 }
 
 .address-display {
@@ -411,6 +416,169 @@ textarea.import-input-metamask {
 
 .address-display:hover {
   opacity: 1;
+}
+
+.wallet-dropdown-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  color: white;
+  padding: 6px 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  backdrop-filter: blur(10px);
+}
+
+.wallet-dropdown-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.02);
+}
+
+.wallet-dropdown-btn svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.3s;
+}
+
+.wallet-dropdown-btn.active svg {
+  transform: rotate(180deg);
+}
+
+/* Wallet Dropdown - 위치 및 스타일 개선 */
+.wallet-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-height: 500px;
+  overflow-y: auto;
+  animation: dropdownSlide 0.3s ease;
+  box-sizing: border-box;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  background: #f8f9fa;
+  border-radius: 12px 12px 0 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.dropdown-header span {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.add-wallet-btn {
+  background: var(--coin-primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.add-wallet-btn:hover {
+  background: var(--coin-dark);
+  transform: scale(1.02);
+}
+
+.wallet-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.wallet-list li {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: all 0.3s;
+  color: #333;
+}
+
+.wallet-list li:hover {
+  background: #f8f9fa;
+}
+
+.wallet-list li:last-child {
+  border-bottom: none;
+}
+
+/* Wallet Item Styles */
+.wallet-header {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: #333;
+}
+
+.wallet-type-badge {
+  display: inline-block;
+  background: var(--coin-light);
+  color: var(--coin-primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.account-item {
+  padding: 8px 0;
+  border-left: 3px solid transparent;
+  padding-left: 12px;
+  margin-left: 12px;
+}
+
+.account-item.active {
+  border-left-color: var(--coin-primary);
+  background: rgba(67, 56, 202, 0.05);
+}
+
+.account-name {
+  font-weight: 500;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.account-address {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 2px;
+}
+
+.account-balance {
+  font-size: 12px;
+  color: #999;
 }
 
 /* 액션 버튼 */
@@ -440,13 +608,224 @@ textarea.import-input-metamask {
   transform: translateY(-1px);
 }
 
+/* ================================================================
+ * Wallet Management Modal
+ * ================================================================ */
 
+.wallet-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: modalFadeIn 0.3s ease;
+  overflow: hidden;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  max-width: 400px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  animation: modalSlideUp 0.3s ease;
+  margin: 0;
+}
+
+@keyframes modalSlideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+  transition: color 0.3s;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.modal-close-btn:hover {
+  color: #333;
+  background: #f5f5f5;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.wallet-option {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border: 2px solid #eee;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.wallet-option:hover {
+  border-color: var(--coin-primary);
+  background: var(--coin-light);
+  transform: translateY(-2px);
+}
+
+.wallet-option:last-child {
+  margin-bottom: 0;
+}
+
+.option-icon {
+  font-size: 24px;
+  margin-right: 16px;
+}
+
+.option-content h4 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.option-content p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* ================================================================
+ * Animation Improvements
+ * ================================================================ */
+
+/* Smooth transitions for all interactive elements */
+.wallet-dropdown *,
+.wallet-modal * {
+  transition: all 0.3s ease;
+}
+
+/* Loading states */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Success states */
+.success-highlight {
+  background: rgba(76, 175, 80, 0.1) !important;
+  border-color: #4CAF50 !important;
+}
+
+/* 숨겨진 요소들이 레이아웃에 영향 주지 않도록 */
+[style*="display: none"] {
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* ================================================================
+ * Responsive Design
+ * ================================================================ */
+
+@media (max-width: 600px) {
+  .card {
+    margin: 12px;
+    max-width: calc(100vw - 24px);
+  }
+  
+  .coin-balance {
+    font-size: 28px;
+  }
+  
+  .coin-unit {
+    font-size: 16px;
+  }
+  
+  /* 모바일에서 dropdown 위치 조정 */
+  .wallet-dropdown {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    top: auto;
+    bottom: 10px;
+    max-height: 50vh;
+    animation: slideUp 0.3s ease;
+    max-width: calc(100vw - 20px);
+  }
+  
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  .modal-content {
+    margin: 20px;
+    width: calc(100% - 40px);
+  }
+  
+  .wallet-option {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .option-icon {
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
+}
 
 /* 거래 내역 섹션 */
 .transactions-section {
   padding: 0 20px 20px;
   max-width: 600px;
   margin: 0 auto;
+  position: relative;
+  z-index: 1;
 }
 
 .section-title {
@@ -462,6 +841,8 @@ textarea.import-input-metamask {
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  position: relative;
+  z-index: 1;
 }
 
 .tx-item {
@@ -649,12 +1030,16 @@ textarea.import-input-metamask {
   justify-content: center;
   padding: 60px 20px;
   text-align: center;
+  position: relative;
+  z-index: 1;
 }
 
 .tx-empty-icon {
   font-size: 48px;
   margin-bottom: 16px;
   opacity: 0.3;
+  position: relative;
+  z-index: 1
 }
 
 .tx-empty-title {
@@ -700,4 +1085,106 @@ textarea.import-input-metamask {
 .tx-retry-btn:hover {
   background: var(--coin-secondary);
   transform: translateY(-1px);
+}
+/* Mnemonic Backup Dialog */
+.mnemonic-backup-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mnemonic-backup-dialog .dialog-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.mnemonic-backup-dialog .dialog-content {
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.mnemonic-backup-dialog .dialog-content h2 {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.mnemonic-backup-dialog .warning-text {
+  color: #ff6b6b;
+  font-weight: 600;
+  margin: 12px 0;
+  font-size: 14px;
+}
+
+.mnemonic-backup-dialog .mnemonic-display {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 20px 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.mnemonic-backup-dialog .mnemonic-word {
+  background: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+  font-family: monospace;
+  font-size: 14px;
+}
+
+.mnemonic-backup-dialog .dialog-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.mnemonic-backup-dialog .btn-copy,
+.mnemonic-backup-dialog .btn-confirm {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 600;
+}
+
+.mnemonic-backup-dialog .btn-copy {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.mnemonic-backup-dialog .btn-copy:hover {
+  background: #e0e0e0;
+}
+
+.mnemonic-backup-dialog .btn-confirm {
+  background: var(--coin-primary);
+  color: white;
+}
+
+.mnemonic-backup-dialog .btn-confirm:hover {
+  opacity: 0.9;
 }

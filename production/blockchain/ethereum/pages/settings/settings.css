@@ -489,14 +489,79 @@
   opacity: 1;
 }
 
+/* Delete Wallet Modal */
+.delete-modal-content {
+  max-width: 420px;
+}
+
+.danger-header {
+  border-bottom-color: #fee2e2;
+  background: #fef2f2;
+}
+
+.danger-header h3 {
+  color: #dc2626;
+}
+
+.warning-message {
+  margin: 0 0 16px 0;
+  font-size: 15px;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.warning-message-strong {
+  margin: 0 0 16px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #dc2626;
+  line-height: 1.6;
+}
+
+.warning-message-final {
+  margin: 0 0 24px 0;
+  font-size: 14px;
+  color: #6b7280;
+  font-style: italic;
+  line-height: 1.6;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.danger-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #dc2626;
+  color: white;
+  border: none;
+}
+
+.danger-btn:hover {
+  background: #b91c1c;
+}
+
+.danger-btn:active {
+  background: #991b1b;
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .modal-content {
     max-width: 100%;
   }
-  
+
   .network-modal-content,
-  .custom-rpc-modal-content {
+  .custom-rpc-modal-content,
+  .delete-modal-content {
     max-width: 100%;
   }
 }

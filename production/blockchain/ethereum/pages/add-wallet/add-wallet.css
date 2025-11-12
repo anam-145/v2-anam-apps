@@ -1,0 +1,445 @@
+/* Add Wallet Page Styles */
+
+.content {
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.section {
+  margin-bottom: 30px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+/* Current Wallet Card */
+.current-wallet-card {
+  background: var(--coin-gradient);
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.wallet-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wallet-name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.wallet-type {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.account-count {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Divider */
+.divider {
+  position: relative;
+  text-align: center;
+  margin: 40px 0;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e0e0e0;
+}
+
+.divider span {
+  background: #f5f5f5;
+  padding: 0 20px;
+  position: relative;
+  color: #999;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Option Cards */
+.option-card {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 20px;
+  background: white;
+  border: 2px solid #eee;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: left;
+}
+
+.option-card:hover {
+  border-color: var(--coin-primary);
+  background: var(--coin-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.option-card:active {
+  transform: translateY(0);
+}
+
+.option-icon {
+  font-size: 32px;
+  margin-right: 20px;
+  width: 50px;
+  text-align: center;
+}
+
+.option-content {
+  flex: 1;
+}
+
+.option-content h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.option-content p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* Import Forms */
+.import-form {
+  background: white;
+  border: 2px solid var(--coin-primary);
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 20px;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.import-form h3 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.import-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 12px;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+}
+
+.import-input:focus {
+  border-color: var(--coin-primary);
+  outline: none;
+}
+
+textarea.import-input {
+  resize: vertical;
+  font-family: 'Courier New', monospace;
+  min-height: 80px;
+}
+
+/* Form Buttons */
+.form-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.btn {
+  flex: 1;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-primary {
+  background: var(--coin-gradient);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(67, 56, 202, 0.3);
+}
+
+.btn-secondary {
+  background: white;
+  color: #666;
+  border: 2px solid #e0e0e0;
+}
+
+.btn-secondary:hover {
+  background: #f5f5f5;
+  border-color: #ccc;
+}
+
+/* Loading state */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Success animation */
+@keyframes successPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.success {
+  animation: successPulse 0.5s ease;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .content {
+    padding: 16px;
+  }
+  
+  .option-icon {
+    font-size: 24px;
+    margin-right: 16px;
+    width: 40px;
+  }
+  
+  .option-content h3 {
+    font-size: 15px;
+  }
+  
+  .option-content p {
+    font-size: 13px;
+  }
+}
+
+.wallet-type {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.wallet-type-hd {
+  background: #4CAF50;
+  color: white;
+}
+
+.wallet-type-imported {
+  background: #FF9800;
+  color: white;
+}
+
+.loading .spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid var(--coin-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.success {
+  background: #4CAF50 !important;
+  color: white !important;
+}
+
+.mnemonic-backup-dialog,
+.import-options-dialog,
+.wallet-name-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.dialog-content {
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.mnemonic-display {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 20px 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.mnemonic-word {
+  background: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+  font-family: monospace;
+  font-size: 14px;
+}
+
+.warning-text {
+  color: #ff6b6b;
+  font-weight: 600;
+  margin: 12px 0;
+}
+
+.dialog-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.btn-copy, .btn-confirm {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-copy {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.btn-copy:hover {
+  background: #e0e0e0;
+}
+
+.btn-confirm {
+  background: var(--coin-primary);
+  color: white;
+}
+
+.btn-confirm:hover {
+  opacity: 0.9;
+}
+
+.import-option {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 16px;
+  margin: 8px 0;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.import-option:hover {
+  background: #f8f8f8;
+  border-color: var(--coin-primary);
+}
+
+.import-option .option-icon {
+  font-size: 32px;
+}
+
+.import-option .option-text h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+}
+
+.import-option .option-text p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.dialog-cancel {
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.dialog-cancel:hover {
+  background: #e0e0e0;
+}

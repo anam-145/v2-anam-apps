@@ -71,36 +71,86 @@ async function exportPrivateKey() {
   );
 }
 
-// Delete wallet
+// Delete wallet - show modal
 function deleteWallet() {
+  const modal = document.getElementById("delete-wallet-modal");
+  modal.style.display = "flex";
+}
+
+// Close delete modal
+function closeDeleteModal() {
+  const modal = document.getElementById("delete-wallet-modal");
+  modal.style.display = "none";
+}
+
+// Confirm delete wallet
+function confirmDeleteWallet() {
+  // Close modal first
+  closeDeleteModal();
+
   try {
-    // Get wallet address before clearing
-    const wallet = WalletStorage.get();
-    
-    // Clear wallet data
-    WalletStorage.clear();
-    
-    // Clear keystore if it exists
-    if (wallet && wallet.address) {
-      localStorage.removeItem(`keystore_${wallet.address}`);
+    const hdManager = window.getHDWalletManager ? window.getHDWalletManager() : null;
+
+    if (!hdManager) {
+      // Fallback to old method if HD Manager not available
+      const wallet = WalletStorage.get();
+      WalletStorage.clear();
+
+      if (wallet && wallet.address) {
+        localStorage.removeItem(`keystore_${wallet.address}`);
+      }
+
+      localStorage.removeItem("eth_tx_cache");
+      localStorage.removeItem(`${CoinConfig.symbol.toLowerCase()}_wallet_status`);
+      localStorage.removeItem(`${CoinConfig.symbol.toLowerCase()}_mnemonic_skip_count`);
+
+      showToast("Wallet deleted successfully");
+
+      setTimeout(() => {
+        window.location.href = "../index/index.html";
+      }, 500);
+      return;
     }
-    
-    // Clear transaction cache
-    localStorage.removeItem("eth_tx_cache");
-    
-    // Clear wallet status
-    localStorage.removeItem(`${CoinConfig.symbol.toLowerCase()}_wallet_status`);
-    localStorage.removeItem(`${CoinConfig.symbol.toLowerCase()}_mnemonic_skip_count`);
-    
-    showToast("Wallet deleted successfully");
-    
-    // Navigate back to wallet creation page immediately
-    setTimeout(() => {
-      window.location.href = "../index/index.html";
-    }, 500);
+
+    // Use HD Manager to delete wallet
+    const currentWallet = hdManager.getCurrentWallet();
+    if (!currentWallet) {
+      showToast("No wallet found", "error");
+      return;
+    }
+
+    const result = hdManager.deleteWallet(currentWallet.id);
+
+    if (result.deleted) {
+      if (result.walletsRemaining > 0) {
+        // Switched to another wallet
+        showToast(
+          `Wallet deleted. Switched to ${result.switchedTo.name}`,
+          "success"
+        );
+
+        // Dispatch wallet change event so the UI updates
+        window.dispatchEvent(new CustomEvent('walletChanged', {
+          detail: { wallet: result.switchedTo }
+        }));
+
+        // Navigate back to main page after showing message
+        setTimeout(() => {
+          window.location.href = "../index/index.html";
+        }, 1500);
+      } else {
+        // No wallets remaining
+        showToast("All wallets deleted. Redirecting...", "success");
+
+        // Navigate to main page which will show wallet creation screen
+        setTimeout(() => {
+          window.location.href = "../index/index.html";
+        }, 1500);
+      }
+    }
   } catch (error) {
-    console.log("Failed to delete wallet:", error);
-    showToast("Failed to delete wallet");
+    console.error("Failed to delete wallet:", error);
+    showToast("Failed to delete wallet: " + error.message, "error");
   }
 }
 
@@ -172,13 +222,16 @@ window.addEventListener("click", function(event) {
   const modal = document.getElementById("modal");
   const networkModal = document.getElementById("network-modal");
   const customRpcModal = document.getElementById("custom-rpc-modal");
-  
+  const deleteModal = document.getElementById("delete-wallet-modal");
+
   if (event.target === modal) {
     closeModal();
   } else if (event.target === networkModal) {
     closeNetworkModal();
   } else if (event.target === customRpcModal) {
     closeCustomRPCModal();
+  } else if (event.target === deleteModal) {
+    closeDeleteModal();
   }
 });
 

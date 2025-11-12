@@ -116,67 +116,6 @@ class EthereumAdapter {
     }
   }
 
-  // 추가.
-  async deriveAccountFromMnemonic(mnemonic, index) {
-    try {
-
-      const hdPath = `m/44'/60'/0'/0/${index}`;
-      const hdNode = ethers.utils.HDNode.fromMnemonic(mnemonic);
-      const derivedWallet = hdNode.derivePath(hdPath);
-      
-      return {
-        index: index,
-        address: derivedWallet.address,
-        privateKey: derivedWallet.privateKey,
-        hdPath: hdPath
-      };
-    } catch (error) {
-      throw new Error("Account Derivation failed: " + error.message);
-    }
-  }
-
-  // 추가.
-  async discoverAccountsFromMnemonic(mnemonic, maxGap = 5, maxAccounts = 100) {
-    const accounts = [];
-    let consecutiveEmpty = 0;
-    let index = 0;
-    
-    while (consecutiveEmpty < maxGap && index < maxAccounts) {
-      const account = await this.deriveAccountFromMnemonic(mnemonic, index);
-      
-      // 블록체인과 통신하여 계정 사용 여부 확인
-      const balance = await this.getBalance(account.address);
-      const hasHistory = await this.checkAddressHistory(account.address);
-      
-      if (balance !== '0' || hasHistory || index === 0) {
-        accounts.push({
-          ...account,
-          balance: balance,
-          hasHistory: hasHistory
-        });
-        consecutiveEmpty = 0;
-      } else {
-        consecutiveEmpty++;
-      }
-      
-      index++;
-    }
-    
-    return accounts;
-  }
-
-  // 추가.
-  async checkAddressHistory(address) {
-    try {
-      await this.initProvider();
-      const txCount = await this.provider.getTransactionCount(address);
-      return txCount > 0;
-    } catch (error) {
-      console.error("Error checking address history:", error);
-      return false;
-    }
-  }
-
   async importFromPrivateKey(privateKey) {
     try {
       const wallet = new ethers.Wallet(privateKey);
@@ -356,31 +295,6 @@ class EthereumAdapter {
       console.log("트랜잭션 내역 조회 실패:", error);
       return [];
     }
-  }
-
-  // 추가.
-  /* ================================================================
-   * 6. HD 지갑 지원 기능
-   * ================================================================ */
-  // HD 지갑에서 여러 계정 한번에 파생
-  async deriveMultipleAccounts(mnemonic, count) {
-    const accounts = [];
-    for (let i = 0; i < count; i++) {
-      const account = await this.deriveAccountFromMnemonic(mnemonic, i);
-      accounts.push(account);
-    }
-    return accounts;
-  }
-  
-  // 특정 수만큼 계정 가져오기 (잔액 조회 포함)
-  async importAccountsWithBalance(mnemonic, count) {
-    const accounts = [];
-    for (let i = 0; i < count; i++) {
-      const account = await this.deriveAccountFromMnemonic(mnemonic, i);
-      account.balance = await this.getBalance(account.address);
-      accounts.push(account);
-    }
-    return accounts;
   }
 }
 

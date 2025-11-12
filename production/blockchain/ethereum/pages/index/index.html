@@ -89,9 +89,29 @@
           
           <!-- Address Display -->
           <div class="address-container">
-            <div class="address-label">Address</div>
+            <div class="address-header">
+              <div class="address-label">Address</div>
+              <button class="wallet-dropdown-btn" id="wallet-dropdown-btn" title="Switch Wallet/Account">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M3 6.5L8 11.5L13 6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
             <div class="address-display" id="address-display">
               Loading...
+            </div>
+
+            <!-- HD Wallet Dropdown -->
+            <div class="wallet-dropdown" id="wallet-dropdown" style="display: none;">
+              <div class="dropdown-header">
+                <span>Select Wallet & Account</span>
+                <button class="add-wallet-btn" id="add-wallet-btn" title="Add account or wallet">
+                  Add account or wallet
+                </button>
+              </div>
+              <ul class="wallet-list" id="wallet-list">
+                <!-- Dynamic wallet/account list will be inserted here -->
+              </ul>
             </div>
           </div>
           
@@ -102,6 +122,9 @@
             </button>
             <button class="action-btn" onclick="navigateToReceive()">
               <span>Receive</span>
+            </button>
+            <button class="action-btn" onclick="navigateToToken()">
+              <span>Tokens</span>
             </button>
           </div>
         </div>
@@ -128,6 +151,7 @@
     
     <!-- App Common Code -->
     <script src="../../app.js"></script>
+    <script src="../../wallet-manager.js"></script>
     
     <!-- Utils -->
     <script src="../../utils/helpers.js"></script>

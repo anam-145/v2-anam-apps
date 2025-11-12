@@ -189,32 +189,57 @@
                 <label for="network-name">Network Name *</label>
                 <input type="text" id="network-name" required placeholder="My Custom Network">
               </div>
-              
+
               <div class="form-group">
                 <label for="rpc-url">RPC URL *</label>
                 <input type="url" id="rpc-url" required placeholder="https://my-rpc-url.com">
               </div>
-              
+
               <div class="form-group">
                 <label for="chain-id">Chain ID *</label>
                 <input type="number" id="chain-id" required placeholder="1">
               </div>
-              
+
               <div class="form-group">
                 <label for="currency-symbol">Currency Symbol (Optional)</label>
                 <input type="text" id="currency-symbol" placeholder="ETH">
               </div>
-              
+
               <div class="form-group">
                 <label for="explorer-url">Block Explorer URL (Optional)</label>
                 <input type="url" id="explorer-url" placeholder="https://etherscan.io">
               </div>
-              
+
               <div class="form-actions">
                 <button type="button" class="cancel-btn" onclick="closeCustomRPCModal()">Cancel</button>
                 <button type="submit" class="save-btn">Save</button>
               </div>
             </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delete Wallet Confirmation Modal -->
+      <div id="delete-wallet-modal" class="modal" style="display: none;">
+        <div class="modal-content delete-modal-content">
+          <div class="modal-header danger-header">
+            <h3>⚠️ Delete Wallet</h3>
+            <button class="modal-close" onclick="closeDeleteModal()">×</button>
+          </div>
+          <div class="modal-body">
+            <p class="warning-message">
+              This will permanently delete all accounts in this wallet.
+            </p>
+            <p class="warning-message-strong">
+              Make sure you have backed up your recovery phrase or private keys!
+            </p>
+            <p class="warning-message-final">
+              This action cannot be undone.
+            </p>
+            <div class="modal-actions">
+              <button class="cancel-btn" onclick="closeDeleteModal()">Cancel</button>
+              <button class="danger-btn" onclick="confirmDeleteWallet()">Delete Wallet</button>
+            </div>
           </div>
         </div>
       </div>
@@ -226,6 +251,7 @@
     <script src="../../app.js"></script>
     <script src="../../utils/helpers.js"></script>
     <script src="../../utils/storage.js"></script>
+    <script src="../../wallet-manager.js"></script>
     <script src="settings.js"></script>
   </body>
 </html>
