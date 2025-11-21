@@ -1,16 +1,5 @@
-// UNDP 메인 페이지 스크립트
+// UNDP 메인 페이지 로직
+console.log("UNDP page loaded");
 
-window.onload = function() {
-    console.log('UNDP app loaded');
-    
-    // 버튼 클릭 이벤트 처리
-    document.querySelectorAll('.button').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            const url = this.getAttribute('href');
-            if (url) {
-                window.open(url, '_blank');
-            }
-        });
-    });
-};
+// 페이지 로드 시 자동으로 UNDP 라이베리아로 이동
+window.location.href = "https://liberia.anamwallet.io/";

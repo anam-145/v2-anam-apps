@@ -199,6 +199,18 @@
       return this.wallet;
     },
 
+    // ========== Helper Functions ==========
+
+    /**
+     * Vault API 감지 헬퍼
+     * @returns {Object|null} anamUI 또는 anam 객체
+     */
+    _getVaultAPI: function() {
+      if (window.anamUI && window.anamUI.decryptVault) return window.anamUI;
+      if (window.anam && window.anam.decryptVault) return window.anam;
+      return null;
+    },
+
     // ========== Keystore API 통합 ==========
 
     /**
@@ -223,51 +235,39 @@
       // localStorage에 공개 정보만 저장 (privateKey, mnemonic 제외)
       localStorage.setItem(this.KEYS.storage, JSON.stringify(publicData));
       
-      // 2. Keystore API 사용 가능 확인
-      if (window.anamUI && window.anamUI.createKeystore) {
+      // 2. Vault API 사용 (PBKDF2 + AES-256-GCM)
+      if (window.anamUI && window.anamUI.createVault) {
         return new Promise((resolve, reject) => {
-          // 일회성 이벤트 리스너
           const handler = (event) => {
-            window.removeEventListener('keystoreCreated', handler);
-            
-            if (event.detail && event.detail.keystore) {
-              // 암호화된 keystore 저장
-              localStorage.setItem(`keystore_${walletData.address}`, event.detail.keystore);
-              
-              // sessionStorage에 전체 데이터 캐시 (임시)
-              const fullData = {
-                ...publicData,
-                ...walletData  // mnemonic, privateKey, networks 포함
-              };
+            window.removeEventListener('vaultCreated', handler);
+
+            if (event.detail && event.detail.vault) {
+              // Vault 저장
+              localStorage.setItem(`vault_${walletData.address}`, event.detail.vault);
+
+              // sessionStorage 캐시
+              const fullData = { ...publicData, ...walletData };
               sessionStorage.setItem(this.KEYS.session, JSON.stringify(fullData));
               this.wallet = fullData;
-              
-              resolve(event.detail.keystore);
+
+              resolve(event.detail.vault);
             } else {
-              reject(new Error('Failed to create keystore'));
+              reject(new Error('Failed to create vault'));
             }
           };
-          
-          window.addEventListener('keystoreCreated', handler);
-          
-          // 전체 wallet 데이터를 JSON으로 변환하여 암호화
+
+          window.addEventListener('vaultCreated', handler);
+
+          // JSON 문자열로 암호화
           const walletJson = JSON.stringify({
             mnemonic: walletData.mnemonic,
             networks: walletData.networks
           });
-          const encoder = new TextEncoder();
-          const data = encoder.encode(walletJson);
-          const hexArray = Array.from(data, byte => byte.toString(16).padStart(2, '0'));
-          const secretHex = '0x' + hexArray.join('');
-          window.anamUI.createKeystore(secretHex, walletData.address);
+          window.anamUI.createVault(walletJson, walletData.address);
         });
       } else {
-        console.warn('[WalletStorage] Keystore API not available, saving in plain text');
-        const fullData = {
-          ...publicData,
-          ...walletData,
-          hasKeystore: false
-        };
+        console.warn('[Bitcoin] Vault API not available, saving in plain text');
+        const fullData = { ...publicData, ...walletData, hasKeystore: false };
         this.save(fullData);
         return Promise.resolve(null);
       }
@@ -291,83 +291,74 @@
           return data;
         }
       }
-      
-      // 3. 복호화 필요
+
+      // 3. Vault 복호화 필요
       const wallet = this.get();
       if (!wallet || !wallet.hasKeystore) {
-        return wallet;  // 평문이거나 지갑 없음
+        return wallet;
       }
-      
-      // 4. Keystore 복호화
-      return this.decryptKeystore(wallet.address);
+
+      return this.decryptVault(wallet.address);
     },
 
     /**
-     * Keystore 복호화
+     * Vault 복호화 (PBKDF2 + AES-256-GCM)
      */
-    decryptKeystore: async function(address) {
-      const keystore = localStorage.getItem(`keystore_${address}`);
-      
-      if (!keystore) {
-        console.error('[WalletStorage] Keystore not found for address:', address);
+    decryptVault: async function(address) {
+      const vault = localStorage.getItem(`vault_${address}`);
+      if (!vault) {
+        console.error('[Bitcoin] Vault not found for address:', address);
         return null;
       }
-      
-      // Keystore API 감지 - anamUI 우선, anam 폴백
-      const keystoreAPI = (window.anamUI && window.anamUI.decryptKeystore) ? window.anamUI : 
-                          (window.anam && window.anam.decryptKeystore) ? window.anam : null;
-      
-      if (!keystoreAPI) {
-        console.error('[WalletStorage] Keystore API not available in both anamUI and anam');
+
+      const vaultAPI = this._getVaultAPI();
+      if (!vaultAPI) {
+        console.error('[Bitcoin] Vault API not available');
         return null;
       }
-      
-      
+
       return new Promise((resolve) => {
         const handler = (event) => {
-          window.removeEventListener('keystoreDecrypted', handler);
-          
+          window.removeEventListener('vaultDecrypted', handler);
+
           if (event.detail && event.detail.success) {
-            const wallet = this.get() || {};
-            let decryptedData = {};
-            
-            if (event.detail.secret) {
-              const secretHex = event.detail.secret;
-              const bytes = new Uint8Array(secretHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-              const decoder = new TextDecoder();
-              const walletJson = decoder.decode(bytes);
-              decryptedData = JSON.parse(walletJson);
-            }
-            
-            const decrypted = {
-              ...wallet,
-              ...decryptedData,
-              address: event.detail.address,
-              decryptedAt: Date.now()
-            };
-            if (decrypted.networks && wallet.activeNetwork) {
-              const networkData = decrypted.networks[wallet.activeNetwork];
-              if (networkData) {
-                decrypted.privateKey = networkData.privateKey;
+            try {
+              const wallet = this.get() || {};
+              const decryptedData = JSON.parse(event.detail.secret);
+
+              const decrypted = {
+                ...wallet,
+                ...decryptedData,
+                address: wallet.address || event.detail.address,
+                decryptedAt: Date.now()
+              };
+
+              // activeNetwork의 privateKey 설정
+              if (decrypted.networks && wallet.activeNetwork) {
+                const networkData = decrypted.networks[wallet.activeNetwork];
+                if (networkData) {
+                  decrypted.privateKey = networkData.privateKey;
+                }
               }
+
+              // 캐시 업데이트
+              this.wallet = decrypted;
+              sessionStorage.setItem(this.KEYS.session, JSON.stringify(decrypted));
+              window.dispatchEvent(new Event('walletReady'));
+
+              resolve(decrypted);
+            } catch (e) {
+              console.error('[Bitcoin] Vault decryption failed:', e);
+              resolve(null);
             }
-            
-            // 캐시 업데이트
-            this.wallet = decrypted;
-            sessionStorage.setItem(this.KEYS.session, JSON.stringify(decrypted));
-            
-            window.dispatchEvent(new Event('walletReady'));
-            
-            resolve(decrypted);
           } else {
+            console.error('[Bitcoin] Vault decryption failed');
             resolve(null);
           }
         };
-        
-        window.addEventListener('keystoreDecrypted', handler);
-        
-        // 복호화 요청 (감지된 API 사용)
-        keystoreAPI.decryptKeystore(keystore);
+
+        window.addEventListener('vaultDecrypted', handler);
+        vaultAPI.decryptVault(vault);
       });
     },
 
@@ -375,16 +366,11 @@
      * 자동 복호화 (앱 시작 시)
      */
     autoDecrypt: function(address) {
-      const keystore = localStorage.getItem(`keystore_${address}`);
-      
-      // Keystore API 감지 - anamUI 우선, anam 폴백
-      const keystoreAPI = (window.anamUI && window.anamUI.decryptKeystore) ? window.anamUI : 
-                          (window.anam && window.anam.decryptKeystore) ? window.anam : null;
-      
-      if (keystore && keystoreAPI) {
-        setTimeout(() => {
-          this.decryptKeystore(address);
-        }, 100);
+      const vault = localStorage.getItem(`vault_${address}`);
+      const vaultAPI = this._getVaultAPI();
+
+      if (vault && vaultAPI) {
+        this.decryptVault(address);
       }
     },
 
