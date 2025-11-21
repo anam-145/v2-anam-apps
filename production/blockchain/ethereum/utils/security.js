@@ -30,6 +30,7 @@
 
     /**
      * Derive private key with auto-clear timeout
+     * ✅ SECURE: Automatically clears key from memory after specified time
      * @param {string} walletId - Wallet ID
      * @param {number} accountIndex - Account index
      * @param {number} timeoutMs - Timeout in milliseconds (default 30 seconds)
@@ -52,6 +53,50 @@
       }, timeoutMs);
 
       return privateKey;
+    },
+
+    /**
+     * Execute a function with a private key that gets auto-cleared
+     * ✅ SECURE: Best practice for handling private keys
+     * @param {string} walletId - Wallet ID
+     * @param {number} accountIndex - Account index
+     * @param {Function} callback - Function to execute with private key
+     * @returns {Promise<any>} Result from callback
+     */
+    withPrivateKey: async function(walletId, accountIndex, callback) {
+      const hdManager = window.getHDWalletManager();
+      if (!hdManager) {
+        throw new Error('HD Wallet Manager not initialized');
+      }
+
+      let privateKey = null;
+
+      try {
+        console.log('[Security] 🔐 Deriving private key for secure operation...');
+        privateKey = await hdManager.derivePrivateKeyForAccount(walletId, accountIndex);
+
+        if (!privateKey) {
+          throw new Error('Failed to derive private key');
+        }
+
+        // Execute callback with private key
+        const result = await callback(privateKey);
+
+        console.log('[Security] ✅ Operation completed successfully');
+        return result;
+
+      } catch (error) {
+        console.error('[Security] Operation failed:', error);
+        throw error;
+
+      } finally {
+        // ✅ SECURE: Always clear private key, even on error
+        if (privateKey) {
+          console.log('[Security] 🧹 Clearing private key from memory...');
+          this.clearString(privateKey);
+          privateKey = null;
+        }
+      }
     },
 
     // ================================================================

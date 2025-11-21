@@ -167,18 +167,19 @@ async function confirmSend() {
         );
         console.log('[Send] ✅ Private key derived successfully');
       } else if (currentWallet.type === 'imported') {
-        // Imported wallet: get private key from storage
-        privateKey = currentAccount.privateKey;
-
-        if (!privateKey) {
-          // Fallback to WalletStorage
-          privateKey = await WalletStorage.getPrivateKeySecure();
-        }
+        // ✅ SECURE: Decrypt private key on-demand for imported wallet
+        console.log('[Send] 🔐 Decrypting private key for imported wallet...');
+        privateKey = await hdManager.derivePrivateKeyForAccount(
+          currentWallet.id,
+          currentAccount.index
+        );
+        console.log('[Send] ✅ Private key decrypted successfully');
       }
     } else {
-      // Legacy wallet - use WalletStorage
-      senderAddress = currentWallet.address;
-      privateKey = await WalletStorage.getPrivateKeySecure();
+      // Legacy wallet - should not happen with new implementation
+      console.warn('[Send] ⚠️ Legacy wallet detected - this should be migrated');
+      showToast("Please reimport your wallet for better security");
+      return;
     }
 
     if (!privateKey) {
@@ -202,8 +203,12 @@ async function confirmSend() {
 
     const result = await adapter.sendTransaction(txParams);
 
-    // ✅ SECURE: Clear private key from memory immediately
+    // ✅ SECURE: Clear private key from memory immediately using SecurityUtils
     console.log('[Send] 🧹 Clearing private key from memory...');
+    if (window.SecurityUtils && window.SecurityUtils.clearString) {
+      window.SecurityUtils.clearString(privateKey);
+      window.SecurityUtils.clearString(txParams.privateKey);
+    }
     privateKey = null;
     txParams.privateKey = null;
 
@@ -262,9 +267,12 @@ async function confirmSend() {
     console.error("Transaction failed:", error);
     showToast("Transaction failed: " + error.message);
 
-    // ✅ SECURE: Make sure to clear private key even on error
+    // ✅ SECURE: Make sure to clear private key even on error using SecurityUtils
     if (privateKey) {
       console.log('[Send] 🧹 Clearing private key from memory (error path)...');
+      if (window.SecurityUtils && window.SecurityUtils.clearString) {
+        window.SecurityUtils.clearString(privateKey);
+      }
       privateKey = null;
     }
   }

@@ -42,10 +42,11 @@ class HDWalletManager {
       return null;
     }
 
-    // Use WalletStorage to decrypt from Keystore
-    if (window.WalletStorage && window.WalletStorage.getMnemonicSecure) {
+    // Use WalletStorage to decrypt from Keystore using the specific address
+    if (window.WalletStorage && window.WalletStorage.decryptKeystore) {
       try {
-        const mnemonic = await window.WalletStorage.getMnemonicSecure();
+        console.log(`[HDWalletManager] Decrypting keystore for address: ${address}`);
+        const mnemonic = await window.WalletStorage.decryptKeystore(address);
         return mnemonic;
       } catch (error) {
         console.error('[HDWalletManager] Failed to decrypt mnemonic:', error);
@@ -74,12 +75,25 @@ class HDWalletManager {
     }
 
     if (wallet.type === 'imported') {
-      // Imported wallets store private key directly (TODO: encrypt this too)
+      // ✅ SECURE: Decrypt private key from Keystore for imported wallets
       const account = wallet.accounts.find(acc => acc.index === accountIndex);
       if (!account) {
         throw new Error('Account not found');
       }
-      return account.privateKey;
+
+      if (wallet.privateKeyEncrypted) {
+        console.log('[HDWalletManager] 🔐 Decrypting private key for imported wallet...');
+        const privateKey = await this.getPrivateKeyForImportedWallet(walletId, account.address);
+        if (!privateKey) {
+          throw new Error('Failed to decrypt private key. Wallet may be locked.');
+        }
+        console.log('[HDWalletManager] ✅ Private key decrypted successfully');
+        return privateKey;
+      } else {
+        // Legacy imported wallet without encryption
+        console.warn('[HDWalletManager] ⚠️ Imported wallet is not encrypted (legacy)');
+        return account.privateKey || null;
+      }
     }
 
     if (wallet.type !== 'hd') {
@@ -94,7 +108,9 @@ class HDWalletManager {
     console.log(`[HDWalletManager] 🔐 Deriving private key for account ${accountIndex}...`);
 
     // ✅ SECURE: Decrypt mnemonic from Keystore (requires user authentication)
-    const mnemonic = await this.getMnemonicForWallet(walletId, account.address);
+    // Always use first account's address where the keystore is stored
+    const firstAccount = wallet.accounts[0];
+    let mnemonic = await this.getMnemonicForWallet(walletId, firstAccount.address);
 
     if (!mnemonic) {
       throw new Error('Failed to decrypt mnemonic. Wallet may be locked.');
@@ -104,12 +120,24 @@ class HDWalletManager {
     const adapter = window.getAdapter();
     const derivedAccount = await adapter.deriveAccountFromMnemonic(mnemonic, accountIndex);
 
+    // ✅ SECURE: Clear mnemonic from memory immediately after derivation
+    if (window.SecurityUtils && window.SecurityUtils.clearString) {
+      window.SecurityUtils.clearString(mnemonic);
+    }
+    mnemonic = null;
+
     // Verify derived address matches stored address (security check)
     if (derivedAccount.address.toLowerCase() !== account.address.toLowerCase()) {
       console.error('[HDWalletManager] ❌ Address mismatch!', {
         expected: account.address,
         derived: derivedAccount.address
       });
+
+      // Clear private key before throwing
+      if (window.SecurityUtils && window.SecurityUtils.clearString) {
+        window.SecurityUtils.clearString(derivedAccount.privateKey);
+      }
+
       throw new Error('Security Error: Derived address does not match stored address');
     }
 
@@ -156,13 +184,12 @@ class HDWalletManager {
     // Save wallet info (NO sensitive data)
     this.saveToStorage();
 
-    // Sync with WalletStorage for backward compatibility
+    // ✅ SECURE: Only sync public data to WalletStorage (no sensitive data)
     if (window.WalletStorage) {
       window.WalletStorage.save({
         address: walletData.address,
-        privateKey: walletData.privateKey,  // Only in sessionStorage
-        mnemonic: walletData.mnemonic,       // Will be encrypted by WalletStorage
-        name: walletInfo.name
+        name: walletInfo.name,
+        hasKeystore: true
       });
     }
 
@@ -183,18 +210,13 @@ class HDWalletManager {
         this.currentWalletId = id;
         this.saveToStorage();
 
-        // Sync with WalletStorage
+        // ✅ SECURE: Sync only public data
         const account = wallet.accounts[0];
         if (window.WalletStorage && account) {
-          // Need to derive private key for legacy storage sync
-          const privateKey = await this.derivePrivateKeyForAccount(id, 0);
-          const mnemonic = await this.getMnemonicForWallet(id, account.address);
-
           window.WalletStorage.save({
             address: account.address,
-            privateKey: privateKey,
-            mnemonic: mnemonic,
-            name: wallet.name
+            name: wallet.name,
+            hasKeystore: wallet.mnemonicEncrypted
           });
         }
 
@@ -237,13 +259,12 @@ class HDWalletManager {
 
     this.saveToStorage();
 
-    // Sync with WalletStorage
+    // ✅ SECURE: Only sync public data to WalletStorage
     if (window.WalletStorage) {
       window.WalletStorage.save({
         address: firstAccount.address,
-        privateKey: firstAccount.privateKey,  // Only in sessionStorage
-        mnemonic: mnemonic,
-        name: walletInfo.name
+        name: walletInfo.name,
+        hasKeystore: true
       });
     }
 
@@ -299,14 +320,13 @@ class HDWalletManager {
 
     this.saveToStorage();
 
-    // Sync with WalletStorage
+    // ✅ SECURE: Only sync public data to WalletStorage
     if (window.WalletStorage && walletInfo.accounts.length > 0) {
       const firstAccount = accounts[0];
       window.WalletStorage.save({
         address: firstAccount.address,
-        privateKey: firstAccount.privateKey,  // Only in sessionStorage
-        mnemonic: mnemonic,
-        name: walletInfo.name
+        name: walletInfo.name,
+        hasKeystore: true
       });
     }
 
@@ -323,17 +343,16 @@ class HDWalletManager {
 
     const walletId = this.generateWalletId();
 
-    // Note: For imported wallets, we must store the private key
-    // TODO: Consider encrypting this via Keystore API as well
+    // ✅ SECURE: Encrypt private key using Keystore API
     const walletInfo = {
       id: walletId,
       name: name || `Imported Account`,
       type: 'imported',
-      mnemonicEncrypted: false,  // No mnemonic
+      privateKeyEncrypted: true,  // Flag indicating private key is encrypted
       accounts: [{
         index: 0,
         address: walletData.address,
-        privateKey: privateKey,  // Must be stored for imported wallets
+        // ❌ NO privateKey stored in plaintext!
         name: 'Imported Account',
         balance: '0'
       }],
@@ -343,19 +362,76 @@ class HDWalletManager {
 
     this.wallets.set(walletId, walletInfo);
     this.currentWalletId = walletId;
+
+    // ✅ SECURE: Encrypt private key using Keystore API
+    await this.encryptPrivateKey(walletId, privateKey, walletData.address);
+
     this.saveToStorage();
 
-    // Sync with WalletStorage
+    // ✅ SECURE: Only sync public data to WalletStorage
     if (window.WalletStorage) {
       window.WalletStorage.save({
         address: walletData.address,
-        privateKey: privateKey,
-        mnemonic: null,
-        name: walletInfo.name
+        name: walletInfo.name,
+        hasKeystore: true
       });
     }
 
     return { walletId, address: walletData.address, alreadyExists: false };
+  }
+
+  /**
+   * Encrypts and stores private key for imported wallets using Keystore API
+   * @private
+   */
+  async encryptPrivateKey(walletId, privateKey, address) {
+    if (window.WalletStorage && window.WalletStorage.saveSecure) {
+      try {
+        // Store private key as if it were a mnemonic (same encryption mechanism)
+        await window.WalletStorage.saveSecure(privateKey, address);
+        console.log(`[HDWalletManager] ✅ Private key encrypted for imported wallet ${walletId}`);
+        return true;
+      } catch (error) {
+        console.error('[HDWalletManager] ❌ Failed to encrypt private key:', error);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Gets decrypted private key for imported wallet from Keystore
+   * @private
+   */
+  async getPrivateKeyForImportedWallet(walletId, address) {
+    const wallet = this.wallets.get(walletId);
+    if (!wallet) {
+      throw new Error('Wallet not found');
+    }
+
+    if (wallet.type !== 'imported') {
+      throw new Error('This method is only for imported wallets');
+    }
+
+    if (!wallet.privateKeyEncrypted) {
+      console.warn('[HDWalletManager] ⚠️ Imported wallet private key is not encrypted!');
+      return null;
+    }
+
+    // Use WalletStorage to decrypt from Keystore using the specific address
+    // (The keystore stores the private key as if it were a mnemonic)
+    if (window.WalletStorage && window.WalletStorage.decryptKeystore) {
+      try {
+        console.log(`[HDWalletManager] Decrypting private key for address: ${address}`);
+        const privateKey = await window.WalletStorage.decryptKeystore(address);
+        return privateKey;
+      } catch (error) {
+        console.error('[HDWalletManager] Failed to decrypt private key:', error);
+        return null;
+      }
+    }
+
+    return null;
   }
 
   // ================================================================
@@ -373,7 +449,7 @@ class HDWalletManager {
 
     // Get mnemonic for derivation
     const firstAccount = wallet.accounts[0];
-    const mnemonic = await this.getMnemonicForWallet(walletId, firstAccount.address);
+    let mnemonic = await this.getMnemonicForWallet(walletId, firstAccount.address);
 
     if (!mnemonic) {
       throw new Error('Failed to decrypt wallet mnemonic. Wallet may be locked.');
@@ -381,6 +457,12 @@ class HDWalletManager {
 
     // Derive new account
     const newAccount = await adapter.deriveAccountFromMnemonic(mnemonic, nextIndex);
+
+    // ✅ SECURE: Clear mnemonic from memory immediately after derivation
+    if (window.SecurityUtils && window.SecurityUtils.clearString) {
+      window.SecurityUtils.clearString(mnemonic);
+    }
+    mnemonic = null;
 
     // Fetch balance
     const balance = await adapter.getBalance(newAccount.address);
@@ -399,13 +481,12 @@ class HDWalletManager {
     wallet.currentAccountIndex = nextIndex;
     this.saveToStorage();
 
-    // Sync with WalletStorage for backward compatibility
+    // ✅ SECURE: Only sync public data to WalletStorage
     if (window.WalletStorage) {
       window.WalletStorage.save({
         address: newAccount.address,
-        privateKey: newAccount.privateKey,  // Only in sessionStorage
-        mnemonic: mnemonic,
-        name: wallet.name
+        name: wallet.name,
+        hasKeystore: wallet.mnemonicEncrypted
       });
     }
 
@@ -426,28 +507,13 @@ class HDWalletManager {
     wallet.currentAccountIndex = accountIndex;
     this.saveToStorage();
 
-    // Sync with WalletStorage for backward compatibility
+    // ✅ SECURE: Only sync public data to WalletStorage
     if (window.WalletStorage) {
-      if (wallet.type === 'hd') {
-        // Derive private key for legacy storage
-        const privateKey = await this.derivePrivateKeyForAccount(walletId, accountIndex);
-        const mnemonic = await this.getMnemonicForWallet(walletId, account.address);
-
-        window.WalletStorage.save({
-          address: account.address,
-          privateKey: privateKey,
-          mnemonic: mnemonic,
-          name: wallet.name
-        });
-      } else {
-        // Imported wallet
-        window.WalletStorage.save({
-          address: account.address,
-          privateKey: account.privateKey,
-          mnemonic: null,
-          name: wallet.name
-        });
-      }
+      window.WalletStorage.save({
+        address: account.address,
+        name: wallet.name,
+        hasKeystore: wallet.type === 'hd' ? wallet.mnemonicEncrypted : false
+      });
     }
   }
 
@@ -456,29 +522,16 @@ class HDWalletManager {
     this.currentWalletId = walletId;
     this.saveToStorage();
 
-    // Sync with WalletStorage for backward compatibility
+    // ✅ SECURE: Only sync public data to WalletStorage
     const wallet = this.wallets.get(walletId);
     const account = wallet.accounts.find(acc => acc.index === wallet.currentAccountIndex);
 
     if (window.WalletStorage && account) {
-      if (wallet.type === 'hd') {
-        const privateKey = await this.derivePrivateKeyForAccount(walletId, wallet.currentAccountIndex);
-        const mnemonic = await this.getMnemonicForWallet(walletId, account.address);
-
-        window.WalletStorage.save({
-          address: account.address,
-          privateKey: privateKey,
-          mnemonic: mnemonic,
-          name: wallet.name
-        });
-      } else {
-        window.WalletStorage.save({
-          address: account.address,
-          privateKey: account.privateKey,
-          mnemonic: null,
-          name: wallet.name
-        });
-      }
+      window.WalletStorage.save({
+        address: account.address,
+        name: wallet.name,
+        hasKeystore: wallet.type === 'hd' ? wallet.mnemonicEncrypted : false
+      });
     }
   }
 
@@ -579,27 +632,16 @@ class HDWalletManager {
 
     this.saveToStorage();
 
-    // Update WalletStorage
+    // ✅ SECURE: Update WalletStorage with public data only
     if (this.currentWalletId) {
       const currentWallet = this.getCurrentWallet();
       const currentAccount = this.getCurrentAccount();
       if (currentAccount) {
-        if (currentWallet.type === 'hd') {
-          // Would need to derive key, but skip for now during deletion
-          window.WalletStorage?.save({
-            address: currentAccount.address,
-            privateKey: null,  // Will be derived when needed
-            mnemonic: null,
-            name: currentWallet.name
-          });
-        } else {
-          window.WalletStorage?.save({
-            address: currentAccount.address,
-            privateKey: currentAccount.privateKey,
-            mnemonic: null,
-            name: currentWallet.name
-          });
-        }
+        window.WalletStorage?.save({
+          address: currentAccount.address,
+          name: currentWallet.name,
+          hasKeystore: currentWallet.type === 'hd' ? currentWallet.mnemonicEncrypted : false
+        });
       }
     } else {
       if (window.WalletStorage) {

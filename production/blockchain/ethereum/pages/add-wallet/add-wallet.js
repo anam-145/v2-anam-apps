@@ -271,11 +271,31 @@ async function createNewWallet() {
       hdManager.renameWallet(result.id, walletName.trim());
     }
 
-    // Show mnemonic backup with copy functionality
-    const mnemonic = result.accounts[0].mnemonic || result.mnemonic;
-    showMnemonicBackup(mnemonic);
+    // ✅ SECURE: Decrypt mnemonic ONLY for backup display
+    // This requires user authentication and is immediately cleared after
+    let mnemonic = null;
+    try {
+      const firstAccount = result.accounts[0];
+      console.log('[AddWallet] Retrieving mnemonic for backup display...');
+      mnemonic = await hdManager.getMnemonicForWallet(result.id, firstAccount.address);
 
-    showToast("Wallet created successfully!", "success");
+      if (!mnemonic) {
+        throw new Error('Failed to retrieve mnemonic for backup');
+      }
+
+      // Show mnemonic backup with copy functionality
+      showMnemonicBackup(mnemonic);
+
+      showToast("Wallet created successfully!", "success");
+
+    } finally {
+      // ✅ SECURE: Clear mnemonic from memory immediately
+      if (mnemonic && window.SecurityUtils) {
+        console.log('[AddWallet] Clearing mnemonic from memory...');
+        window.SecurityUtils.clearString(mnemonic);
+      }
+      mnemonic = null;
+    }
 
   } catch (error) {
     console.error("Failed to create wallet:", error);
