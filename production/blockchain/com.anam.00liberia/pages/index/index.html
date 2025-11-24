@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Liberia Wallet</title>
+    <link rel="stylesheet" href="../../app.css" />
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Loading Screen (초기 상태) -->
+      <div id="wallet-loading" class="wallet-screen" style="display: flex;">
+        <div class="loading-content">
+          <img src="../../assets/icons/app_icon.png" alt="Liberia" class="loading-logo" />
+          <div class="loading-spinner-container">
+            <div class="loading-spinner"></div>
+            <div class="loading-spinner-inner"></div>
+          </div>
+          <p class="loading-text">Liberia Wallet</p>
+          <p class="loading-subtext">Initializing your wallet...</p>
+        </div>
+      </div>
+
+      <!-- Main Wallet Screen -->
+      <div id="wallet-main" class="wallet-screen" style="display: none;">
+        <!-- Header -->
+        <header class="header">
+          <div class="header-content">
+            <div class="logo-section">
+              <div class="logo">
+                <img src="../../assets/icons/app_icon.png" alt="Liberia Logo" class="coin-logo" />
+                <span class="logo-text">Liberia</span>
+              </div>
+            </div>
+            <button class="icon-btn settings-btn" onclick="navigateToSettings()" title="Settings">
+              <img src="../../assets/images/settings.svg" alt="Settings" width="20" height="20" />
+            </button>
+          </div>
+        </header>
+
+        <!-- Balance Card -->
+        <div class="card balance-card">
+          <div class="balance-header">
+            <span class="balance-label" id="network-label">Loading...</span>
+            <span class="network-status" id="network-status">●</span>
+          </div>
+          <!-- USDC (메인 잔액) -->
+          <div class="balance-amount">
+            <div class="coin-balance">
+              <span id="usdc-balance-display">0.00</span>
+              <span class="coin-unit">USDC</span>
+            </div>
+          </div>
+          <!-- ETH (수수료용 - 작게) -->
+          <div class="fee-balance">
+            <span class="fee-label">Gas:</span>
+            <span id="eth-balance-display">0.0000</span>
+            <span class="fee-unit">ETH</span>
+          </div>
+
+          <!-- Address Display -->
+          <div class="address-container">
+            <div class="address-header">
+              <div class="address-label">Address</div>
+            </div>
+            <div class="address-display" id="address-display">
+              Loading...
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="action-buttons">
+            <button class="action-btn" onclick="navigateToSend()">
+              <span>Send</span>
+            </button>
+            <button class="action-btn" onclick="navigateToReceive()">
+              <span>Receive</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Transaction History Section -->
+        <section class="transactions-section">
+          <h2 class="section-title">Recent Transactions</h2>
+          <div class="tx-list" id="tx-list">
+            <!-- Transactions will be loaded dynamically -->
+          </div>
+        </section>
+      </div>
+
+      <!-- Error Screen -->
+      <div id="wallet-error" class="wallet-screen" style="display: none;">
+        <div class="error-content">
+          <div class="error-icon">⚠️</div>
+          <h2 class="error-title">Failed to Initialize</h2>
+          <p class="error-message" id="error-message">Unknown error</p>
+          <button class="retry-btn" onclick="initWallet()">Retry</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Required Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+
+    <!-- Configuration -->
+    <script src="../../utils/config.js"></script>
+
+    <!-- App Common Code -->
+    <script src="../../app.js"></script>
+
+    <!-- Utils -->
+    <script src="../../utils/helpers.js"></script>
+    <script src="../../utils/storage.js"></script>
+
+    <!-- Main Logic -->
+    <script src="index.js"></script>
+  </body>
+</html>

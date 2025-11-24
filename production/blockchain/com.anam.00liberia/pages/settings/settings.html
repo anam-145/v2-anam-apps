@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wallet Settings</title>
+    <link rel="stylesheet" href="../../app.css" />
+    <link rel="stylesheet" href="settings.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <button class="back-btn" onclick="navigateBack()">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12.5 5L7.5 10L12.5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <h1 class="header-title">Settings</h1>
+        <div class="header-spacer"></div>
+      </header>
+
+      <!-- Settings Content -->
+      <div class="settings-content">
+        <!-- Network Section -->
+        <section class="settings-section">
+          <h2 class="section-title">Network Settings</h2>
+          <div class="settings-list">
+            <button class="settings-item" onclick="showNetworkSelector()">
+              <div class="settings-item-content">
+                <svg class="settings-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="10" cy="10" r="2" fill="currentColor"/>
+                  <circle cx="10" cy="10" r="5" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                  <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5" fill="none" stroke-dasharray="2 2"/>
+                </svg>
+                <div class="network-display">
+                  <div class="network-info">
+                    <span id="current-network-name" class="network-selected">Loading...</span>
+                    <span class="network-status"></span>
+                  </div>
+                </div>
+              </div>
+              <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Modal for showing sensitive info -->
+      <div id="modal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 id="modal-title">Title</h3>
+            <button class="modal-close" onclick="closeModal()">×</button>
+          </div>
+          <div class="modal-body">
+            <p id="modal-message" class="modal-message"></p>
+            <div id="modal-value" class="modal-value"></div>
+            <button id="copy-btn" class="copy-btn" onclick="copyToClipboard()">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Network Selector Modal -->
+      <div id="network-modal" class="modal" style="display: none;">
+        <div class="modal-content network-modal-content">
+          <div class="modal-header">
+            <h3>Select Network</h3>
+            <button class="modal-close" onclick="closeNetworkModal()">×</button>
+          </div>
+          <div class="modal-body">
+            <!-- Predefined Networks -->
+            <div class="network-list">
+              <div class="network-item" onclick="selectNetwork('mainnet')">
+                <div class="network-item-content">
+                  <div class="network-details">
+                    <span class="network-name">Base Mainnet</span>
+                    <span class="network-chain">Chain ID: 8453</span>
+                  </div>
+                </div>
+                <span id="mainnet-check" class="network-check" style="display: none;">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7 10L9 12L13 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </div>
+
+              <div class="network-item" onclick="selectNetwork('sepolia')">
+                <div class="network-item-content">
+                  <div class="network-details">
+                    <span class="network-name">Base Sepolia</span>
+                    <span class="network-chain">Chain ID: 84532</span>
+                  </div>
+                </div>
+                <span id="sepolia-check" class="network-check">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7 10L9 12L13 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </div>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="../../utils/config.js"></script>
+    <script src="../../app.js"></script>
+    <script src="../../utils/helpers.js"></script>
+    <script src="../../utils/storage.js"></script>
+    <script src="settings.js"></script>
+  </body>
+</html>

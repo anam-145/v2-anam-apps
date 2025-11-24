@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Send Coin</title>
+    <link rel="stylesheet" href="../../app.css" />
+    <link rel="stylesheet" href="send.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="send-screen">
+        <!-- Header -->
+        <header class="header">
+          <button class="back-btn" onclick="goBack()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <h1 class="header-title">Send <span class="coin-symbol">COIN</span></h1>
+          <div style="width: 24px;"></div>
+        </header>
+
+        <!-- Form Content -->
+        <div class="send-content">
+          <div class="form-group">
+            <label for="recipient-address">Recipient Address</label>
+            <div class="input-with-icon">
+              <input 
+                type="text" 
+                id="recipient-address" 
+                class="form-input" 
+                placeholder="Enter recipient's address"
+              />
+              <button class="input-icon-btn" onclick="scanQRCode()" title="Scan QR Code">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 3h5v5H3V3zm9 0h5v5h-5V3zM3 12h5v5H3v-5zm9 0h2v2h-2v-2zm2 2h2v2h-2v-2zm-2 2h2v2h-2v-2zm4-4h2v2h-2v-2z" fill="currentColor"/>
+                  <path d="M5 5h1v1H5V5zm9 0h1v1h-1V5zM5 14h1v1H5v-1z" fill="currentColor"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="send-amount">Amount</label>
+            <input 
+              type="number" 
+              id="send-amount" 
+              class="form-input" 
+              placeholder="0.0000"
+              step="0.0001"
+            />
+            <span class="input-hint">Available: <span id="available-balance">0.0000</span> <span class="coin-symbol">COIN</span></span>
+          </div>
+          
+          <div class="button-group">
+            <button class="send-confirm-btn" onclick="confirmSend()">
+              Confirm Send
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Required Libraries -->
+    <!-- Ethers.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    
+    <!-- Configuration -->
+    <script src="../../utils/config.js"></script>
+    
+    <!-- App Common Code -->
+    <script src="../../app.js"></script>
+    
+    <!-- Utils -->
+    <script src="../../utils/helpers.js"></script>
+    <script src="../../utils/storage.js"></script>
+    
+    <!-- Main Logic -->
+    <script src="send.js"></script>
+  </body>
+</html>
