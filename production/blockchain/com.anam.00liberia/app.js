@@ -85,16 +85,28 @@ class LiberiaAdapter {
    * 1. 지갑 - deriveKey API 사용
    * ================================================================ */
 
-  // deriveKey API로 키 파생 (Promise 래퍼)
-  deriveKey(path) {
+  // deriveKey API v2로 키 파생 (Promise 래퍼)
+  // curve: "secp256k1" (Ethereum/EVM) 또는 "ed25519" (Solana/Stellar 등)
+  deriveKey(path, curve = "secp256k1") {
     return new Promise((resolve, reject) => {
       const handler = (event) => {
         window.removeEventListener('keyDerived', handler);
         if (event.detail.success) {
+          const { privateKey, publicKey, path: derivedPath, curve: derivedCurve } = event.detail;
+
+          // secp256k1의 경우 ethers.js로 address 계산
+          let address = null;
+          if (curve === "secp256k1" && typeof ethers !== 'undefined') {
+            const wallet = new ethers.Wallet(privateKey);
+            address = wallet.address;
+          }
+
           resolve({
-            address: event.detail.address,
-            privateKey: event.detail.privateKey,
-            path: event.detail.path
+            address: address,
+            privateKey: privateKey,
+            publicKey: publicKey,
+            path: derivedPath,
+            curve: derivedCurve
           });
         } else {
           reject(new Error(event.detail.error));
@@ -103,7 +115,7 @@ class LiberiaAdapter {
       window.addEventListener('keyDerived', handler);
 
       if (window.anamUI && window.anamUI.deriveKey) {
-        window.anamUI.deriveKey(path);
+        window.anamUI.deriveKey(path, curve);
       } else {
         window.removeEventListener('keyDerived', handler);
         reject(new Error('deriveKey API not available'));
@@ -111,10 +123,11 @@ class LiberiaAdapter {
     });
   }
 
-  // 기본 경로로 지갑 가져오기 (경로 인자 허용)
-  async getWallet(path) {
+  // 기본 경로로 지갑 가져오기 (경로, curve 인자 허용)
+  async getWallet(path, curve) {
     const targetPath = path || window.LiberiaConfig?.BIP44_PATH || "m/44'/60'/0'/0/0";
-    return await this.deriveKey(targetPath);
+    const targetCurve = curve || window.LiberiaConfig?.CURVE || "secp256k1";
+    return await this.deriveKey(targetPath, targetCurve);
   }
 
   isValidAddress(address) {

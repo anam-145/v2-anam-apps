@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stellar Wallet</title>
+    <link rel="stylesheet" href="../../app.css" />
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Loading Screen -->
+      <div id="wallet-loading" class="wallet-screen" style="display: flex;">
+        <div class="loading-content">
+          <img src="../../assets/icons/app_icon.png" alt="Stellar" class="loading-logo" />
+          <div class="loading-spinner-container">
+            <div class="loading-spinner"></div>
+            <div class="loading-spinner-inner"></div>
+          </div>
+          <p class="loading-text">Stellar</p>
+          <p class="loading-subtext">Initializing your wallet...</p>
+        </div>
+      </div>
+
+      <!-- Main Wallet Screen -->
+      <div id="wallet-main" class="wallet-screen" style="display: none;">
+        <!-- Header -->
+        <header class="header">
+          <div class="header-content">
+            <div class="logo-section">
+              <div class="logo">
+                <img src="../../assets/icons/app_icon.png" alt="Stellar Logo" class="coin-logo" />
+                <span class="logo-text">Stellar</span>
+              </div>
+            </div>
+            <button class="icon-btn settings-btn" onclick="navigateToSettings()" title="Settings">
+              <img src="../../assets/images/settings.svg" alt="Settings" width="20" height="20" />
+            </button>
+          </div>
+        </header>
+
+        <!-- Balance Card -->
+        <div class="card balance-card">
+          <div class="balance-header">
+            <span class="balance-label" id="network-label">Stellar Mainnet</span>
+            <span class="network-status" id="network-status">●</span>
+          </div>
+          <!-- XLM Balance -->
+          <div class="balance-amount">
+            <div class="coin-balance">
+              <span id="xlm-balance-display">0.00</span>
+              <span class="coin-unit">XLM</span>
+            </div>
+            <div class="balance-usd" id="balance-usd">≈ $0.00 USD</div>
+          </div>
+
+          <!-- Address Display -->
+          <div class="address-container">
+            <div class="address-header">
+              <div class="address-label">Address</div>
+            </div>
+            <div class="address-display" id="address-display">
+              Loading...
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="action-buttons">
+            <button class="action-btn" onclick="navigateToSend()">
+              <span>Send</span>
+            </button>
+            <button class="action-btn" onclick="navigateToReceive()">
+              <span>Receive</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Account Not Activated Warning -->
+        <div id="activation-warning" class="activation-warning" style="display: none;">
+          <div class="activation-icon">⚠️</div>
+          <div class="activation-content">
+            <div class="activation-title">Account Not Activated</div>
+            <div class="activation-text">
+              Your account needs at least <strong>1 XLM</strong> to be activated on the Stellar network.
+            </div>
+          </div>
+        </div>
+
+        <!-- Transaction History Section -->
+        <section class="transactions-section">
+          <h2 class="section-title">Recent Transactions</h2>
+          <div class="tx-list" id="tx-list">
+            <!-- Transactions will be loaded dynamically -->
+          </div>
+        </section>
+      </div>
+
+      <!-- Error Screen -->
+      <div id="wallet-error" class="wallet-screen" style="display: none;">
+        <div class="error-content">
+          <div class="error-icon">⚠️</div>
+          <h2 class="error-title">Failed to Initialize</h2>
+          <p class="error-message" id="error-message">Unknown error</p>
+          <button class="retry-btn" onclick="initWallet()">Retry</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Required Libraries - Stellar SDK -->
+    <script src="../../assets/stellar-bundle.iife.js"></script>
+
+    <!-- Configuration -->
+    <script src="../../utils/config.js"></script>
+
+    <!-- App Common Code -->
+    <script src="../../app.js"></script>
+
+    <!-- Utils -->
+    <script src="../../utils/helpers.js"></script>
+    <script src="../../utils/storage.js"></script>
+
+    <!-- Main Logic -->
+    <script src="index.js"></script>
+  </body>
+</html>

@@ -62,6 +62,9 @@
   // BIP44 경로 - Base는 Ethereum과 동일한 coin type 60 사용
   const BIP44_PATH = "m/44'/60'/0'/0/0";
 
+  // Curve 타입 - secp256k1 (Ethereum/EVM), ed25519 (Solana/Stellar 등)
+  const CURVE = "secp256k1";
+
   // ================================================================
   // 네트워크 관리
   // ================================================================
@@ -159,6 +162,7 @@
     NETWORKS,
     TOKENS,
     BIP44_PATH,
+    CURVE,
 
     // 토큰
     getTokenAddress,

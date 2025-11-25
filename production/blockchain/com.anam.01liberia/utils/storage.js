@@ -1,5 +1,5 @@
 // ================================================================
-// Liberia Wallet Storage Manager
+// Liberia Stellar Wallet Storage Manager
 // 단순화된 버전 - deriveKey API 사용으로 Vault 불필요
 // localStorage에는 주소만 저장
 // ================================================================
@@ -11,13 +11,16 @@
     // 메모리 캐시
     wallet: null,
     getDefaultPath: function() {
-      return (window.LiberiaConfig && window.LiberiaConfig.BIP44_PATH) || "m/44'/60'/0'/0/0";
+      return (window.LiberiaConfig && window.LiberiaConfig.BIP44_PATH) || "m/44'/148'/0'";
+    },
+    getDefaultCurve: function() {
+      return (window.LiberiaConfig && window.LiberiaConfig.CURVE) || "ed25519";
     },
 
     // Storage 키
     KEYS: {
-      storage: 'liberia_wallet',
-      session: 'liberia_wallet_cache'
+      storage: 'liberia_stellar_wallet',
+      session: 'liberia_stellar_wallet_cache'
     },
 
     /**
@@ -110,7 +113,7 @@
       }
 
       const targetPath = path || this.getDefaultPath();
-      const targetCurve = curve || (window.LiberiaConfig && window.LiberiaConfig.CURVE) || "secp256k1";
+      const targetCurve = curve || this.getDefaultCurve();
       const derived = await adapter.getWallet(targetPath, targetCurve);
 
       // 주소 로컬 저장소 없으면 저장
@@ -159,5 +162,5 @@
     WalletStorage.init();
   }
 
-  console.log('[WalletStorage] Liberia module loaded - simplified (deriveKey API)');
+  console.log('[WalletStorage] Liberia Stellar module loaded - simplified (deriveKey API)');
 })();

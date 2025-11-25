@@ -91,8 +91,8 @@ function generateQRCodeForAddress() {
     try {
       new window.QRCode(qrContainer, {
         text: currentWallet.address,
-        width: 256,
-        height: 256,
+        width: 200,
+        height: 200,
         colorDark: "#000000",
         colorLight: "#ffffff",
         correctLevel: window.QRCode.CorrectLevel.M

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wallet Settings</title>
+    <link rel="stylesheet" href="../../app.css" />
+    <link rel="stylesheet" href="settings.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <button class="back-btn" onclick="navigateBack()">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12.5 5L7.5 10L12.5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <h1 class="header-title">Settings</h1>
+        <div class="header-spacer"></div>
+      </header>
+
+      <!-- Settings Content -->
+      <div class="settings-content">
+        <!-- Network Settings Section -->
+        <section class="settings-section">
+          <h2 class="section-title">Network Settings</h2>
+          <div class="settings-list">
+            <button class="settings-item" onclick="showNetworkSelector()">
+              <div class="settings-item-content">
+                <svg class="settings-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="10" cy="10" r="2" fill="currentColor"/>
+                  <circle cx="10" cy="10" r="5" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                  <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5" fill="none" stroke-dasharray="2 2"/>
+                </svg>
+                <div class="network-display">
+                  <div class="network-info">
+                    <span id="current-network-name" class="network-selected">Loading...</span>
+                    <span class="network-status"></span>
+                  </div>
+                </div>
+              </div>
+              <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </section>
+
+        <!-- Testnet Faucet Section (only for testnet/futurenet) -->
+        <section class="settings-section" id="faucet-section" style="display: none;">
+          <h2 class="section-title">Testnet Tools</h2>
+          <div class="settings-list">
+            <button class="settings-item" onclick="fundAccount()">
+              <div class="settings-item-content">
+                <svg class="settings-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 2L10 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M6 6L10 2L14 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M4 12H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M4 16H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <span>Fund Account (10,000 XLM)</span>
+              </div>
+              <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Network Selector Modal -->
+      <div id="network-modal" class="modal" style="display: none;">
+        <div class="modal-content network-modal-content">
+          <div class="modal-header">
+            <h3>Select Network</h3>
+            <button class="modal-close" onclick="closeNetworkModal()">×</button>
+          </div>
+          <div class="modal-body">
+            <!-- Network List -->
+            <div class="network-list">
+              <div class="network-item" onclick="selectNetwork('mainnet')">
+                <div class="network-item-content">
+                  <div class="network-details">
+                    <span class="network-name">Stellar Mainnet</span>
+                    <span class="network-chain">Main Network</span>
+                  </div>
+                </div>
+                <span id="mainnet-check" class="network-check" style="display: none;">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7 10L9 12L13 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </div>
+
+              <div class="network-item" onclick="selectNetwork('testnet')">
+                <div class="network-item-content">
+                  <div class="network-details">
+                    <span class="network-name">Stellar Testnet</span>
+                    <span class="network-chain">Test Network</span>
+                  </div>
+                </div>
+                <span id="testnet-check" class="network-check">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7 10L9 12L13 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </div>
+
+              <div class="network-item" onclick="selectNetwork('futurenet')">
+                <div class="network-item-content">
+                  <div class="network-details">
+                    <span class="network-name">Stellar Futurenet</span>
+                    <span class="network-chain">Future Network</span>
+                  </div>
+                </div>
+                <span id="futurenet-check" class="network-check" style="display: none;">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7 10L9 12L13 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../../assets/stellar-bundle.iife.js"></script>
+    <script src="../../utils/config.js"></script>
+    <script src="../../app.js"></script>
+    <script src="../../utils/helpers.js"></script>
+    <script src="../../utils/storage.js"></script>
+    <script src="settings.js"></script>
+  </body>
+</html>
