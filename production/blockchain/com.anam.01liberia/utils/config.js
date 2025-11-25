@@ -59,7 +59,7 @@
   // 활성 네트워크 가져오기
   function getActiveNetwork() {
     const saved = localStorage.getItem("liberia_stellar_active_network");
-    return saved || "testnet"; // 기본값은 testnet
+    return saved || "mainnet"; // 기본값은 mainnet
   }
 
   // 활성 네트워크 설정

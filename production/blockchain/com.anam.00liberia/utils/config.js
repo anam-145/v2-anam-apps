@@ -71,7 +71,7 @@
 
   function getActiveNetwork() {
     const saved = localStorage.getItem("liberia_active_network");
-    return saved || "sepolia";
+    return saved || "mainnet";
   }
 
   function setActiveNetwork(networkId) {
