@@ -7,8 +7,8 @@
   "use strict";
 
   const API_KEYS = {
-    ETHERSCAN: "ADGVUU56AP4I5HMIWN118Z8WPUNPZHF5QT", // Etherscan V2 - 모든 EVM 체인 지원
-    ALCHEMY: "KTCeB6pisOdbnHN7ercbQ",
+    ETHERSCAN: "GD4K6FTTVNF23VIICEYJ3AY3TP7RWT6PIY", // Etherscan V2 - 모든 EVM 체인 지원
+    ALCHEMY: "-U_T-L6mReK8r94w4Y2_K", // Base Mainnet & Sepolia 공용
   };
 
   const NETWORKS = {
@@ -24,7 +24,7 @@
     sepolia: {
       name: "Base Sepolia",
       chainId: 84532,
-      rpcEndpoint: "https://base-sepolia.g.alchemy.com/v2/-U_T-L6mReK8r94w4Y2_K",
+      rpcEndpoint: `https://base-sepolia.g.alchemy.com/v2/${API_KEYS.ALCHEMY}`,
       explorerUrl: "https://sepolia.basescan.org",
       explorerApiUrl: "https://api-sepolia.basescan.org/api",
       symbol: "ETH",

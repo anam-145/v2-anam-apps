@@ -181,9 +181,14 @@ function updateNetworkCheckmarks(networkId) {
 
 function clearNetworkCache() {
   // 네트워크 관련 캐시 삭제 (USDC용)
+  // 주의: liberia_active_network는 삭제하면 안 됨!
   const keys = Object.keys(localStorage);
   keys.forEach(key => {
-    if (key.startsWith('usdc_tx_') || key.startsWith('liberia_')) {
+    if (key === 'liberia_active_network') {
+      return; // 네트워크 설정은 유지
+    }
+    if (key.startsWith('usdc_tx_') || key.startsWith('liberia_tx_') ||
+        key.startsWith('liberia_balance_') || key.startsWith('liberia_price_')) {
       localStorage.removeItem(key);
     }
   });

@@ -116,6 +116,7 @@ async function showMainScreen() {
       updateBalance();
       loadTransactionHistory();
     }
+    checkNetworkStatus();
   }, 30000);
 }
 
@@ -147,14 +148,23 @@ function updateNetworkLabel() {
 }
 
 async function checkNetworkStatus() {
+  const statusElement = document.getElementById("network-status");
+  if (!statusElement) return;
+
   try {
     await adapter.initProvider();
     const blockNumber = await adapter.getBlockNumber();
     console.log("[Liberia] Current block:", blockNumber);
-    document.getElementById("network-status").style.color = "#4cff4c";
+    statusElement.style.color = "#4cff4c";
   } catch (error) {
-    console.log("[Liberia] Network error:", error);
-    document.getElementById("network-status").style.color = "#ff4444";
+    console.log("[Liberia] Network check failed:", error.message);
+    // RPC 실패해도 일단 노란색으로 (연결 시도 중)
+    // 완전 실패는 빨간색
+    if (adapter.provider) {
+      statusElement.style.color = "#ffcc00"; // 노란색: 연결됨 but 응답 없음
+    } else {
+      statusElement.style.color = "#ff4444"; // 빨간색: 연결 실패
+    }
   }
 }
 
