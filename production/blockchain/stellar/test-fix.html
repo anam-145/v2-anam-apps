@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Stellar2 Fix Test</title>
+  <style>
+    body { font-family: monospace; padding: 20px; }
+    .test { margin: 20px; padding: 20px; border: 1px solid #ccc; }
+    .success { color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <h1>Stellar2 Error Fix Test</h1>
+
+  <div class="test">
+    <h2>1. Settings Page Test</h2>
+    <button onclick="testSettings()">Test Settings Page</button>
+    <div id="settings-result"></div>
+  </div>
+
+  <div class="test">
+    <h2>2. Receive Page Test</h2>
+    <button onclick="testReceive()">Test Receive Page</button>
+    <div id="receive-result"></div>
+  </div>
+
+  <div class="test">
+    <h2>3. Global Functions Test</h2>
+    <button onclick="testGlobals()">Test Global Functions</button>
+    <div id="globals-result"></div>
+  </div>
+
+  <script>
+    async function testSettings() {
+      const result = document.getElementById('settings-result');
+      try {
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = 'pages/settings/settings.html';
+        document.body.appendChild(iframe);
+
+        setTimeout(() => {
+          const errors = [];
+          // Check if navigateBack is defined
+          if (!iframe.contentWindow.navigateBack) {
+            errors.push('❌ navigateBack not defined');
+          } else {
+            errors.push('✅ navigateBack defined');
+          }
+
+          // Check if showToast doesn't conflict
+          if (!iframe.contentWindow.StellarUtils?.showToast) {
+            errors.push('❌ showToast not available');
+          } else {
+            errors.push('✅ showToast available');
+          }
+
+          result.innerHTML = errors.join('<br>');
+          document.body.removeChild(iframe);
+        }, 1000);
+      } catch (error) {
+        result.innerHTML = `<span class="error">Error: ${error.message}</span>`;
+      }
+    }
+
+    async function testReceive() {
+      const result = document.getElementById('receive-result');
+      try {
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = 'pages/receive/receive.html';
+        document.body.appendChild(iframe);
+
+        setTimeout(() => {
+          const errors = [];
+          // Check if fundTestAccount is defined
+          if (!iframe.contentWindow.fundTestAccount) {
+            errors.push('❌ fundTestAccount not defined');
+          } else {
+            errors.push('✅ fundTestAccount defined');
+          }
+
+          // Check if copyAddress is defined
+          if (!iframe.contentWindow.copyAddress) {
+            errors.push('❌ copyAddress not defined');
+          } else {
+            errors.push('✅ copyAddress defined');
+          }
+
+          result.innerHTML = errors.join('<br>');
+          document.body.removeChild(iframe);
+        }, 1000);
+      } catch (error) {
+        result.innerHTML = `<span class="error">Error: ${error.message}</span>`;
+      }
+    }
+
+    function testGlobals() {
+      const result = document.getElementById('globals-result');
+      const checks = [];
+
+      // Load scripts
+      const script1 = document.createElement('script');
+      script1.src = 'utils/helpers.js';
+      document.head.appendChild(script1);
+
+      setTimeout(() => {
+        if (window.StellarUtils) {
+          checks.push('✅ StellarUtils loaded');
+          if (window.StellarUtils.showToast) {
+            checks.push('✅ showToast function available');
+          } else {
+            checks.push('❌ showToast function not available');
+          }
+        } else {
+          checks.push('❌ StellarUtils not loaded');
+        }
+
+        result.innerHTML = checks.join('<br>');
+      }, 500);
+    }
+  </script>
+</body>
+</html>

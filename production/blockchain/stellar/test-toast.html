@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Stellar2 Toast Test</title>
+  <link rel="stylesheet" href="app.css">
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-container {
+      margin: 20px;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .test-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .test-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      color: white;
+    }
+    .success { background: #4CAF50; }
+    .error { background: #F44336; }
+    .warning { background: #FF9800; }
+    .info { background: #2196F3; }
+    .default { background: #333; }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>Stellar2 Toast Message Test</h1>
+
+    <h2>Test Toast Messages</h2>
+    <div class="test-buttons">
+      <button class="test-btn success" onclick="testToast('success')">Success Toast</button>
+      <button class="test-btn error" onclick="testToast('error')">Error Toast</button>
+      <button class="test-btn warning" onclick="testToast('warning')">Warning Toast</button>
+      <button class="test-btn info" onclick="testToast('info')">Info Toast</button>
+      <button class="test-btn default" onclick="testToast('default')">Default Toast</button>
+    </div>
+
+    <h2>Test Long Messages</h2>
+    <button class="test-btn info" onclick="testLongToast()">Long Message Toast</button>
+
+    <h2>Test Rapid Fire</h2>
+    <button class="test-btn warning" onclick="testRapidToasts()">Rapid Toasts (5x)</button>
+
+    <div id="log" style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 4px; min-height: 100px; font-size: 12px;">
+      <strong>Log:</strong><br>
+    </div>
+  </div>
+
+  <!-- Load helpers -->
+  <script src="utils/helpers.js"></script>
+
+  <script>
+    // Log helper
+    function log(msg) {
+      const logDiv = document.getElementById('log');
+      const time = new Date().toLocaleTimeString();
+      logDiv.innerHTML += `${time}: ${msg}<br>`;
+    }
+
+    // Test basic toast
+    function testToast(type) {
+      const messages = {
+        success: 'Operation completed successfully!',
+        error: 'An error occurred. Please try again.',
+        warning: 'Warning: This action cannot be undone.',
+        info: 'Information: Your balance has been updated.',
+        default: 'This is a default toast message.'
+      };
+
+      const message = messages[type] || messages.default;
+      const toastType = type === 'default' ? undefined : type;
+
+      log(`Showing ${type} toast: "${message}"`);
+
+      if (window.StellarUtils && window.StellarUtils.showToast) {
+        window.StellarUtils.showToast(message, toastType);
+      } else {
+        // Direct call if not wrapped
+        showToast(message, toastType);
+      }
+
+      // Check if toast was created
+      setTimeout(() => {
+        const toast = document.querySelector('.toast');
+        if (toast) {
+          const computed = window.getComputedStyle(toast);
+          log(`Toast created with background: ${computed.backgroundColor}, color: ${computed.color}`);
+        } else {
+          log('ERROR: Toast element not found!');
+        }
+      }, 100);
+    }
+
+    // Test long message
+    function testLongToast() {
+      const longMessage = 'This is a very long message to test how the toast handles extended text content that might wrap to multiple lines or extend beyond the normal width of the toast notification.';
+      log(`Showing long toast message (${longMessage.length} chars)`);
+
+      if (window.StellarUtils && window.StellarUtils.showToast) {
+        window.StellarUtils.showToast(longMessage, 'info');
+      } else {
+        showToast(longMessage, 'info');
+      }
+    }
+
+    // Test rapid toasts
+    function testRapidToasts() {
+      const types = ['success', 'error', 'warning', 'info', 'success'];
+      log('Starting rapid toast test (5 toasts, 500ms apart)');
+
+      types.forEach((type, index) => {
+        setTimeout(() => {
+          const msg = `Toast ${index + 1} of 5 (${type})`;
+          log(`Showing: ${msg}`);
+
+          if (window.StellarUtils && window.StellarUtils.showToast) {
+            window.StellarUtils.showToast(msg, type);
+          } else {
+            showToast(msg, type);
+          }
+        }, index * 500);
+      });
+    }
+
+    // Initial check
+    window.addEventListener('DOMContentLoaded', () => {
+      log('Page loaded');
+
+      // Check if functions are available
+      if (typeof showToast !== 'undefined') {
+        log('✓ showToast function is available (direct)');
+      }
+
+      if (window.StellarUtils && window.StellarUtils.showToast) {
+        log('✓ StellarUtils.showToast is available');
+      }
+
+      if (typeof showToast === 'undefined' && (!window.StellarUtils || !window.StellarUtils.showToast)) {
+        log('✗ No toast function found!');
+      }
+    });
+  </script>
+</body>
+</html>

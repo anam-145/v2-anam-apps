@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Receive Stellar</title>
+    <link rel="stylesheet" href="../../app.css" />
+    <link rel="stylesheet" href="receive.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="receive-screen">
+        <!-- Header -->
+        <header class="header">
+          <button class="back-btn" onclick="goBack()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <h1 class="header-title">Receive <span class="coin-symbol">XLM</span></h1>
+          <div style="width: 24px;"></div>
+        </header>
+
+        <!-- Content -->
+        <div class="receive-content">
+          <div class="qr-section">
+            <div class="qr-container" id="qr-code">
+              <!-- QR code will be generated here -->
+            </div>
+          </div>
+
+          <div class="address-section">
+            <div class="address-label">Address</div>
+            <div class="receive-address-box">
+              <span id="receive-address">Loading...</span>
+              <button class="copy-btn" onclick="copyAddress()">Copy</button>
+            </div>
+          </div>
+
+          <div class="receive-info">
+            <p>You can send <strong class="coin-name">Stellar Lumens (XLM)</strong> to this address.</p>
+            <p class="receive-warning">Sending other coins may result in loss of funds.</p>
+          </div>
+
+          <!-- Testnet Funding Button (only shown on testnet/futurenet) -->
+          <div id="testnet-section" class="testnet-section" style="display: none;">
+            <button class="testnet-fund-btn" onclick="fundTestAccount()">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 2L3 7V11C3 14.55 5.84 17.74 10 18.5C14.16 17.74 17 14.55 17 11V7L10 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M10 10L10 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <circle cx="10" cy="7" r="1" fill="currentColor"/>
+              </svg>
+              Fund Test Account (10,000 XLM)
+            </button>
+            <p class="testnet-info">Get free testnet XLM from Friendbot</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Required Libraries -->
+    <!-- QR Code generation library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <!-- Stellar SDK -->
+    <script src="../../assets/stellar-bundle.iife.js"></script>
+
+    <!-- Storage -->
+    <script src="../../utils/storage.js"></script>
+
+    <!-- Configuration -->
+    <script src="../../utils/config.js"></script>
+
+    <!-- App Common Code -->
+    <script src="../../app.js"></script>
+
+    <!-- Utils -->
+    <script src="../../utils/helpers.js"></script>
+
+    <!-- Main Logic -->
+    <script src="receive.js"></script>
+  </body>
+</html>

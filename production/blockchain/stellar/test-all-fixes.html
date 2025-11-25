@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Stellar2 All Fixes Test</title>
+  <style>
+    body { font-family: monospace; padding: 20px; }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    .success { color: green; }
+    .error { color: red; }
+    .warning { color: orange; }
+    h2 { color: #333; }
+    iframe {
+      width: 100%;
+      height: 400px;
+      border: 1px solid #ddd;
+      margin-top: 10px;
+    }
+    .test-results {
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Stellar2 Module - Complete Test Suite</h1>
+  <p>This test verifies all fixes for the stellar2 module to ensure it matches Bitcoin, Ethereum, Solana, Sui, and Cosmos patterns.</p>
+
+  <div class="test-section">
+    <h2>1. Module Structure Test</h2>
+    <button onclick="testStructure()">Test Module Structure</button>
+    <div id="structure-result" class="test-results"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>2. Receive Page Test</h2>
+    <button onclick="testReceivePage()">Test Receive Page</button>
+    <div id="receive-result" class="test-results"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>3. Send Page Test</h2>
+    <button onclick="testSendPage()">Test Send Page</button>
+    <div id="send-result" class="test-results"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>4. Toast Message Test</h2>
+    <button onclick="testToast()">Test Toast</button>
+    <div id="toast-result" class="test-results"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>5. Mnemonic Flow Test</h2>
+    <button onclick="testMnemonicFlow()">Test Mnemonic Flow</button>
+    <div id="mnemonic-result" class="test-results"></div>
+  </div>
+
+  <script>
+    // Helper to check if file exists
+    async function fileExists(path) {
+      try {
+        const response = await fetch(path, { method: 'HEAD' });
+        return response.ok;
+      } catch {
+        return false;
+      }
+    }
+
+    // Test 1: Module Structure
+    async function testStructure() {
+      const result = document.getElementById('structure-result');
+      result.innerHTML = 'Testing module structure...<br>';
+
+      const checks = [];
+
+      // Should NOT exist
+      const shouldNotExist = [
+        'index.html'  // Root index.html should not exist
+      ];
+
+      // Should exist
+      const shouldExist = [
+        'pages/index/index.html',
+        'pages/index/index.js',
+        'pages/index/mnemonic/mnemonic-flow.js',
+        'pages/index/mnemonic/step1-warning.js',
+        'pages/index/mnemonic/step2-display.js',
+        'pages/index/mnemonic/step3-verify.js',
+        'pages/send/send.html',
+        'pages/send/send.js',
+        'pages/receive/receive.html',
+        'pages/receive/receive.js',
+        'pages/settings/settings.html',
+        'pages/settings/settings.js',
+        'app.js',
+        'app.css',
+        'utils/config.js',
+        'utils/helpers.js',
+        'utils/storage.js'
+      ];
+
+      for (const file of shouldNotExist) {
+        const exists = await fileExists(file);
+        if (!exists) {
+          checks.push(`✅ ${file} correctly removed`);
+        } else {
+          checks.push(`❌ ${file} should not exist (like Bitcoin/Ethereum)`);
+        }
+      }
+
+      for (const file of shouldExist) {
+        const exists = await fileExists(file);
+        if (exists) {
+          checks.push(`✅ ${file} exists`);
+        } else {
+          checks.push(`❌ ${file} missing`);
+        }
+      }
+
+      result.innerHTML = checks.join('<br>');
+    }
+
+    // Test 2: Receive Page
+    function testReceivePage() {
+      const result = document.getElementById('receive-result');
+      result.innerHTML = 'Loading receive page...<br>';
+
+      const iframe = document.createElement('iframe');
+      iframe.src = 'pages/receive/receive.html';
+
+      iframe.onload = () => {
+        setTimeout(() => {
+          const checks = [];
+          const win = iframe.contentWindow;
+
+          // Check if goBack is defined
+          if (typeof win.goBack === 'function') {
+            checks.push('✅ goBack function is defined');
+          } else {
+            checks.push('❌ goBack function not defined');
+          }
+
+          // Check if copyAddress is defined
+          if (typeof win.copyAddress === 'function') {
+            checks.push('✅ copyAddress function is defined');
+          } else {
+            checks.push('❌ copyAddress function not defined');
+          }
+
+          // Check if fundTestAccount is defined
+          if (typeof win.fundTestAccount === 'function') {
+            checks.push('✅ fundTestAccount function is defined');
+          } else {
+            checks.push('❌ fundTestAccount function not defined');
+          }
+
+          // Check for duplicate declaration errors
+          const errors = win.console.error ? 'Has console errors' : 'No console errors';
+          checks.push(`ℹ️ Console: ${errors}`);
+
+          result.innerHTML = checks.join('<br>');
+          result.appendChild(iframe);
+        }, 1000);
+      };
+
+      iframe.onerror = () => {
+        result.innerHTML = '<span class="error">Failed to load receive page</span>';
+      };
+    }
+
+    // Test 3: Send Page
+    function testSendPage() {
+      const result = document.getElementById('send-result');
+      result.innerHTML = 'Loading send page...<br>';
+
+      const iframe = document.createElement('iframe');
+      iframe.src = 'pages/send/send.html';
+
+      iframe.onload = () => {
+        setTimeout(() => {
+          const checks = [];
+          const win = iframe.contentWindow;
+
+          // Check if goBack is defined
+          if (typeof win.goBack === 'function') {
+            checks.push('✅ goBack function is defined');
+          } else {
+            checks.push('❌ goBack function not defined');
+          }
+
+          // Check if confirmSend is defined
+          if (typeof win.confirmSend === 'function') {
+            checks.push('✅ confirmSend function is defined');
+          } else {
+            checks.push('❌ confirmSend function not defined');
+          }
+
+          // Check if scanQRCode is defined
+          if (typeof win.scanQRCode === 'function') {
+            checks.push('✅ scanQRCode function is defined');
+          } else {
+            checks.push('❌ scanQRCode function not defined');
+          }
+
+          result.innerHTML = checks.join('<br>');
+          result.appendChild(iframe);
+        }, 1000);
+      };
+
+      iframe.onerror = () => {
+        result.innerHTML = '<span class="error">Failed to load send page</span>';
+      };
+    }
+
+    // Test 4: Toast
+    async function testToast() {
+      const result = document.getElementById('toast-result');
+      result.innerHTML = 'Testing toast messages...<br>';
+
+      // Load required scripts
+      const scripts = [
+        'assets/stellar-bundle.iife.js',
+        'utils/config.js',
+        'utils/storage.js',
+        'utils/helpers.js'
+      ];
+
+      for (const src of scripts) {
+        const script = document.createElement('script');
+        script.src = src;
+        document.head.appendChild(script);
+        await new Promise(resolve => script.onload = resolve);
+      }
+
+      setTimeout(() => {
+        const checks = [];
+
+        if (window.StellarUtils && window.StellarUtils.showToast) {
+          checks.push('✅ showToast function available');
+
+          // Test toast
+          window.StellarUtils.showToast('Test toast message', 'success');
+
+          setTimeout(() => {
+            const toast = document.querySelector('.toast');
+            if (toast) {
+              const styles = window.getComputedStyle(toast);
+              checks.push(`✅ Toast created`);
+              checks.push(`   Background: ${styles.backgroundColor}`);
+              checks.push(`   Text color: ${styles.color}`);
+
+              // Check if text is visible
+              const bgColor = styles.backgroundColor;
+              const textColor = styles.color;
+              if (textColor && textColor !== 'rgba(0, 0, 0, 0)') {
+                checks.push('✅ Text color is set (should be visible)');
+              } else {
+                checks.push('❌ Text color issue - text may not be visible');
+              }
+            } else {
+              checks.push('❌ Toast element not created');
+            }
+
+            result.innerHTML = checks.join('<br>');
+          }, 100);
+        } else {
+          checks.push('❌ showToast not available');
+          result.innerHTML = checks.join('<br>');
+        }
+      }, 500);
+    }
+
+    // Test 5: Mnemonic Flow
+    function testMnemonicFlow() {
+      const result = document.getElementById('mnemonic-result');
+      result.innerHTML = 'Loading index page to test mnemonic flow...<br>';
+
+      const iframe = document.createElement('iframe');
+      iframe.src = 'pages/index/index.html';
+
+      iframe.onload = () => {
+        setTimeout(() => {
+          const checks = [];
+          const win = iframe.contentWindow;
+
+          // Check if mnemonic flow is available
+          if (win.mnemonicFlow) {
+            checks.push('✅ MnemonicFlow manager loaded');
+          } else {
+            checks.push('❌ MnemonicFlow manager not loaded');
+          }
+
+          // Check if startMnemonicFlow is defined
+          if (typeof win.startMnemonicFlow === 'function') {
+            checks.push('✅ startMnemonicFlow function available');
+          } else {
+            checks.push('❌ startMnemonicFlow function not available');
+          }
+
+          // Check if createWallet is defined
+          if (typeof win.createWallet === 'function') {
+            checks.push('✅ createWallet function available');
+          } else {
+            checks.push('❌ createWallet function not available');
+          }
+
+          // Check if onMnemonicFlowComplete callback is defined
+          if (typeof win.onMnemonicFlowComplete === 'function') {
+            checks.push('✅ onMnemonicFlowComplete callback defined');
+          } else {
+            checks.push('❌ onMnemonicFlowComplete callback not defined');
+          }
+
+          result.innerHTML = checks.join('<br>');
+          result.appendChild(iframe);
+        }, 1500);
+      };
+
+      iframe.onerror = () => {
+        result.innerHTML = '<span class="error">Failed to load index page</span>';
+      };
+    }
+  </script>
+</body>
+</html>

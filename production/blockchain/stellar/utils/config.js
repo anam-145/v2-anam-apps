@@ -1,0 +1,256 @@
+// ================================================================
+// Stellar 중앙 설정 파일
+// 네트워크 설정, API 엔드포인트 등을 중앙 관리
+// ================================================================
+
+(function() {
+  'use strict';
+
+  // ================================================================
+  // 네트워크 설정
+  // ================================================================
+
+  const NETWORKS = {
+    mainnet: {
+      id: 'mainnet',
+      name: 'mainnet',
+      displayName: 'Stellar Mainnet',
+      horizonUrl: 'https://horizon.stellar.org',
+      passphrase: 'Public Global Stellar Network ; September 2015',
+      explorerUrl: 'https://stellar.expert/explorer/public',
+      friendbotUrl: null
+    },
+    testnet: {
+      id: 'testnet',
+      name: 'testnet',
+      displayName: 'Stellar Testnet',
+      horizonUrl: 'https://horizon-testnet.stellar.org',
+      passphrase: 'Test SDF Network ; September 2015',
+      explorerUrl: 'https://stellar.expert/explorer/testnet',
+      friendbotUrl: 'https://friendbot.stellar.org'
+    },
+    futurenet: {
+      id: 'futurenet',
+      name: 'futurenet',
+      displayName: 'Stellar Futurenet',
+      horizonUrl: 'https://horizon-futurenet.stellar.org',
+      passphrase: 'Test SDF Future Network ; October 2022',
+      explorerUrl: 'https://stellar.expert/explorer/futurenet',
+      friendbotUrl: 'https://friendbot-futurenet.stellar.org'
+    }
+  };
+
+  // ================================================================
+  // 네트워크 관리
+  // ================================================================
+
+  // 활성 네트워크 가져오기
+  function getActiveNetwork() {
+    const saved = localStorage.getItem('stellar_active_network');
+    return saved || 'testnet'; // 기본값은 testnet
+  }
+
+  // 활성 네트워크 설정
+  function setActiveNetwork(networkId) {
+    if (!NETWORKS[networkId]) {
+      console.error(`[StellarConfig] Invalid network ID: ${networkId}`);
+      return false;
+    }
+
+    localStorage.setItem('stellar_active_network', networkId);
+
+    // 네트워크 변경 이벤트 발생
+    window.dispatchEvent(new CustomEvent('stellarNetworkChanged', {
+      detail: { network: networkId }
+    }));
+
+    return true;
+  }
+
+  // 현재 네트워크 설정 가져오기
+  function getCurrentNetwork() {
+    const activeId = getActiveNetwork();
+    return NETWORKS[activeId] || NETWORKS.testnet;
+  }
+
+  // ================================================================
+  // 캐시 설정
+  // ================================================================
+
+  const CACHE_CONFIG = {
+    // 트랜잭션 캐시
+    TX_CACHE_KEY: 'stellar_tx_cache',
+    TX_CACHE_TTL: 1 * 60 * 1000,  // 1분
+
+    // 잔액 캐시
+    BALANCE_CACHE_KEY: 'stellar_balance_cache',
+    BALANCE_CACHE_TTL: 30 * 1000,  // 30초
+
+    // 가격 캐시
+    PRICE_CACHE_KEY: 'stellar_price_cache',
+    PRICE_CACHE_TTL: 60 * 1000,  // 1분
+  };
+
+  // ================================================================
+  // 트랜잭션 설정
+  // ================================================================
+
+  const TRANSACTION_CONFIG = {
+    // 수수료 (stroops)
+    BASE_FEE: 100,           // 100 stroops = 0.00001 XLM
+    DEFAULT_FEE: 100,
+
+    // 계정 최소 잔액
+    MIN_BALANCE: 1,          // 1 XLM (계정 활성화 최소 금액)
+    MIN_AMOUNT: '0.0000001', // 최소 전송 금액 (1 stroop)
+
+    // 타임아웃 설정
+    TIMEOUT: 30,             // 30 seconds
+    CONFIRMATION_TIME: 5000, // 5 seconds (Stellar는 빠름)
+
+    // 재시도 설정
+    MAX_RETRY_ATTEMPTS: 3,
+    RETRY_DELAY: 2000,  // 2초
+  };
+
+  // ================================================================
+  // UI 설정
+  // ================================================================
+
+  const UI_CONFIG = {
+    // 토스트 메시지
+    TOAST_DURATION: 3000,  // 3초
+
+    // 새로고침 간격
+    BALANCE_REFRESH_INTERVAL: 30000,  // 30초
+    TX_REFRESH_INTERVAL: 30000,  // 30초
+
+    // 페이지네이션
+    TX_PER_PAGE: 10,
+    MAX_TX_DISPLAY: 50,
+
+    // 주소 표시
+    ADDRESS_DISPLAY_CHARS: 6,
+
+    // 애니메이션
+    ANIMATION_DURATION: 300,  // ms
+  };
+
+  // ================================================================
+  // API 설정
+  // ================================================================
+
+  const API_CONFIG = {
+    PRICE_API: 'https://api.coingecko.com/api/v3/simple/price?ids=stellar&vs_currencies=usd'
+  };
+
+  // ================================================================
+  // API 헬퍼 함수
+  // ================================================================
+
+  // Horizon API URL 생성
+  function getHorizonUrl(endpoint = '') {
+    const network = getCurrentNetwork();
+    return network.horizonUrl + endpoint;
+  }
+
+  // Explorer URL 생성
+  function getExplorerUrl(type, value) {
+    const network = getCurrentNetwork();
+    const baseUrl = network.explorerUrl;
+
+    switch(type) {
+      case 'tx':
+        return `${baseUrl}/tx/${value}`;
+      case 'account':
+      case 'address':
+        return `${baseUrl}/account/${value}`;
+      default:
+        return baseUrl;
+    }
+  }
+
+  // 주소 유효성 검증 (Stellar G... 형식)
+  function isValidAddress(address) {
+    if (!address || typeof address !== 'string') {
+      return false;
+    }
+
+    // Stellar 주소: G로 시작하는 56자
+    return /^G[A-Z2-7]{55}$/.test(address);
+  }
+
+  // ================================================================
+  // 캐시 관리
+  // ================================================================
+
+  function clearNetworkCache() {
+    // 네트워크 관련 캐시 삭제
+    localStorage.removeItem(CACHE_CONFIG.TX_CACHE_KEY);
+    localStorage.removeItem(CACHE_CONFIG.BALANCE_CACHE_KEY);
+    localStorage.removeItem(CACHE_CONFIG.PRICE_CACHE_KEY);
+    console.log('[StellarConfig] Network cache cleared');
+  }
+
+  // ================================================================
+  // 전역 설정 객체
+  // ================================================================
+
+  const StellarConfig = {
+    // 네트워크
+    NETWORKS,
+
+    // 네트워크 관리
+    getActiveNetwork,
+    setActiveNetwork,
+    getCurrentNetwork,
+
+    // 캐시
+    CACHE: CACHE_CONFIG,
+
+    // 트랜잭션
+    TRANSACTION: TRANSACTION_CONFIG,
+
+    // UI
+    UI: UI_CONFIG,
+
+    // API
+    API: API_CONFIG,
+
+    // 헬퍼 함수
+    getHorizonUrl,
+    getExplorerUrl,
+    isValidAddress,
+    clearNetworkCache,
+
+    // 현재 네트워크 바로가기
+    get currentNetwork() {
+      return this.getCurrentNetwork();
+    },
+
+    get horizonUrl() {
+      return this.currentNetwork.horizonUrl;
+    },
+
+    get explorerUrl() {
+      return this.currentNetwork.explorerUrl;
+    },
+
+    get networkName() {
+      return this.currentNetwork.name;
+    },
+
+    get displayName() {
+      return this.currentNetwork.displayName;
+    }
+  };
+
+  // ================================================================
+  // 모듈 내보내기
+  // ================================================================
+
+  window.StellarConfig = StellarConfig;
+
+  console.log('[StellarConfig] Module loaded');
+  console.log('[StellarConfig] Active network:', StellarConfig.getActiveNetwork());
+})();

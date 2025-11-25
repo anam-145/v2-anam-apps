@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Stellar2 최종 테스트</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .test-section {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 { color: #08B5E5; }
+    h2 { color: #333; margin-bottom: 15px; }
+    .test-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .test-item {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 15px;
+    }
+    .success { color: #4CAF50; font-weight: bold; }
+    .error { color: #F44336; font-weight: bold; }
+    .warning { color: #FF9800; font-weight: bold; }
+    .info { color: #2196F3; }
+    button {
+      background: #08B5E5;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    button:hover {
+      background: #0691B7;
+    }
+    .result {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f9f9f9;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+    iframe {
+      width: 100%;
+      height: 600px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>🚀 Stellar2 모듈 최종 테스트</h1>
+    <p>Bitcoin, Ethereum, Solana, Cosmos, Sui와 완전히 일치하는지 확인합니다.</p>
+
+    <div class="test-section">
+      <h2>✅ 수정 완료 사항</h2>
+      <ul>
+        <li class="success">✓ send.js의 showToast 중복 선언 오류 해결</li>
+        <li class="success">✓ 설정 아이콘 SVG 파일 추가 (assets/images/settings.svg)</li>
+        <li class="success">✓ 전체 CSS 파일 Bitcoin과 통일 (색상만 Stellar로 변경)</li>
+        <li class="success">✓ HTML 구조 영어 주석으로 통일</li>
+        <li class="success">✓ 니모닉 플로우 추가 및 Stellar 어댑터 연결</li>
+        <li class="success">✓ Toast 메시지 텍스트 색상 문제 해결</li>
+      </ul>
+    </div>
+
+    <div class="test-section">
+      <h2>1. 파일 구조 테스트</h2>
+      <button onclick="testFileStructure()">파일 구조 확인</button>
+      <div id="structure-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+      <h2>2. 메인 페이지 테스트</h2>
+      <button onclick="testMainPage()">메인 페이지 로드</button>
+      <div id="main-result" class="result"></div>
+      <div id="main-iframe"></div>
+    </div>
+
+    <div class="test-section">
+      <h2>3. 각 페이지 오류 확인</h2>
+      <div class="test-grid">
+        <div class="test-item">
+          <h3>Send Page</h3>
+          <button onclick="testPage('send')">테스트</button>
+          <div id="send-errors" class="result"></div>
+        </div>
+        <div class="test-item">
+          <h3>Receive Page</h3>
+          <button onclick="testPage('receive')">테스트</button>
+          <div id="receive-errors" class="result"></div>
+        </div>
+        <div class="test-item">
+          <h3>Settings Page</h3>
+          <button onclick="testPage('settings')">테스트</button>
+          <div id="settings-errors" class="result"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <h2>4. Toast 메시지 테스트</h2>
+      <button onclick="testToastVisibility()">Toast 표시 테스트</button>
+      <div id="toast-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+      <h2>5. 스타일 일관성 테스트</h2>
+      <button onclick="testStyleConsistency()">스타일 확인</button>
+      <div id="style-result" class="result"></div>
+    </div>
+  </div>
+
+  <script>
+    // 1. 파일 구조 테스트
+    async function testFileStructure() {
+      const result = document.getElementById('structure-result');
+      result.innerHTML = '확인 중...';
+
+      const requiredFiles = [
+        'app.js',
+        'app.css',
+        'utils/config.js',
+        'utils/helpers.js',
+        'utils/storage.js',
+        'assets/images/settings.svg',
+        'assets/stellar-bundle.iife.js',
+        'pages/index/index.html',
+        'pages/index/index.js',
+        'pages/index/index.css',
+        'pages/index/mnemonic/mnemonic-flow.js',
+        'pages/send/send.html',
+        'pages/send/send.js',
+        'pages/send/send.css',
+        'pages/receive/receive.html',
+        'pages/receive/receive.js',
+        'pages/receive/receive.css',
+        'pages/settings/settings.html',
+        'pages/settings/settings.js',
+        'pages/settings/settings.css'
+      ];
+
+      const checks = [];
+      for (const file of requiredFiles) {
+        try {
+          const response = await fetch(file, { method: 'HEAD' });
+          if (response.ok) {
+            checks.push(`<span class="success">✓</span> ${file}`);
+          } else {
+            checks.push(`<span class="error">✗</span> ${file} (${response.status})`);
+          }
+        } catch (error) {
+          checks.push(`<span class="error">✗</span> ${file} (에러)`);
+        }
+      }
+
+      // index.html이 루트에 없어야 함
+      try {
+        const response = await fetch('index.html', { method: 'HEAD' });
+        if (!response.ok) {
+          checks.push(`<span class="success">✓</span> 루트 index.html 없음 (정상)`);
+        } else {
+          checks.push(`<span class="error">✗</span> 루트 index.html 존재 (제거 필요)`);
+        }
+      } catch {
+        checks.push(`<span class="success">✓</span> 루트 index.html 없음 (정상)`);
+      }
+
+      result.innerHTML = checks.join('<br>');
+    }
+
+    // 2. 메인 페이지 테스트
+    function testMainPage() {
+      const result = document.getElementById('main-result');
+      const container = document.getElementById('main-iframe');
+
+      result.innerHTML = '페이지 로딩 중...';
+      container.innerHTML = '';
+
+      const iframe = document.createElement('iframe');
+      iframe.src = 'pages/index/index.html';
+
+      iframe.onload = () => {
+        setTimeout(() => {
+          const win = iframe.contentWindow;
+          const checks = [];
+
+          // Console 에러 체크를 위한 proxy
+          const originalError = win.console.error;
+          let errorCount = 0;
+          win.console.error = function() {
+            errorCount++;
+            originalError.apply(win.console, arguments);
+          };
+
+          // 주요 함수들 확인
+          const functions = [
+            'createWallet',
+            'importFromMnemonic',
+            'startMnemonicFlow',
+            'copyAddress',
+            'navigateToSend',
+            'navigateToReceive',
+            'navigateToSettings'
+          ];
+
+          for (const func of functions) {
+            if (typeof win[func] === 'function') {
+              checks.push(`<span class="success">✓</span> ${func} 함수 정의됨`);
+            } else {
+              checks.push(`<span class="error">✗</span> ${func} 함수 없음`);
+            }
+          }
+
+          // showToast 중복 확인
+          if (typeof win.showToast === 'undefined') {
+            checks.push(`<span class="success">✓</span> showToast 중복 선언 없음`);
+          } else {
+            checks.push(`<span class="error">✗</span> showToast가 전역에 선언됨`);
+          }
+
+          // StellarUtils 확인
+          if (win.StellarUtils && win.StellarUtils.showToast) {
+            checks.push(`<span class="success">✓</span> StellarUtils.showToast 사용 가능`);
+          } else {
+            checks.push(`<span class="warning">⚠</span> StellarUtils.showToast 없음`);
+          }
+
+          result.innerHTML = checks.join('<br>') +
+            `<br><br>콘솔 에러: ${errorCount}개`;
+        }, 1500);
+      };
+
+      container.appendChild(iframe);
+    }
+
+    // 3. 각 페이지 오류 확인
+    function testPage(pageName) {
+      const result = document.getElementById(`${pageName}-errors`);
+      result.innerHTML = '확인 중...';
+
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = `pages/${pageName}/${pageName}.html`;
+      document.body.appendChild(iframe);
+
+      iframe.onload = () => {
+        setTimeout(() => {
+          const win = iframe.contentWindow;
+          let errors = [];
+
+          // Console 에러 캐치
+          const originalError = win.console.error;
+          win.console.error = function(msg) {
+            errors.push(msg);
+            originalError.apply(win.console, arguments);
+          };
+
+          // 필수 함수 확인
+          const requiredFunctions = {
+            send: ['goBack', 'confirmSend', 'scanQRCode'],
+            receive: ['goBack', 'copyAddress', 'fundTestAccount'],
+            settings: ['navigateBack', 'showRecoveryPhrase', 'deleteWallet']
+          };
+
+          const funcs = requiredFunctions[pageName] || [];
+          for (const func of funcs) {
+            if (typeof win[func] !== 'function') {
+              errors.push(`${func} 함수 없음`);
+            }
+          }
+
+          if (errors.length === 0) {
+            result.innerHTML = '<span class="success">✓ 오류 없음</span>';
+          } else {
+            result.innerHTML = '<span class="error">오류 발견:</span><br>' +
+              errors.map(e => `- ${e}`).join('<br>');
+          }
+
+          document.body.removeChild(iframe);
+        }, 1000);
+      };
+    }
+
+    // 4. Toast 테스트
+    async function testToastVisibility() {
+      const result = document.getElementById('toast-result');
+      result.innerHTML = 'Toast 테스트 중...';
+
+      // 필요한 스크립트 로드
+      const scripts = [
+        'assets/stellar-bundle.iife.js',
+        'utils/config.js',
+        'utils/storage.js',
+        'utils/helpers.js',
+        'app.js'
+      ];
+
+      for (const src of scripts) {
+        if (!document.querySelector(`script[src="${src}"]`)) {
+          const script = document.createElement('script');
+          script.src = src;
+          document.head.appendChild(script);
+          await new Promise(resolve => script.onload = resolve);
+        }
+      }
+
+      setTimeout(() => {
+        if (window.StellarUtils && window.StellarUtils.showToast) {
+          // Toast 생성
+          window.StellarUtils.showToast('테스트 메시지입니다', 'success');
+
+          setTimeout(() => {
+            const toast = document.querySelector('.toast');
+            if (toast) {
+              const styles = window.getComputedStyle(toast);
+              const bgColor = styles.backgroundColor;
+              const textColor = styles.color;
+
+              result.innerHTML = `
+                <span class="success">✓ Toast 생성됨</span><br>
+                배경색: ${bgColor}<br>
+                텍스트색: ${textColor}<br>
+                ${textColor === 'rgb(255, 255, 255)' || textColor === 'white' ?
+                  '<span class="success">✓ 텍스트가 보입니다</span>' :
+                  '<span class="error">✗ 텍스트 색상 문제</span>'}
+              `;
+            } else {
+              result.innerHTML = '<span class="error">✗ Toast 생성 실패</span>';
+            }
+          }, 100);
+        } else {
+          result.innerHTML = '<span class="error">✗ showToast 함수 없음</span>';
+        }
+      }, 500);
+    }
+
+    // 5. 스타일 일관성 테스트
+    async function testStyleConsistency() {
+      const result = document.getElementById('style-result');
+      result.innerHTML = '스타일 확인 중...';
+
+      // CSS 파일 확인
+      const cssFiles = [
+        'app.css',
+        'pages/index/index.css',
+        'pages/send/send.css',
+        'pages/receive/receive.css',
+        'pages/settings/settings.css'
+      ];
+
+      const checks = [];
+
+      // CSS 변수 확인
+      const testDiv = document.createElement('div');
+      document.body.appendChild(testDiv);
+
+      const rootStyles = getComputedStyle(document.documentElement);
+      const primaryColor = rootStyles.getPropertyValue('--coin-primary').trim();
+      const secondaryColor = rootStyles.getPropertyValue('--coin-secondary').trim();
+
+      if (primaryColor === '#08B5E5') {
+        checks.push('<span class="success">✓</span> Primary 색상 올바름 (#08B5E5)');
+      } else {
+        checks.push(`<span class="error">✗</span> Primary 색상 틀림: ${primaryColor}`);
+      }
+
+      if (secondaryColor === '#000000') {
+        checks.push('<span class="success">✓</span> Secondary 색상 올바름 (#000000)');
+      } else {
+        checks.push(`<span class="error">✗</span> Secondary 색상 틀림: ${secondaryColor}`);
+      }
+
+      document.body.removeChild(testDiv);
+
+      // CSS 파일 존재 확인
+      for (const file of cssFiles) {
+        try {
+          const response = await fetch(file);
+          if (response.ok) {
+            const text = await response.text();
+            if (text.length > 100) {
+              checks.push(`<span class="success">✓</span> ${file} 로드됨`);
+            } else {
+              checks.push(`<span class="warning">⚠</span> ${file} 내용 부족`);
+            }
+          } else {
+            checks.push(`<span class="error">✗</span> ${file} 로드 실패`);
+          }
+        } catch {
+          checks.push(`<span class="error">✗</span> ${file} 접근 불가`);
+        }
+      }
+
+      result.innerHTML = checks.join('<br>');
+    }
+
+    // 페이지 로드 시 자동 실행
+    window.addEventListener('DOMContentLoaded', () => {
+      console.log('Stellar2 최종 테스트 페이지 로드됨');
+    });
+  </script>
+</body>
+</html>
